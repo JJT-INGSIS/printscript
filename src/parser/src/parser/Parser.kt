@@ -1,7 +1,7 @@
 package parser
 
-import parser.grammar.ast.Expression
-import parser.grammar.ast.Statement
+import parser.ast.Expression
+import parser.ast.Statement
 import parser.statements.DeclarationParser
 import parser.statements.IdentifierStatementParser
 import parser.token.Token

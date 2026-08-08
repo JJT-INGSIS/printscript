@@ -1,6 +1,6 @@
 package parser
 
-import parser.grammar.ast.Expression
+import parser.ast.Expression
 import parser.token.Token
 import parser.token.TokenType
 

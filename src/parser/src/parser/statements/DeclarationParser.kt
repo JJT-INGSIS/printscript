@@ -2,7 +2,7 @@ package parser.statements
 
 import parser.ParsingContext
 import parser.StatementParser
-import parser.grammar.ast.Statement
+import parser.ast.Statement
 
 /**
  * Statement que empieza con "let".

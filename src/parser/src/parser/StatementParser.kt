@@ -1,6 +1,6 @@
 package parser
 
-import parser.grammar.ast.Statement
+import parser.ast.Statement
 
 /**
  * PUNTO 1 — La "cosa uniforme". Cada alternativa de statement (declaration,
