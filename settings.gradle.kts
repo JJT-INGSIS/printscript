@@ -19,5 +19,6 @@ include(
     "language-model",
     "lexer",
     "parser",
-    "token-source"
+    "token-source",
+    "interpreter"
 )
