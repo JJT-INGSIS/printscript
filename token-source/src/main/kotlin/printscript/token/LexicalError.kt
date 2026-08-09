@@ -1,4 +1,4 @@
-package printscript.lexer
+package printscript.token
 
 import printscript.model.source.SourceSpan
 

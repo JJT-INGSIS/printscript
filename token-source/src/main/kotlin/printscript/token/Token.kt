@@ -1,4 +1,4 @@
-package printscript.lexer
+package printscript.token
 
 import printscript.model.source.SourceSpan
 
@@ -7,4 +7,3 @@ data class Token(
     val lexeme: String,
     val span: SourceSpan
 )
-

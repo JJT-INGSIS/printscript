@@ -1,7 +1,8 @@
 package parser
 
-import printscript.lexer.LexicalError
+
 import printscript.model.source.SourceSpan
+import printscript.token.LexicalError
 
 sealed interface ParseError {
     val span: SourceSpan

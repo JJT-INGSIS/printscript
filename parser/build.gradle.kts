@@ -8,7 +8,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":lexer"))
+    implementation(project(":token-source"))
     testImplementation(kotlin("test"))
 }
 

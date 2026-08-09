@@ -1,8 +1,8 @@
 package parser
 
-import printscript.lexer.Token
-import printscript.lexer.TokenType
 import parser.ast.Expression
+import printscript.token.Token
+import printscript.token.TokenType
 
 interface ParsingContext {
     fun peek(): Token
