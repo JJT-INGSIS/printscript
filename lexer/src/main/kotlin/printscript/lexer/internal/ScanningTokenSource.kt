@@ -1,16 +1,16 @@
 package printscript.lexer.internal
 
-import printscript.lexer.LexicalError
-import printscript.lexer.Token
-import printscript.lexer.TokenReadResult
-import printscript.lexer.TokenSource
-import printscript.lexer.TokenType
 import printscript.lexer.internal.scanner.TokenScanner
 import printscript.model.source.SourceSpan
+import printscript.token.LexicalError
+import printscript.token.Token
+import printscript.token.TokenReadResult
+import printscript.token.TokenSource
+import printscript.token.TokenType
 
 private const val EOF_LEXEME = ""
 
-internal class DefaultTokenSource(
+internal class ScanningTokenSource(
     private val cursor: ReaderCharacterCursor,
     private val scanners: List<TokenScanner>,
 ) : TokenSource {

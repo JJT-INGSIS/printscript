@@ -1,14 +1,15 @@
 package parser
 
-import printscript.TokenSource
-import printscript.lexer.Token
-import printscript.lexer.TokenType
+
 import parser.ast.Expression
 import parser.ast.Statement
 import parser.statements.AssignmentParser
 import parser.statements.CallParser
 import parser.statements.DeclarationParser
 import parser.statements.StatementParser
+import printscript.token.Token
+import printscript.token.TokenSource
+import printscript.token.TokenType
 
 class Parser(
     tokens: TokenSource,

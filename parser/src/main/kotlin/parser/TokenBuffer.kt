@@ -1,9 +1,10 @@
 package parser
 
-import printscript.TokenSource
-import printscript.lexer.LexicalResult
-import printscript.lexer.Token
-import printscript.lexer.TokenType
+import printscript.token.Token
+import printscript.token.TokenReadResult
+import printscript.token.TokenSource
+import printscript.token.TokenType
+
 
 class TokenBuffer(private val source: TokenSource) {
 
@@ -23,7 +24,7 @@ class TokenBuffer(private val source: TokenSource) {
 
     private fun read(): Token =
         when (val result = source.nextToken()) {
-            is LexicalResult.Success -> result.token
-            is LexicalResult.Failure -> throw ParseException(ParseError.Lexical(result.error))
+            is TokenReadResult.Success -> result.token
+            is TokenReadResult.Failure -> throw ParseException(ParseError.Lexical(result.error))
         }
 }

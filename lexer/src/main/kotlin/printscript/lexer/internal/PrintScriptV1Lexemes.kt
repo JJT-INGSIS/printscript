@@ -1,6 +1,7 @@
 package printscript.lexer.internal
 
-import printscript.lexer.TokenType
+import printscript.token.TokenType
+
 
 internal val printScriptV1FixedTokens: Map<String, TokenType> = mapOf(
     "let" to TokenType.LET,

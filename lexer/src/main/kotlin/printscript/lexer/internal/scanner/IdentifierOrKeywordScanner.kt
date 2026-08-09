@@ -1,10 +1,10 @@
 package printscript.lexer.internal.scanner
 
-import printscript.lexer.Token
-import printscript.lexer.TokenReadResult
-import printscript.lexer.TokenType
 import printscript.lexer.internal.ReaderCharacterCursor
 import printscript.model.source.SourceSpan
+import printscript.token.Token
+import printscript.token.TokenReadResult
+import printscript.token.TokenType
 
 private const val IDENTIFIER_SEPARATOR = '_'
 

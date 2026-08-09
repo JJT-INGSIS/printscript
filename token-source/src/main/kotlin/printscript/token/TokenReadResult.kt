@@ -1,4 +1,6 @@
-package printscript.lexer
+package printscript.token
+
+
 
 sealed interface TokenReadResult {
     data class Success(

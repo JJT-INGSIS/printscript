@@ -18,5 +18,6 @@ rootProject.name = "printscript"
 include(
     "language-model",
     "lexer",
-    "parser"
+    "parser",
+    "token-source"
 )

@@ -1,11 +1,11 @@
 package printscript.lexer.internal.scanner
 
-import printscript.lexer.LexicalError
-import printscript.lexer.Token
-import printscript.lexer.TokenReadResult
-import printscript.lexer.TokenType
 import printscript.lexer.internal.ReaderCharacterCursor
 import printscript.model.source.SourceSpan
+import printscript.token.LexicalError
+import printscript.token.Token
+import printscript.token.TokenReadResult
+import printscript.token.TokenType
 
 internal class SymbolScanner(
     private val fixedTokens: Map<String, TokenType>,

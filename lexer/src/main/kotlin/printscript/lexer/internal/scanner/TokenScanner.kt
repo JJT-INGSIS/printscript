@@ -1,7 +1,8 @@
 package printscript.lexer.internal.scanner
 
-import printscript.lexer.TokenReadResult
+
 import printscript.lexer.internal.ReaderCharacterCursor
+import printscript.token.TokenReadResult
 
 internal interface TokenScanner {
     fun canStartWith(character: Char): Boolean

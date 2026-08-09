@@ -8,8 +8,8 @@ kotlin {
 }
 
 dependencies {
-    api(project(":token-source"))
     api(project(":language-model"))
+
     testImplementation(kotlin("test"))
 }
 
