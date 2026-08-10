@@ -36,14 +36,14 @@ internal class ParsingStatementSource(
 
     override fun parseStatement(): ParsingResult<Statement> {
         val token = peek().orReturn { return it }
-        val statementParser = statementParsers.firstOrNull { it.canStartWith(token.type) }
+        val statementParser = statementParsers.firstOrNull { it.canParse(this) }
             ?: return ParsingResult.Failure(
                 ParseError.UnexpectedToken(expected = emptySet(), actual = token),
             )
         return statementParser.parse(this)
     }
 
-    override fun peek(): ParsingResult<Token> = cursor.peek().toParsingResult()
+    override fun peekAt(offset: Int): ParsingResult<Token> = cursor.peekAt(offset).toParsingResult()
 
     override fun consume(): ParsingResult<Token> = cursor.advance().toParsingResult()
 

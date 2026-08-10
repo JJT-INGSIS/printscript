@@ -1,30 +1,31 @@
 package printscript.parser.internal
 
 import printscript.token.TokenReadResult
+import printscript.token.TokenType
 import printscript.token.TokenSource
 
 internal class TokenCursor(
     private val source: TokenSource,
 ) {
-    private var lookahead: TokenReadResult? = null
+    private val buffer = ArrayDeque<TokenReadResult>()
 
-    fun peek(): TokenReadResult {
-        val currentLookahead = lookahead
+    fun peek(): TokenReadResult = peekAt(0)
 
-        if (currentLookahead != null) {
-            return currentLookahead
+    fun peekAt(offset: Int): TokenReadResult {
+        while (buffer.size <= offset && !reachedEnd()) {
+            buffer.addLast(source.nextToken())
         }
-
-        return source.nextToken().also {
-            lookahead = it
-        }
+        return buffer.getOrElse(offset) { buffer.last() }
     }
 
     fun advance(): TokenReadResult {
         val current = peek()
-
-        lookahead = null
-
+        buffer.removeFirst()
         return current
+    }
+
+    private fun reachedEnd(): Boolean {
+        val last = buffer.lastOrNull() ?: return false
+        return last is TokenReadResult.Success && last.token.type == TokenType.EOF
     }
 }

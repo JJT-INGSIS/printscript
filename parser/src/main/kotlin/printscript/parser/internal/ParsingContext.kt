@@ -5,7 +5,7 @@ import printscript.token.Token
 import printscript.token.TokenType
 
 internal interface ParsingContext {
-    fun peek(): ParsingResult<Token>
+    fun peekAt(offset: Int): ParsingResult<Token>
 
     fun consume(): ParsingResult<Token>
 
@@ -20,4 +20,9 @@ internal interface ParsingContext {
     ): ParsingResult<Token> {
         return expect(setOf(expected))
     }
+
+    fun peek(): ParsingResult<Token> = peekAt(0)
+
+    fun typeAt(offset: Int): TokenType? =
+        (peekAt(offset) as? ParsingResult.Success)?.value?.type
 }

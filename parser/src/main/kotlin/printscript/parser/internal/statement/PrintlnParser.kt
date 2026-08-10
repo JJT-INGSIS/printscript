@@ -15,7 +15,7 @@ internal class PrintlnParser(
     private val expressionParser: ExpressionParser,
 ) : StatementParser {
 
-    override fun canStartWith(type: TokenType): Boolean = type == TokenType.PRINTLN
+    override fun canParse(context: ParsingContext): Boolean = context.typeAt(0) == TokenType.PRINTLN
 
     override fun parse(context: ParsingContext): ParsingResult<Statement> {
         val parts = checkGrammar(context).orReturn { return it }
