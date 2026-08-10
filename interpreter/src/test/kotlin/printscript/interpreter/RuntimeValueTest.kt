@@ -2,6 +2,7 @@ package printscript.interpreter
 
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.StringValue
+import printscript.model.ast.DeclaredType
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,12 +30,12 @@ class RuntimeValueTest {
     @Test
     fun `un numero es de tipo number`() {
         val value = NumberValue(BigDecimal("1"))
-        assertEquals(PrintScriptType.NUMBER, value.type)
+        assertEquals(DeclaredType.NUMBER, value.type)
     }
 
     @Test
     fun `un string es de tipo string`() {
         val value = StringValue("x")
-        assertEquals(PrintScriptType.STRING, value.type)
+        assertEquals(DeclaredType.STRING, value.type)
     }
 }

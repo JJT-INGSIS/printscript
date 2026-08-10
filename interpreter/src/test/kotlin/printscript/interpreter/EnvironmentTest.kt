@@ -3,6 +3,7 @@ package printscript.interpreter
 import printscript.interpreter.environment.MapEnvironment
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.value.NumberValue
+import printscript.model.ast.DeclaredType
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,26 +21,26 @@ class EnvironmentTest {
     @Test
     fun `se puede declarar sin inicializar`() {
         val environment = MapEnvironment()
-        environment.declare("x", VariableBinding(PrintScriptType.NUMBER, null))
+        environment.declare("x", VariableBinding(DeclaredType.NUMBER, null))
 
         val binding = environment.lookup("x")
 
         assertNotNull(binding)
-        assertEquals(PrintScriptType.NUMBER, binding.type)
+        assertEquals(DeclaredType.NUMBER, binding.type)
         assertNull(binding.value)
     }
 
     @Test
     fun `actualizar conserva el tipo declarado`() {
         val environment = MapEnvironment()
-        environment.declare("x", VariableBinding(PrintScriptType.NUMBER, null))
+        environment.declare("x", VariableBinding(DeclaredType.NUMBER, null))
 
         environment.update("x", NumberValue(BigDecimal("5")))
 
         val binding = environment.lookup("x")
 
         assertNotNull(binding)
-        assertEquals(PrintScriptType.NUMBER, binding.type)
+        assertEquals(DeclaredType.NUMBER, binding.type)
         assertEquals(NumberValue(BigDecimal("5")), binding.value)
     }
 }
