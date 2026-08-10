@@ -17,19 +17,22 @@ internal class ParsingStatementSource(
 
     private val cursor = TokenCursor(tokens)
 
-    override fun nextStatement(): StatementReadResult {
-        val token = when (val result = cursor.peek()) {
-            is TokenReadResult.Success -> result.token
-            is TokenReadResult.Failure -> return StatementReadResult.Failure(ParseError.Lexical(result.error))
-        }
-        if (token.type == TokenType.EOF) {
-            return StatementReadResult.EndOfInput
-        }
-        return when (val result = parseStatement()) {
+    override fun nextStatement(): StatementReadResult =
+        if (isEndOfInput()) endOfInput()
+        else parseNextStatement()
+
+    private fun isEndOfInput(): Boolean {
+        val nextToken = peek().orReturn { return false }
+        return nextToken.type == TokenType.EOF
+    }
+
+    private fun endOfInput(): StatementReadResult = StatementReadResult.EndOfInput
+
+    private fun parseNextStatement(): StatementReadResult =
+        when (val result = parseStatement()) {
             is ParsingResult.Success -> StatementReadResult.Success(result.value)
             is ParsingResult.Failure -> StatementReadResult.Failure(result.error)
         }
-    }
 
     override fun parseStatement(): ParsingResult<Statement> {
         val token = peek().orReturn { return it }
