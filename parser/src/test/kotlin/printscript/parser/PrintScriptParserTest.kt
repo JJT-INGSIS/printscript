@@ -31,7 +31,8 @@ import kotlin.test.assertTrue
 private class TokensSource(private val results: List<TokenReadResult>) : TokenSource {
     private var index = 0
     override fun nextToken(): TokenReadResult =
-        if (index < results.size) results[index++] else results.last()
+        if (index < results.size) results[index++]
+        else TokenReadResult.Success(Token(TokenType.EOF, "", ANY_SPAN))
 }
 
 private val ANY_SPAN = SourceSpan(SourcePosition(1, 1, 0), SourcePosition(1, 1, 0))
@@ -384,5 +385,30 @@ class PrintScriptParserTest {
         assertTrue(source.nextStatement() is StatementReadResult.Success)
         assertTrue(source.nextStatement() is StatementReadResult.Success)
         assertEquals(StatementReadResult.EndOfInput, source.nextStatement())
+    }
+
+    @Test
+    fun `recovers after an error and reports several failures`() {
+        // given  two broken statements followed by a valid one
+        val source = PrintScriptParser().parse(
+            TokensSource(
+                listOf(
+                    tk(TokenType.LET, "let"), tk(TokenType.IDENTIFIER, "x"), tk(TokenType.COLON, ":"),
+                    tk(TokenType.NUMBER_TYPE, "number"), tk(TokenType.ASSIGN, "="), tk(TokenType.SEMICOLON, ";"),
+                    tk(TokenType.IDENTIFIER, "y"), tk(TokenType.ASSIGN, "="), tk(TokenType.SEMICOLON, ";"),
+                    tk(TokenType.LET, "let"), tk(TokenType.IDENTIFIER, "z"), tk(TokenType.COLON, ":"),
+                    tk(TokenType.NUMBER_TYPE, "number"), tk(TokenType.ASSIGN, "="),
+                    tk(TokenType.NUMBER_LITERAL, "5"), tk(TokenType.SEMICOLON, ";"),
+                    tk(TokenType.EOF, ""),
+                ),
+            ),
+        )
+        // when  drain the source until end of input
+        val results = generateSequence { source.nextStatement() }
+            .takeWhile { it != StatementReadResult.EndOfInput }
+            .toList()
+        // then  the two broken statements are reported, the valid one parses
+        assertEquals(2, results.count { it is StatementReadResult.Failure })
+        assertEquals(1, results.count { it is StatementReadResult.Success })
     }
 }

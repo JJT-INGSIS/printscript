@@ -31,8 +31,24 @@ internal class ParsingStatementSource(
     private fun parseNextStatement(): StatementReadResult =
         when (val result = parseStatement()) {
             is ParsingResult.Success -> StatementReadResult.Success(result.value)
-            is ParsingResult.Failure -> StatementReadResult.Failure(result.error)
+            is ParsingResult.Failure -> {
+                synchronize()
+                StatementReadResult.Failure(result.error)
+            }
         }
+
+    private fun synchronize() {
+        while (true) {
+            when (val result = peek()) {
+                is ParsingResult.Failure -> consume()
+                is ParsingResult.Success -> {
+                    if (result.value.type == TokenType.EOF) return
+                    consume()
+                    if (result.value.type == TokenType.SEMICOLON) return
+                }
+            }
+        }
+    }
 
     override fun parseStatement(): ParsingResult<Statement> {
         val token = peek().orReturn { return it }
