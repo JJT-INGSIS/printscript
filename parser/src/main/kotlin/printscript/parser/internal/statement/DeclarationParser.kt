@@ -9,6 +9,7 @@ import printscript.model.source.SourceSpan
 import printscript.parser.internal.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.expression.ExpressionParser
+import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
 import printscript.token.Token
 import printscript.token.TokenType
@@ -70,14 +71,6 @@ internal class DeclarationParser(
             expressionParser.parse(context).orReturn { return it },
         )
     }
-
-    private inline fun <T> ParsingResult<T>.orReturn(
-        onFailure: (ParsingResult.Failure) -> Nothing,
-    ): T =
-        when (this) {
-            is ParsingResult.Success -> value
-            is ParsingResult.Failure -> onFailure(this)
-        }
 
     private data class Parts(
         val letToken: Token,

@@ -8,6 +8,7 @@ import printscript.model.source.SourceSpan
 import printscript.parser.internal.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.expression.ExpressionParser
+import printscript.parser.internal.orReturn
 import printscript.token.Token
 import printscript.token.TokenType
 
@@ -21,7 +22,7 @@ internal class AssignmentParser(
         val parts = checkGrammar(context).orReturn { return it }
         return ParsingResult.Success(build(parts))
     }
-
+    //ver si podemos hacerlo como un dispacher y/o clases general tipo GrammarChecker
     private fun checkGrammar(context: ParsingContext): ParsingResult<Parts> {
         val identifierToken = context.expect(TokenType.IDENTIFIER).orReturn { return it }
         context.expect(TokenType.ASSIGN).orReturn { return it }
@@ -44,14 +45,6 @@ internal class AssignmentParser(
                 end = parts.semicolonToken.span.end,
             ),
         )
-
-    private inline fun <T> ParsingResult<T>.orReturn(
-        onFailure: (ParsingResult.Failure) -> Nothing,
-    ): T =
-        when (this) {
-            is ParsingResult.Success -> value
-            is ParsingResult.Failure -> onFailure(this)
-        }
 
     private data class Parts(
         val identifierToken: Token,

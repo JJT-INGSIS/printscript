@@ -1,5 +1,6 @@
 package printscript.parser.internal
 
+import printscript.model.ast.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenType
 
@@ -7,6 +8,8 @@ internal interface ParsingContext {
     fun peek(): ParsingResult<Token>
 
     fun consume(): ParsingResult<Token>
+
+    fun parseStatement(): ParsingResult<Statement>
 
     fun expect(
         expected: Set<TokenType>,
