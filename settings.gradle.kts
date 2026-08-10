@@ -20,5 +20,6 @@ include(
     "lexer",
     "parser",
     "token-source",
-    "interpreter"
+    "interpreter",
+    "statement-source"
 )
