@@ -1,4 +1,6 @@
-package printscript.interpreter.output
+package printscript.interpreter
+
+import printscript.interpreter.output.ProgramOutput
 
 class InMemoryOutput : ProgramOutput {
 

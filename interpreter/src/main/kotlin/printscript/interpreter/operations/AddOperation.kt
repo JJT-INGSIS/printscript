@@ -1,17 +1,32 @@
 package printscript.interpreter.operations
 
+import printscript.interpreter.ExecutionResult
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
 import printscript.interpreter.value.StringValue
 import printscript.model.source.SourceSpan
 
-class AddOperation : BinaryOperation {
+internal class AddOperation : BinaryOperation {
 
-    override fun apply(left: RuntimeValue, right: RuntimeValue, span: SourceSpan): RuntimeValue {
+    override fun apply(
+        left: RuntimeValue,
+        right: RuntimeValue,
+        span: SourceSpan,
+    ): ExecutionResult<RuntimeValue> {
         if (left is NumberValue && right is NumberValue) {
-            return NumberValue(left.value + right.value)
+            return sum(left, right)
         }
-        // si al menos uno es string, el resultado es string
-        return StringValue(left.asText() + right.asText())
+        return concatenate(left, right)
+    }
+
+    private fun sum(left: NumberValue, right: NumberValue): ExecutionResult<RuntimeValue> {
+        return ExecutionResult.Success(NumberValue(left.value + right.value))
+    }
+
+    private fun concatenate(
+        left: RuntimeValue,
+        right: RuntimeValue,
+    ): ExecutionResult<RuntimeValue> {
+        return ExecutionResult.Success(StringValue(left.asText() + right.asText()))
     }
 }

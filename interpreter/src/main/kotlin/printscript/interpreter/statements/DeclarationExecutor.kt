@@ -1,36 +1,67 @@
 package printscript.interpreter.statements
 
 import printscript.interpreter.ExecutionContext
-import printscript.interpreter.InterpreterException
-import printscript.interpreter.displayNameOf
+import printscript.interpreter.ExecutionResult
+import printscript.interpreter.SemanticError
 import printscript.interpreter.environment.VariableBinding
+import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
+import printscript.model.ast.expression.Expression
 import printscript.model.ast.statement.VariableDeclarationStatement
 
-class DeclarationExecutor : StatementExecutor<VariableDeclarationStatement> {
+internal class DeclarationExecutor : StatementExecutor<VariableDeclarationStatement> {
 
-    override fun execute(statement: VariableDeclarationStatement, context: ExecutionContext) {
-        val name = statement.identifier.value
+    override fun execute(
+        statement: VariableDeclarationStatement,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
+        val name: String = statement.identifier.value
 
-        if (context.environment.lookup(name) != null) {
-            throw InterpreterException("La variable '$name' ya fue declarada", statement.span)
+        if (isAlreadyDeclared(name, context)) {
+            return ExecutionResult.Failure(
+                SemanticError.AlreadyDeclaredVariable(
+                    name = name,
+                    span = statement.span,
+                ),
+            )
         }
 
-        var value: RuntimeValue? = null
-        val initializer = statement.initializer
+        val initialValue: RuntimeValue? = evaluateInitializer(statement, context)
+            .orReturn { return it }
 
-        if (initializer != null) {
-            value = context.evaluate(initializer)
+        val binding = VariableBinding(
+            type = statement.declaredType,
+            value = initialValue,
+        )
+        context.environment.declare(name, binding)
 
-            if (value.type != statement.declaredType) {
-                throw InterpreterException(
-                    "No se puede asignar un valor de tipo ${displayNameOf(value.type)} " +
-                            "a la variable '$name' de tipo ${displayNameOf(statement.declaredType)}",
-                    statement.span
-                )
-            }
+        return ExecutionResult.Success(Unit)
+    }
+
+    private fun isAlreadyDeclared(name: String, context: ExecutionContext): Boolean {
+        return context.environment.lookup(name) != null
+    }
+
+    private fun evaluateInitializer(
+        statement: VariableDeclarationStatement,
+        context: ExecutionContext,
+    ): ExecutionResult<RuntimeValue?> {
+        val initializer: Expression = statement.initializer
+            ?: return ExecutionResult.Success(null)
+
+        val value: RuntimeValue = context.evaluate(initializer).orReturn { return it }
+
+        if (value.type != statement.declaredType) {
+            return ExecutionResult.Failure(
+                SemanticError.TypeMismatch(
+                    name = statement.identifier.value,
+                    expected = statement.declaredType,
+                    actual = value.type,
+                    span = statement.span,
+                ),
+            )
         }
 
-        context.environment.declare(name, VariableBinding(statement.declaredType, value))
+        return ExecutionResult.Success(value)
     }
 }
