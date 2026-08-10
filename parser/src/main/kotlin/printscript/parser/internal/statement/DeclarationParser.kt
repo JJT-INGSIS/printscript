@@ -20,6 +20,11 @@ internal class DeclarationParser(
     override fun canStartWith(type: TokenType): Boolean = type == TokenType.LET
 
     override fun parse(context: ParsingContext): ParsingResult<Statement> {
+        val parts = checkGrammar(context).orReturn { return it }
+        return ParsingResult.Success(build(parts))
+    }
+
+    private fun checkGrammar(context: ParsingContext): ParsingResult<Parts> {
         val letToken = context.expect(TokenType.LET).orReturn { return it }
         val identifierToken = context.expect(TokenType.IDENTIFIER).orReturn { return it }
         context.expect(TokenType.COLON).orReturn { return it }
@@ -27,22 +32,24 @@ internal class DeclarationParser(
         val declaredType = declaredTypeOf(typeToken).orReturn { return it }
         val initializer = parseInitializer(context).orReturn { return it }
         val semicolonToken = context.expect(TokenType.SEMICOLON).orReturn { return it }
-
         return ParsingResult.Success(
-            VariableDeclarationStatement(
-                identifier = Identifier(
-                    value = identifierToken.lexeme,
-                    span = identifierToken.span,
-                ),
-                declaredType = declaredType,
-                initializer = initializer,
-                span = SourceSpan(
-                    start = letToken.span.start,
-                    end = semicolonToken.span.end,
-                ),
-            ),
+            Parts(letToken, identifierToken, declaredType, initializer, semicolonToken),
         )
     }
+
+    private fun build(parts: Parts): Statement =
+        VariableDeclarationStatement(
+            identifier = Identifier(
+                value = parts.identifierToken.lexeme,
+                span = parts.identifierToken.span,
+            ),
+            declaredType = parts.declaredType,
+            initializer = parts.initializer,
+            span = SourceSpan(
+                start = parts.letToken.span.start,
+                end = parts.semicolonToken.span.end,
+            ),
+        )
 
     private fun declaredTypeOf(typeToken: Token): ParsingResult<DeclaredType> =
         when (typeToken.type) {
@@ -71,6 +78,14 @@ internal class DeclarationParser(
             is ParsingResult.Success -> value
             is ParsingResult.Failure -> onFailure(this)
         }
+
+    private data class Parts(
+        val letToken: Token,
+        val identifierToken: Token,
+        val declaredType: DeclaredType,
+        val initializer: Expression?,
+        val semicolonToken: Token,
+    )
 
     private companion object {
         val TYPE_TOKENS = setOf(TokenType.NUMBER_TYPE, TokenType.STRING_TYPE)
