@@ -18,7 +18,7 @@ internal class DeclarationParser(
     private val expressionParser: ExpressionParser,
 ) : StatementParser {
 
-    override fun canStartWith(type: TokenType): Boolean = type == TokenType.LET
+    override fun canParse(context: ParsingContext): Boolean = context.typeAt(0) == TokenType.LET
 
     override fun parse(context: ParsingContext): ParsingResult<Statement> {
         val parts = checkGrammar(context).orReturn { return it }
@@ -28,7 +28,7 @@ internal class DeclarationParser(
     private fun checkGrammar(context: ParsingContext): ParsingResult<Parts> {
         val letToken = context.expect(TokenType.LET).orReturn { return it }
         val identifierToken = context.expect(TokenType.IDENTIFIER).orReturn { return it }
-        context.expect(TokenType.COLON).orReturn { return it }
+        val colonToken = context.expect(TokenType.COLON).orReturn { return it }
         val typeToken = context.expect(TYPE_TOKENS).orReturn { return it }
         val declaredType = declaredTypeOf(typeToken).orReturn { return it }
         val initializer = parseInitializer(context).orReturn { return it }
