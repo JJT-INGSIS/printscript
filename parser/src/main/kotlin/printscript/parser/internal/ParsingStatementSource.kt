@@ -1,6 +1,7 @@
 package printscript.parser.internal
 
 
+import printscript.parser.internal.recovery.PanicModeSynchronizer
 import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource

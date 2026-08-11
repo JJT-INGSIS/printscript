@@ -1,5 +1,7 @@
-package printscript.parser.internal
+package printscript.parser.internal.recovery
 
+import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.ParsingResult
 import printscript.token.TokenType
 
 internal class PanicModeSynchronizer {
