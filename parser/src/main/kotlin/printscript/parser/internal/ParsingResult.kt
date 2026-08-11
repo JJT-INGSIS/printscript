@@ -12,3 +12,12 @@ internal sealed interface ParsingResult<out T> {
         val error: ParseError,
     ) : ParsingResult<Nothing>
 }
+
+internal inline fun <T> ParsingResult<T>.orReturn(
+    onFailure: (ParsingResult.Failure) -> Nothing,
+): T =
+    when (this) {
+        is ParsingResult.Success -> value
+        is ParsingResult.Failure -> onFailure(this)
+    }
+
