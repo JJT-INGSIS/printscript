@@ -1,6 +1,5 @@
 package printscript.interpreter
 
-import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 
 sealed interface InterpretationResult {
@@ -12,7 +11,6 @@ sealed interface InterpretationResult {
     ) : InterpretationResult
 
     data class SemanticFailure(
-        val detail: String,
-        val span: SourceSpan,
+        val error: SemanticError,
     ) : InterpretationResult
 }

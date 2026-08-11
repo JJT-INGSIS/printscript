@@ -1,6 +1,6 @@
 package printscript.interpreter
 
-import printscript.interpreter.output.InMemoryOutput
+import printscript.interpreter.InMemoryOutput
 import printscript.model.ast.DeclaredType
 import printscript.model.ast.Identifier
 import printscript.model.ast.expression.BinaryExpression
@@ -10,6 +10,8 @@ import printscript.model.ast.expression.IdentifierExpression
 import printscript.model.ast.expression.NumberLiteralExpression
 import printscript.model.ast.expression.StringLiteralExpression
 import printscript.model.ast.expression.StringQuoteStyle
+import printscript.model.ast.expression.UnaryExpression
+import printscript.model.ast.expression.UnaryOperator
 import printscript.model.ast.statement.AssignmentStatement
 import printscript.model.ast.statement.PrintlnStatement
 import printscript.model.ast.statement.Statement
@@ -28,7 +30,7 @@ class InterpreterTest {
 
     private val anySpan = SourceSpan(
         start = SourcePosition(1, 1, 0),
-        end = SourcePosition(1, 1, 0)
+        end = SourcePosition(1, 1, 0),
     )
 
     private fun name(value: String): Identifier {
@@ -47,14 +49,18 @@ class InterpreterTest {
         return IdentifierExpression(name(value))
     }
 
-    private fun binary(left: Expression, operator: BinaryOperator, right: Expression): Expression {
+    private fun binary(
+        left: Expression,
+        operator: BinaryOperator,
+        right: Expression,
+    ): Expression {
         return BinaryExpression(left, operator, anySpan, right)
     }
 
     private fun declare(
         variableName: String,
         type: DeclaredType,
-        initializer: Expression?
+        initializer: Expression?,
     ): Statement {
         return VariableDeclarationStatement(name(variableName), type, initializer, anySpan)
     }
@@ -67,14 +73,12 @@ class InterpreterTest {
         return output.lines()
     }
 
-    private fun runExpectingFailure(
-        vararg statements: Statement
-    ): InterpretationResult.SemanticFailure {
+    private fun runExpectingFailure(vararg statements: Statement): SemanticError {
         val output = InMemoryOutput()
         val result = Interpreter(output).interpret(ListStatementSource(statements.toList()))
 
         assertIs<InterpretationResult.SemanticFailure>(result)
-        return result
+        return result.error
     }
 
     @Test
@@ -86,10 +90,10 @@ class InterpreterTest {
                 binary(
                     binary(variable("name"), BinaryOperator.ADD, text(" ")),
                     BinaryOperator.ADD,
-                    variable("lastName")
+                    variable("lastName"),
                 ),
-                anySpan
-            )
+                anySpan,
+            ),
         )
 
         assertEquals(listOf("Joe Doe"), output)
@@ -103,12 +107,12 @@ class InterpreterTest {
             declare(
                 "c",
                 DeclaredType.NUMBER,
-                binary(variable("a"), BinaryOperator.DIVIDE, variable("b"))
+                binary(variable("a"), BinaryOperator.DIVIDE, variable("b")),
             ),
             PrintlnStatement(
                 binary(text("Result: "), BinaryOperator.ADD, variable("c")),
-                anySpan
-            )
+                anySpan,
+            ),
         )
 
         assertEquals(listOf("Result: 3"), output)
@@ -122,12 +126,12 @@ class InterpreterTest {
             AssignmentStatement(
                 name("a"),
                 binary(variable("a"), BinaryOperator.DIVIDE, variable("b")),
-                anySpan
+                anySpan,
             ),
             PrintlnStatement(
                 binary(text("Result: "), BinaryOperator.ADD, variable("a")),
-                anySpan
-            )
+                anySpan,
+            ),
         )
 
         assertEquals(listOf("Result: 3"), output)
@@ -138,82 +142,123 @@ class InterpreterTest {
         val output = run(
             PrintlnStatement(
                 binary(number("7"), BinaryOperator.DIVIDE, number("2")),
-                anySpan
-            )
+                anySpan,
+            ),
         )
 
         assertEquals(listOf("3.5"), output)
     }
 
     @Test
-    fun `usar una variable no declarada falla`() {
-        val failure = runExpectingFailure(PrintlnStatement(variable("x"), anySpan))
+    fun `el menos unario niega un numero`() {
+        val output = run(
+            PrintlnStatement(
+                UnaryExpression(UnaryOperator.MINUS, anySpan, number("5")),
+                anySpan,
+            ),
+        )
 
-        assertEquals("La variable 'x' no está declarada", failure.detail)
+        assertEquals(listOf("-5"), output)
+    }
+
+    @Test
+    fun `usar una variable no declarada falla`() {
+        val error = runExpectingFailure(PrintlnStatement(variable("x"), anySpan))
+
+        assertEquals(SemanticError.UndeclaredVariable("x", anySpan), error)
     }
 
     @Test
     fun `declarar dos veces la misma variable falla`() {
-        val failure = runExpectingFailure(
+        val error = runExpectingFailure(
             declare("x", DeclaredType.NUMBER, number("1")),
-            declare("x", DeclaredType.NUMBER, number("2"))
+            declare("x", DeclaredType.NUMBER, number("2")),
         )
 
-        assertEquals("La variable 'x' ya fue declarada", failure.detail)
+        assertEquals(SemanticError.AlreadyDeclaredVariable("x", anySpan), error)
     }
 
     @Test
     fun `asignar un string a un number falla`() {
-        val failure = runExpectingFailure(declare("x", DeclaredType.NUMBER, text("hola")))
+        val error = runExpectingFailure(declare("x", DeclaredType.NUMBER, text("hola")))
 
         assertEquals(
-            "No se puede asignar un valor de tipo string a la variable 'x' de tipo number",
-            failure.detail
+            SemanticError.TypeMismatch(
+                name = "x",
+                expected = DeclaredType.NUMBER,
+                actual = DeclaredType.STRING,
+                span = anySpan,
+            ),
+            error,
         )
     }
 
     @Test
     fun `usar una variable declarada sin inicializar falla`() {
-        val failure = runExpectingFailure(
+        val error = runExpectingFailure(
             declare("x", DeclaredType.NUMBER, null),
-            PrintlnStatement(variable("x"), anySpan)
+            PrintlnStatement(variable("x"), anySpan),
         )
 
-        assertEquals("La variable 'x' se usa sin haber sido inicializada", failure.detail)
+        assertEquals(SemanticError.UninitializedVariable("x", anySpan), error)
     }
 
     @Test
     fun `restar strings falla`() {
-        val failure = runExpectingFailure(
+        val error = runExpectingFailure(
             PrintlnStatement(
                 binary(text("a"), BinaryOperator.SUBTRACT, text("b")),
-                anySpan
-            )
+                anySpan,
+            ),
         )
 
         assertEquals(
-            "El operador '-' solo admite números, pero se recibió string y string",
-            failure.detail
+            SemanticError.InvalidBinaryOperands(
+                operator = BinaryOperator.SUBTRACT,
+                left = DeclaredType.STRING,
+                right = DeclaredType.STRING,
+                span = anySpan,
+            ),
+            error,
+        )
+    }
+
+    @Test
+    fun `el menos unario sobre un string falla`() {
+        val error = runExpectingFailure(
+            PrintlnStatement(
+                UnaryExpression(UnaryOperator.MINUS, anySpan, text("hola")),
+                anySpan,
+            ),
+        )
+
+        assertEquals(
+            SemanticError.InvalidUnaryOperand(
+                operator = UnaryOperator.MINUS,
+                operand = DeclaredType.STRING,
+                span = anySpan,
+            ),
+            error,
         )
     }
 
     @Test
     fun `dividir por cero falla`() {
-        val failure = runExpectingFailure(
+        val error = runExpectingFailure(
             PrintlnStatement(
                 binary(number("1"), BinaryOperator.DIVIDE, number("0")),
-                anySpan
-            )
+                anySpan,
+            ),
         )
 
-        assertEquals("División por cero", failure.detail)
+        assertEquals(SemanticError.DivisionByZero(anySpan), error)
     }
 
     @Test
     fun `un error de parseo se propaga sin ejecutar nada`() {
         val parseError = ParseError.UnexpectedToken(
             expected = setOf(TokenType.SEMICOLON),
-            actual = Token(TokenType.LET, "let", anySpan)
+            actual = Token(TokenType.LET, "let", anySpan),
         )
 
         val output = InMemoryOutput()

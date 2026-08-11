@@ -1,30 +1,46 @@
 package printscript.interpreter.statements
 
 import printscript.interpreter.ExecutionContext
-import printscript.interpreter.InterpreterException
-import printscript.interpreter.displayNameOf
+import printscript.interpreter.ExecutionResult
+import printscript.interpreter.SemanticError
+import printscript.interpreter.environment.VariableBinding
+import printscript.interpreter.orReturn
+import printscript.interpreter.value.RuntimeValue
 import printscript.model.ast.statement.AssignmentStatement
 
-class AssignmentExecutor : StatementExecutor<AssignmentStatement> {
+internal class AssignmentExecutor : StatementExecutor<AssignmentStatement> {
 
-    override fun execute(statement: AssignmentStatement, context: ExecutionContext) {
-        val name = statement.target.value
+    override fun execute(
+        statement: AssignmentStatement,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
+        val name: String = statement.target.value
 
-        val binding = context.environment.lookup(name)
+        val binding: VariableBinding? = context.environment.lookup(name)
         if (binding == null) {
-            throw InterpreterException("La variable '$name' no está declarada", statement.span)
+            return ExecutionResult.Failure(
+                SemanticError.UndeclaredVariable(
+                    name = name,
+                    span = statement.span,
+                ),
+            )
         }
 
-        val value = context.evaluate(statement.expression)
+        val value: RuntimeValue = context.evaluate(statement.expression).orReturn { return it }
 
         if (value.type != binding.type) {
-            throw InterpreterException(
-                "No se puede asignar un valor de tipo ${displayNameOf(value.type)} " +
-                        "a la variable '$name' de tipo ${displayNameOf(binding.type)}",
-                statement.span
+            return ExecutionResult.Failure(
+                SemanticError.TypeMismatch(
+                    name = name,
+                    expected = binding.type,
+                    actual = value.type,
+                    span = statement.span,
+                ),
             )
         }
 
         context.environment.update(name, value)
+
+        return ExecutionResult.Success(Unit)
     }
 }

@@ -3,7 +3,6 @@ package printscript.interpreter
 import printscript.interpreter.environment.Environment
 import printscript.interpreter.environment.MapEnvironment
 import printscript.interpreter.expressions.ExpressionEvaluator
-import printscript.interpreter.output.ConsoleOutput
 import printscript.interpreter.output.ProgramOutput
 import printscript.interpreter.statements.AssignmentExecutor
 import printscript.interpreter.statements.DeclarationExecutor
@@ -18,8 +17,8 @@ import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
 class Interpreter(
-    private val output: ProgramOutput = ConsoleOutput(),
-    override val environment: Environment = MapEnvironment()
+    private val output: ProgramOutput,
+    override val environment: Environment = MapEnvironment(),
 ) : ExecutionContext {
 
     private val evaluator = ExpressionEvaluator(environment)
@@ -30,7 +29,7 @@ class Interpreter(
 
     fun interpret(source: StatementSource): InterpretationResult {
         while (true) {
-            val read = source.nextStatement()
+            val read: StatementReadResult = source.nextStatement()
 
             when (read) {
                 is StatementReadResult.EndOfInput -> {
@@ -42,33 +41,24 @@ class Interpreter(
                 }
 
                 is StatementReadResult.Success -> {
-                    val failure = executeOrFail(read.statement)
-                    if (failure != null) {
-                        return failure
+                    val executed: ExecutionResult<Unit> = execute(read.statement)
+                    if (executed is ExecutionResult.Failure) {
+                        return InterpretationResult.SemanticFailure(executed.error)
                     }
                 }
             }
         }
     }
 
-    private fun executeOrFail(statement: Statement): InterpretationResult.SemanticFailure? {
-        try {
-            execute(statement)
-        } catch (error: InterpreterException) {
-            return InterpretationResult.SemanticFailure(error.detail, error.span)
-        }
-        return null
-    }
-
-    fun execute(statement: Statement) {
-        when (statement) {
+    private fun execute(statement: Statement): ExecutionResult<Unit> {
+        return when (statement) {
             is VariableDeclarationStatement -> declarationExecutor.execute(statement, this)
             is AssignmentStatement -> assignmentExecutor.execute(statement, this)
             is PrintlnStatement -> printlnExecutor.execute(statement, this)
         }
     }
 
-    override fun evaluate(expression: Expression): RuntimeValue {
+    override fun evaluate(expression: Expression): ExecutionResult<RuntimeValue> {
         return evaluator.evaluate(expression)
     }
 
