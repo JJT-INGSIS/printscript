@@ -82,7 +82,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `ejemplo 1 de la consigna`() {
+    fun `example 1 from the assignment`() {
         val output = run(
             declare("name", DeclaredType.STRING, text("Joe")),
             declare("lastName", DeclaredType.STRING, text("Doe")),
@@ -100,7 +100,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `ejemplo 2 de la consigna`() {
+    fun `example 2 from the assignment`() {
         val output = run(
             declare("a", DeclaredType.NUMBER, number("12")),
             declare("b", DeclaredType.NUMBER, number("4")),
@@ -119,7 +119,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `ejemplo 3 de la consigna, con reasignacion`() {
+    fun `example 3 from the assignment, with reassignment`() {
         val output = run(
             declare("a", DeclaredType.NUMBER, number("12")),
             declare("b", DeclaredType.NUMBER, number("4")),
@@ -138,7 +138,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `los decimales se conservan`() {
+    fun `decimals are preserved`() {
         val output = run(
             PrintlnStatement(
                 binary(number("7"), BinaryOperator.DIVIDE, number("2")),
@@ -150,7 +150,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `el menos unario niega un numero`() {
+    fun `unary minus negates a number`() {
         val output = run(
             PrintlnStatement(
                 UnaryExpression(UnaryOperator.MINUS, anySpan, number("5")),
@@ -162,14 +162,14 @@ class InterpreterTest {
     }
 
     @Test
-    fun `usar una variable no declarada falla`() {
+    fun `using an undeclared variable fails`() {
         val error = runExpectingFailure(PrintlnStatement(variable("x"), anySpan))
 
         assertEquals(SemanticError.UndeclaredVariable("x", anySpan), error)
     }
 
     @Test
-    fun `declarar dos veces la misma variable falla`() {
+    fun `declaring the same variable twice fails`() {
         val error = runExpectingFailure(
             declare("x", DeclaredType.NUMBER, number("1")),
             declare("x", DeclaredType.NUMBER, number("2")),
@@ -179,7 +179,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `asignar un string a un number falla`() {
+    fun `assigning a string to a number fails`() {
         val error = runExpectingFailure(declare("x", DeclaredType.NUMBER, text("hola")))
 
         assertEquals(
@@ -194,7 +194,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `usar una variable declarada sin inicializar falla`() {
+    fun `using a declared but uninitialized variable fails`() {
         val error = runExpectingFailure(
             declare("x", DeclaredType.NUMBER, null),
             PrintlnStatement(variable("x"), anySpan),
@@ -204,7 +204,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `restar strings falla`() {
+    fun `subtracting strings fails`() {
         val error = runExpectingFailure(
             PrintlnStatement(
                 binary(text("a"), BinaryOperator.SUBTRACT, text("b")),
@@ -224,7 +224,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `el menos unario sobre un string falla`() {
+    fun `unary minus on a string fails`() {
         val error = runExpectingFailure(
             PrintlnStatement(
                 UnaryExpression(UnaryOperator.MINUS, anySpan, text("hola")),
@@ -243,7 +243,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `dividir por cero falla`() {
+    fun `dividing by zero fails`() {
         val error = runExpectingFailure(
             PrintlnStatement(
                 binary(number("1"), BinaryOperator.DIVIDE, number("0")),
@@ -255,7 +255,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `un error de parseo se propaga sin ejecutar nada`() {
+    fun `a parse error is propagated without executing anything`() {
         val parseError = ParseError.UnexpectedToken(
             expected = setOf(TokenType.SEMICOLON),
             actual = Token(TokenType.LET, "let", anySpan),
@@ -270,7 +270,7 @@ class InterpreterTest {
     }
 
     @Test
-    fun `un programa vacio termina bien`() {
+    fun `an empty program finishes successfully`() {
         val result = Interpreter(InMemoryOutput()).interpret(ListStatementSource(emptyList()))
 
         assertEquals(InterpretationResult.Success, result)
