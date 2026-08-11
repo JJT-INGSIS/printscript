@@ -35,7 +35,6 @@ private class TokensSource(private val results: List<TokenReadResult>) : TokenSo
         else TokenReadResult.Success(Token(TokenType.EOF, "", ANY_SPAN))
 }
 
-private val ANY_SPAN = SourceSpan(SourcePosition(1, 1, 0), SourcePosition(1, 1, 0))
 
 private fun tk(type: TokenType, lexeme: String) = TokenReadResult.Success(Token(type, lexeme, ANY_SPAN))
 
