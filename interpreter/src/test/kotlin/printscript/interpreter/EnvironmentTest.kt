@@ -13,13 +13,13 @@ import kotlin.test.assertNull
 class EnvironmentTest {
 
     @Test
-    fun `una variable no declarada no existe`() {
+    fun `an undeclared variable does not exist`() {
         val environment = MapEnvironment()
         assertNull(environment.lookup("x"))
     }
 
     @Test
-    fun `se puede declarar sin inicializar`() {
+    fun `a variable can be declared without initializing it`() {
         val environment = MapEnvironment()
         environment.declare("x", VariableBinding(DeclaredType.NUMBER, null))
 
@@ -31,7 +31,7 @@ class EnvironmentTest {
     }
 
     @Test
-    fun `actualizar conserva el tipo declarado`() {
+    fun `updating preserves the declared type`() {
         val environment = MapEnvironment()
         environment.declare("x", VariableBinding(DeclaredType.NUMBER, null))
 
