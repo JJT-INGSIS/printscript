@@ -25,7 +25,7 @@ class FakeTokenSource(private val results: List<TokenReadResult>) : TokenSource 
 
 /**
  * DSL para construir listas de tokens de forma legible.
- * Extensible: cuando el lenguaje sume un token, agregás un atajo acá y ya lo usan todos los tests.
+ * Extensible: cuando el lenguaje sume un token, agregas un atajo acá y ya lo usan todos los tests.
  */
 class TokenListBuilder {
     private val results = mutableListOf<TokenReadResult>()

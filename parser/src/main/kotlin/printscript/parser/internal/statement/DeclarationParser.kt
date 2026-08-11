@@ -68,7 +68,7 @@ internal class DeclarationParser(
             .orReturn { return it }
 
         val typeToken =
-            context.expect(TYPE_TOKENS)
+            context.expect(DECLARED_TYPES_BY_TOKEN.keys)
                 .orReturn { return it }
 
         val declaredType =
@@ -97,24 +97,15 @@ internal class DeclarationParser(
     private fun declaredTypeOf(
         typeToken: Token,
     ): ParsingResult<DeclaredType> {
-        return when (typeToken.type) {
-            TokenType.NUMBER_TYPE -> {
-                ParsingResult.Success(DeclaredType.NUMBER)
-            }
+        val declaredType = DECLARED_TYPES_BY_TOKEN[typeToken.type]
+            ?: return ParsingResult.Failure(
+                ParseError.UnexpectedToken(
+                    expected = DECLARED_TYPES_BY_TOKEN.keys,
+                    actual = typeToken,
+                ),
+            )
 
-            TokenType.STRING_TYPE -> {
-                ParsingResult.Success(DeclaredType.STRING)
-            }
-
-            else -> {
-                ParsingResult.Failure(
-                    ParseError.UnexpectedToken(
-                        expected = TYPE_TOKENS,
-                        actual = typeToken,
-                    ),
-                )
-            }
-        }
+        return ParsingResult.Success(declaredType)
     }
 
     private fun parseInitializer(
@@ -166,9 +157,9 @@ internal class DeclarationParser(
             TokenType.LET,
         )
 
-        val TYPE_TOKENS = setOf(
-            TokenType.NUMBER_TYPE,
-            TokenType.STRING_TYPE,
+        val DECLARED_TYPES_BY_TOKEN = mapOf(
+            TokenType.NUMBER_TYPE to DeclaredType.NUMBER,
+            TokenType.STRING_TYPE to DeclaredType.STRING,
         )
     }
 }
