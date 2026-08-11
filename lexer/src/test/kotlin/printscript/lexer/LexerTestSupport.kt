@@ -8,6 +8,7 @@ import printscript.lexer.internal.scanner.NumberLiteralScanner
 import printscript.lexer.internal.scanner.StringLiteralScanner
 import printscript.lexer.internal.scanner.SymbolScanner
 import printscript.lexer.internal.scanner.TokenScanner
+import printscript.lexer.internal.scanner.TokenScannerDispatcher
 import printscript.token.LexicalError
 import printscript.token.Token
 import printscript.token.TokenReadResult
@@ -30,9 +31,13 @@ internal fun scanningTokenSourceFor(input: String): TokenSource {
         SymbolScanner(printScriptV1FixedTokens),
     )
 
+    val scannerDispatcher = TokenScannerDispatcher(
+        scanners = scanners,
+    )
+
     return ScanningTokenSource(
         cursor = cursorFor(input),
-        scanners = scanners,
+        scannerDispatcher = scannerDispatcher,
     )
 }
 

@@ -7,17 +7,19 @@ import printscript.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.lexer.internal.scanner.NumberLiteralScanner
 import printscript.lexer.internal.scanner.StringLiteralScanner
 import printscript.lexer.internal.scanner.SymbolScanner
-import printscript.lexer.internal.scanner.TokenScanner
+import printscript.lexer.internal.scanner.TokenScannerDispatcher
 import printscript.token.TokenSource
 import java.io.Reader
 
 class PrintScriptLexer : Lexer {
 
-    private val scanners: List<TokenScanner> = listOf(
-        StringLiteralScanner(),
-        NumberLiteralScanner(),
-        IdentifierOrKeywordScanner(printScriptV1FixedTokens),
-        SymbolScanner(printScriptV1FixedTokens),
+    private val scannerDispatcher = TokenScannerDispatcher(
+        scanners = listOf(
+            StringLiteralScanner(),
+            NumberLiteralScanner(),
+            IdentifierOrKeywordScanner(printScriptV1FixedTokens),
+            SymbolScanner(printScriptV1FixedTokens),
+        ),
     )
 
     override fun tokenize(
@@ -27,7 +29,7 @@ class PrintScriptLexer : Lexer {
 
         return ScanningTokenSource(
             cursor = cursor,
-            scanners = scanners,
+            scannerDispatcher = scannerDispatcher,
         )
     }
 }
