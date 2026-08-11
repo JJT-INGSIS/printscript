@@ -16,7 +16,7 @@ class ListStatementSource(
         }
 
         val statement = statements[index]
-        index = index + 1
+        index += 1
         return StatementReadResult.Success(statement)
     }
 }
