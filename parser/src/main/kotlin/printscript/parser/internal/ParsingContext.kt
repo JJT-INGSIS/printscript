@@ -4,8 +4,21 @@ import printscript.model.ast.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenType
 
-internal interface ParsingContext {
-    fun peekAt(offset: Int): ParsingResult<Token>
+private const val CURRENT_TOKEN_OFFSET = 0
+
+internal interface TokenLookahead {
+
+    fun peekAt(
+        offset: Int,
+    ): ParsingResult<Token>
+
+    fun peek(): ParsingResult<Token> {
+        return peekAt(CURRENT_TOKEN_OFFSET)
+    }
+}
+
+
+internal interface ParsingContext : TokenLookahead {
 
     fun consume(): ParsingResult<Token>
 
@@ -20,9 +33,4 @@ internal interface ParsingContext {
     ): ParsingResult<Token> {
         return expect(setOf(expected))
     }
-
-    fun peek(): ParsingResult<Token> = peekAt(0)
-
-    fun typeAt(offset: Int): TokenType? =
-        (peekAt(offset) as? ParsingResult.Success)?.value?.type
 }

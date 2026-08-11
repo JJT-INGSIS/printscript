@@ -8,6 +8,10 @@ sealed interface StatementReadResult {
         val statement: Statement,
     ) : StatementReadResult
 
+    /**
+     * The current statement could not be parsed.
+     * The caller may invoke the nextStatement () again.
+     */
     data class Failure(
         val error: ParseError,
     ) : StatementReadResult

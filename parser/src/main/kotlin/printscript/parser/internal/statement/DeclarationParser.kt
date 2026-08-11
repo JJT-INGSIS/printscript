@@ -8,6 +8,7 @@ import printscript.model.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourceSpan
 import printscript.parser.internal.ParsingContext
 import printscript.parser.internal.ParsingResult
+import printscript.parser.internal.TokenLookahead
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
@@ -18,28 +19,127 @@ internal class DeclarationParser(
     private val expressionParser: ExpressionParser,
 ) : StatementParser {
 
-    override fun canParse(context: ParsingContext): Boolean = context.typeAt(0) == TokenType.LET
+    override fun match(
+        lookahead: TokenLookahead,
+    ): StatementMatch {
+        return when (val result = lookahead.peek()) {
+            is ParsingResult.Success -> {
+                val token = result.value
 
-    override fun parse(context: ParsingContext): ParsingResult<Statement> {
-        val parts = checkGrammar(context).orReturn { return it }
+                if (token.type == TokenType.LET) {
+                    StatementMatch.Match
+                } else {
+                    StatementMatch.NoMatch(
+                        StatementMismatch.atCurrentToken(
+                            expected = DECLARATION_START_TOKENS,
+                            actual = token,
+                        ),
+                    )
+                }
+            }
+
+            is ParsingResult.Failure -> {
+                StatementMatch.Failure(result.error)
+            }
+        }
+    }
+
+    override fun parse(
+        context: ParsingContext,
+    ): ParsingResult<Statement> {
+        val parts = parseParts(context)
+            .orReturn { return it }
+
         return ParsingResult.Success(build(parts))
     }
 
-    private fun checkGrammar(context: ParsingContext): ParsingResult<Parts> {
-        val letToken = context.expect(TokenType.LET).orReturn { return it }
-        val identifierToken = context.expect(TokenType.IDENTIFIER).orReturn { return it }
-        val colonToken = context.expect(TokenType.COLON).orReturn { return it }
-        val typeToken = context.expect(TYPE_TOKENS).orReturn { return it }
-        val declaredType = declaredTypeOf(typeToken).orReturn { return it }
-        val initializer = parseInitializer(context).orReturn { return it }
-        val semicolonToken = context.expect(TokenType.SEMICOLON).orReturn { return it }
+    private fun parseParts(
+        context: ParsingContext,
+    ): ParsingResult<Parts> {
+        val letToken =
+            context.expect(TokenType.LET)
+                .orReturn { return it }
+
+        val identifierToken =
+            context.expect(TokenType.IDENTIFIER)
+                .orReturn { return it }
+
+        context.expect(TokenType.COLON)
+            .orReturn { return it }
+
+        val typeToken =
+            context.expect(TYPE_TOKENS)
+                .orReturn { return it }
+
+        val declaredType =
+            declaredTypeOf(typeToken)
+                .orReturn { return it }
+
+        val initializer =
+            parseInitializer(context)
+                .orReturn { return it }
+
+        val semicolonToken =
+            context.expect(TokenType.SEMICOLON)
+                .orReturn { return it }
+
         return ParsingResult.Success(
-            Parts(letToken, identifierToken, declaredType, initializer, semicolonToken),
+            Parts(
+                letToken = letToken,
+                identifierToken = identifierToken,
+                declaredType = declaredType,
+                initializer = initializer,
+                semicolonToken = semicolonToken,
+            ),
         )
     }
 
-    private fun build(parts: Parts): Statement =
-        VariableDeclarationStatement(
+    private fun declaredTypeOf(
+        typeToken: Token,
+    ): ParsingResult<DeclaredType> {
+        return when (typeToken.type) {
+            TokenType.NUMBER_TYPE -> {
+                ParsingResult.Success(DeclaredType.NUMBER)
+            }
+
+            TokenType.STRING_TYPE -> {
+                ParsingResult.Success(DeclaredType.STRING)
+            }
+
+            else -> {
+                ParsingResult.Failure(
+                    ParseError.UnexpectedToken(
+                        expected = TYPE_TOKENS,
+                        actual = typeToken,
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun parseInitializer(
+        context: ParsingContext,
+    ): ParsingResult<Expression?> {
+        val nextToken = context.peek()
+            .orReturn { return it }
+
+        if (nextToken.type != TokenType.ASSIGN) {
+            return ParsingResult.Success(null)
+        }
+
+        context.expect(TokenType.ASSIGN)
+            .orReturn { return it }
+
+        val expression = expressionParser.parse(context)
+            .orReturn { return it }
+
+        return ParsingResult.Success(expression)
+    }
+
+    private fun build(
+        parts: Parts,
+    ): Statement {
+        return VariableDeclarationStatement(
             identifier = Identifier(
                 value = parts.identifierToken.lexeme,
                 span = parts.identifierToken.span,
@@ -50,25 +150,6 @@ internal class DeclarationParser(
                 start = parts.letToken.span.start,
                 end = parts.semicolonToken.span.end,
             ),
-        )
-
-    private fun declaredTypeOf(typeToken: Token): ParsingResult<DeclaredType> =
-        when (typeToken.type) {
-            TokenType.NUMBER_TYPE -> ParsingResult.Success(DeclaredType.NUMBER)
-            TokenType.STRING_TYPE -> ParsingResult.Success(DeclaredType.STRING)
-            else -> ParsingResult.Failure(
-                ParseError.UnexpectedToken(expected = TYPE_TOKENS, actual = typeToken),
-            )
-        }
-
-    private fun parseInitializer(context: ParsingContext): ParsingResult<Expression?> {
-        val nextToken = context.peek().orReturn { return it }
-        if (nextToken.type != TokenType.ASSIGN) {
-            return ParsingResult.Success(null)
-        }
-        context.expect(TokenType.ASSIGN).orReturn { return it }
-        return ParsingResult.Success(
-            expressionParser.parse(context).orReturn { return it },
         )
     }
 
@@ -81,6 +162,13 @@ internal class DeclarationParser(
     )
 
     private companion object {
-        val TYPE_TOKENS = setOf(TokenType.NUMBER_TYPE, TokenType.STRING_TYPE)
+        val DECLARATION_START_TOKENS = setOf(
+            TokenType.LET,
+        )
+
+        val TYPE_TOKENS = setOf(
+            TokenType.NUMBER_TYPE,
+            TokenType.STRING_TYPE,
+        )
     }
 }
