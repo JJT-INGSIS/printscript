@@ -1,8 +1,8 @@
-package printscript.parser.internal
+package printscript.parser.internal.context
 
 import printscript.token.TokenReadResult
-import printscript.token.TokenType
 import printscript.token.TokenSource
+import printscript.token.TokenType
 
 internal class TokenCursor(
     private val source: TokenSource,
