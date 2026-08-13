@@ -17,7 +17,6 @@ internal interface TokenLookahead {
     }
 }
 
-
 internal interface ParsingContext : TokenLookahead {
 
     fun consume(): ParsingResult<Token>

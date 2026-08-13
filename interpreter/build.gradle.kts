@@ -9,7 +9,7 @@ kotlin {
 
 dependencies {
     api(project(":statement-source"))
-    api(project(":language-model"))
+    api(project(":common"))
     testImplementation(kotlin("test"))
 }
 

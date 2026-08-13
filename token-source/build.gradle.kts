@@ -8,7 +8,7 @@ kotlin {
 }
 
 dependencies {
-    api(project(":language-model"))
+    api(project(":common"))
 
     testImplementation(kotlin("test"))
 }

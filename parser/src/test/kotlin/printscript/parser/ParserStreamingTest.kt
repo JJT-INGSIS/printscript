@@ -38,17 +38,13 @@ class ParserStreamingTest {
     }
 
     @Test
-    fun `recovers after several errors and continues parsing`() {
+    fun `stops at the first error and ignores the rest`() {
         val results = parseAll(
             tokens {
                 let()
                 id("x")
                 colon()
                 numberType()
-                assign()
-                semicolon()
-
-                id("y")
                 assign()
                 semicolon()
 
@@ -64,15 +60,17 @@ class ParserStreamingTest {
             },
         )
 
-        assertEquals(
-            2,
-            results.count { it is StatementReadResult.Failure },
-        )
+        assertEquals(1, results.size)
+        assertTrue(results.single() is StatementReadResult.Failure)
+    }
 
-        assertEquals(
-            1,
-            results.count { it is StatementReadResult.Success },
-        )
+    @Test
+    fun `failure is terminal and later calls are end of input`() {
+        val source = sourceOf(tokens { plus(); eof() })
+
+        assertTrue(source.nextStatement() is StatementReadResult.Failure)
+        assertEquals(StatementReadResult.EndOfInput, source.nextStatement())
+        assertEquals(StatementReadResult.EndOfInput, source.nextStatement())
     }
 
 
