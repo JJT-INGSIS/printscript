@@ -7,14 +7,29 @@ import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
 import printscript.model.ast.expression.Expression
+import printscript.model.ast.statement.Statement
 import printscript.model.ast.statement.VariableDeclarationStatement
 
-internal class DeclarationExecutor : StatementExecutor<VariableDeclarationStatement> {
+internal class DeclarationExecutor : StatementExecutor {
+
+    override fun supports(
+        statement: Statement,
+    ): Boolean {
+        return statement is VariableDeclarationStatement
+    }
 
     override fun execute(
-        statement: VariableDeclarationStatement,
+        statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
+        if (statement !is VariableDeclarationStatement) {
+            return ExecutionResult.Failure(
+                SemanticError.UnsupportedStatement(
+                    span = statement.span,
+                ),
+            )
+        }
+
         val name: String = statement.identifier.value
 
         if (isAlreadyDeclared(name, context)) {
@@ -26,19 +41,24 @@ internal class DeclarationExecutor : StatementExecutor<VariableDeclarationStatem
             )
         }
 
-        val initialValue: RuntimeValue? = evaluateInitializer(statement, context)
-            .orReturn { return it }
+        val initialValue: RuntimeValue? =
+            evaluateInitializer(statement, context)
+                .orReturn { return it }
 
         val binding = VariableBinding(
             type = statement.declaredType,
             value = initialValue,
         )
+
         context.environment.declare(name, binding)
 
         return ExecutionResult.Success(Unit)
     }
 
-    private fun isAlreadyDeclared(name: String, context: ExecutionContext): Boolean {
+    private fun isAlreadyDeclared(
+        name: String,
+        context: ExecutionContext,
+    ): Boolean {
         return context.environment.lookup(name) != null
     }
 
@@ -49,7 +69,9 @@ internal class DeclarationExecutor : StatementExecutor<VariableDeclarationStatem
         val initializer: Expression = statement.initializer
             ?: return ExecutionResult.Success(null)
 
-        val value: RuntimeValue = context.evaluate(initializer).orReturn { return it }
+        val value: RuntimeValue =
+            context.evaluate(initializer)
+                .orReturn { return it }
 
         if (value.type != statement.declaredType) {
             return ExecutionResult.Failure(
