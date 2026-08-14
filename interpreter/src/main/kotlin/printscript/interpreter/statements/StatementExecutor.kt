@@ -4,7 +4,12 @@ import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.model.ast.statement.Statement
 
-internal interface StatementExecutor<T : Statement> {
+internal interface StatementExecutor {
 
-    fun execute(statement: T, context: ExecutionContext): ExecutionResult<Unit>
+    fun supports(statement: Statement): Boolean
+
+    fun execute(
+        statement: Statement,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit>
 }

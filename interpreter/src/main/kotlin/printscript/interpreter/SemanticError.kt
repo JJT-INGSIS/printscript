@@ -51,4 +51,8 @@ sealed interface SemanticError {
         val operator: BinaryOperator,
         override val span: SourceSpan,
     ) : SemanticError
+
+    data class UnsupportedStatement(
+        override val span: SourceSpan,
+    ) : SemanticError
 }

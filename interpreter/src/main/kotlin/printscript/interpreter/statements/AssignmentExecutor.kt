@@ -7,16 +7,33 @@ import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
 import printscript.model.ast.statement.AssignmentStatement
+import printscript.model.ast.statement.Statement
 
-internal class AssignmentExecutor : StatementExecutor<AssignmentStatement> {
+internal class AssignmentExecutor : StatementExecutor {
+
+    override fun supports(
+        statement: Statement,
+    ): Boolean {
+        return statement is AssignmentStatement
+    }
 
     override fun execute(
-        statement: AssignmentStatement,
+        statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
+        if (statement !is AssignmentStatement) {
+            return ExecutionResult.Failure(
+                SemanticError.UnsupportedStatement(
+                    span = statement.span,
+                ),
+            )
+        }
+
         val name: String = statement.target.value
 
-        val binding: VariableBinding? = context.environment.lookup(name)
+        val binding: VariableBinding? =
+            context.environment.lookup(name)
+
         if (binding == null) {
             return ExecutionResult.Failure(
                 SemanticError.UndeclaredVariable(
@@ -26,7 +43,9 @@ internal class AssignmentExecutor : StatementExecutor<AssignmentStatement> {
             )
         }
 
-        val value: RuntimeValue = context.evaluate(statement.expression).orReturn { return it }
+        val value: RuntimeValue =
+            context.evaluate(statement.expression)
+                .orReturn { return it }
 
         if (value.type != binding.type) {
             return ExecutionResult.Failure(
