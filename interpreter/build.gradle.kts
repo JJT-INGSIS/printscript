@@ -1,18 +1,8 @@
 plugins {
-    kotlin("jvm")
-    `java-library`
-}
-
-kotlin {
-    jvmToolchain(21)
+    id("printscript.kotlin-library")
 }
 
 dependencies {
-    api(project(":statement-source"))
-    api(project(":language-model"))
-    testImplementation(kotlin("test"))
-}
-
-tasks.test {
-    useJUnitPlatform()
+    implementation(project(":statement-source"))
+    implementation(project(":common"))
 }

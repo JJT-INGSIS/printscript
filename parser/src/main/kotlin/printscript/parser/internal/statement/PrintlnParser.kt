@@ -46,7 +46,6 @@ internal class PrintlnParser(
     ): ParsingResult<Statement> {
         val parts = parseParts(context)
             .orReturn { return it }
-
         return ParsingResult.Success(build(parts))
     }
 

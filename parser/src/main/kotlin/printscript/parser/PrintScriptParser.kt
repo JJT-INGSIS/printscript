@@ -3,7 +3,6 @@ package printscript.parser
 import printscript.parser.internal.ParsingStatementSource
 import printscript.parser.internal.context.DefaultParsingContext
 import printscript.parser.internal.expression.RecursiveDescentExpressionParser
-import printscript.parser.internal.recovery.PanicModeSynchronizer
 import printscript.parser.internal.statement.AssignmentParser
 import printscript.parser.internal.statement.DeclarationParser
 import printscript.parser.internal.statement.PrintlnParser
@@ -23,7 +22,6 @@ class PrintScriptParser : Parser {
 
         return ParsingStatementSource(
             context = context,
-            synchronizer = PanicModeSynchronizer(),
         )
     }
 

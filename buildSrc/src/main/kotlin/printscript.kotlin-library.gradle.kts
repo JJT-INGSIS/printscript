@@ -8,9 +8,9 @@ kotlin {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    "testImplementation"(kotlin("test"))
 }
 
-tasks.test {
+tasks.named<Test>("test") {
     useJUnitPlatform()
 }

@@ -16,7 +16,7 @@ dependencyResolutionManagement {
 rootProject.name = "printscript"
 
 include(
-    "language-model",
+    "common",
     "lexer",
     "parser",
     "token-source",
