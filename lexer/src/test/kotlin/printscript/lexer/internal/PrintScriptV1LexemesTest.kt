@@ -7,25 +7,37 @@ import kotlin.test.assertEquals
 class PrintScriptV1LexemesTest {
 
     @Test
-    fun `contains all PrintScript V1 fixed lexemes`() {
-        val expected = mapOf(
+    fun `contains all PrintScript V1 keyword lexemes`() {
+        val expectedKeywordTokenTypesByLexeme = mapOf(
             "let" to TokenType.LET,
             "number" to TokenType.NUMBER_TYPE,
             "string" to TokenType.STRING_TYPE,
             "println" to TokenType.PRINTLN,
+        )
 
+        assertEquals(
+            expected = expectedKeywordTokenTypesByLexeme,
+            actual = printScriptV1KeywordTokenTypesByLexeme,
+        )
+    }
+
+    @Test
+    fun `contains all PrintScript V1 symbol lexemes`() {
+        val expectedSymbolTokenTypesByLexeme = mapOf(
             "+" to TokenType.PLUS,
             "-" to TokenType.MINUS,
             "*" to TokenType.STAR,
             "/" to TokenType.SLASH,
             "=" to TokenType.ASSIGN,
-
             ":" to TokenType.COLON,
             ";" to TokenType.SEMICOLON,
             "(" to TokenType.LEFT_PAREN,
             ")" to TokenType.RIGHT_PAREN,
         )
 
-        assertEquals(expected, printScriptV1FixedTokens)
+        assertEquals(
+            expected = expectedSymbolTokenTypesByLexeme,
+            actual = printScriptV1SymbolTokenTypesByLexeme,
+        )
     }
 }

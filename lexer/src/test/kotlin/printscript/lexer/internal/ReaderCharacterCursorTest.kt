@@ -10,124 +10,183 @@ import kotlin.test.assertNull
 class ReaderCharacterCursorTest {
 
     @Test
-    fun `starts at first source position`() {
+    fun `cursor starts at initial source position`() {
         val cursor = cursorFor("abc")
 
-        assertEquals(
-            SourcePosition(
-                line = 1,
-                column = 1,
-                offset = 0,
-            ),
-            cursor.position,
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 1,
+            expectedColumn = 1,
+            expectedOffset = 0,
         )
     }
 
     @Test
-    fun `peek does not consume character`() {
-        val reader = TrackingReader("a")
-        val cursor = ReaderCharacterCursor(reader)
+    fun `peek returns next character without consuming or rereading it`() {
+        val inputReader = TrackingReader("a")
+        val cursor = ReaderCharacterCursor(inputReader)
 
         assertEquals('a', cursor.peek())
         assertEquals('a', cursor.peek())
-        assertEquals(1, reader.readCalls)
+        assertEquals(1, inputReader.readCalls)
 
-        assertEquals(
-            SourcePosition(1, 1, 0),
-            cursor.position,
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 1,
+            expectedColumn = 1,
+            expectedOffset = 0,
         )
     }
 
     @Test
-    fun `advance consumes character and updates position`() {
+    fun `advance consumes next character and updates position`() {
         val cursor = cursorFor("ab")
 
         assertEquals('a', cursor.advance())
-        assertEquals(
-            SourcePosition(1, 2, 1),
-            cursor.position,
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 1,
+            expectedColumn = 2,
+            expectedOffset = 1,
         )
 
         assertEquals('b', cursor.advance())
-        assertEquals(
-            SourcePosition(1, 3, 2),
-            cursor.position,
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 1,
+            expectedColumn = 3,
+            expectedOffset = 2,
         )
     }
 
     @Test
-    fun `EOF remains stable`() {
-        val reader = TrackingReader("")
-        val cursor = ReaderCharacterCursor(reader)
+    fun `advance consumes stored lookahead without reading it again`() {
+        val inputReader = TrackingReader("ab")
+        val cursor = ReaderCharacterCursor(inputReader)
+
+        assertEquals('a', cursor.peek())
+        assertEquals(1, inputReader.readCalls)
+
+        assertEquals('a', cursor.advance())
+        assertEquals(1, inputReader.readCalls)
+
+        assertEquals('b', cursor.peek())
+        assertEquals(2, inputReader.readCalls)
+    }
+
+    @Test
+    fun `end of input remains stable without additional reader reads`() {
+        val inputReader = TrackingReader("")
+        val cursor = ReaderCharacterCursor(inputReader)
 
         assertNull(cursor.peek())
         assertNull(cursor.peek())
         assertNull(cursor.advance())
 
-        assertEquals(1, reader.readCalls)
-        assertEquals(
-            SourcePosition(1, 1, 0),
-            cursor.position,
+        assertEquals(1, inputReader.readCalls)
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 1,
+            expectedColumn = 1,
+            expectedOffset = 0,
         )
     }
 
     @Test
-    fun `line feed advances to next line`() {
+    fun `line feed moves cursor to beginning of next line`() {
         val cursor = cursorFor("a\nb")
 
-        cursor.advance()
-        cursor.advance()
+        assertEquals('a', cursor.advance())
+        assertEquals('\n', cursor.advance())
 
-        assertEquals(
-            SourcePosition(2, 1, 2),
-            cursor.position,
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 1,
+            expectedOffset = 2,
         )
 
         assertEquals('b', cursor.advance())
-        assertEquals(
-            SourcePosition(2, 2, 3),
-            cursor.position,
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 2,
+            expectedOffset = 3,
         )
     }
 
     @Test
-    fun `CRLF represents one logical line break`() {
+    fun `CRLF counts as one logical line break`() {
         val cursor = cursorFor("\r\nx")
 
-        cursor.advance()
-        assertEquals(
-            SourcePosition(2, 1, 1),
-            cursor.position,
+        assertEquals('\r', cursor.advance())
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 1,
+            expectedOffset = 1,
         )
 
-        cursor.advance()
-        assertEquals(
-            SourcePosition(2, 1, 2),
-            cursor.position,
+        assertEquals('\n', cursor.advance())
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 1,
+            expectedOffset = 2,
         )
 
         assertEquals('x', cursor.advance())
-        assertEquals(
-            SourcePosition(2, 2, 3),
-            cursor.position,
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 2,
+            expectedOffset = 3,
         )
     }
 
     @Test
-    fun `lone carriage return advances line`() {
+    fun `standalone carriage return moves cursor to beginning of next line`() {
         val cursor = cursorFor("\rx")
 
-        cursor.advance()
+        assertEquals('\r', cursor.advance())
 
-        assertEquals(
-            SourcePosition(2, 1, 1),
-            cursor.position,
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 1,
+            expectedOffset = 1,
         )
 
         assertEquals('x', cursor.advance())
+
+        assertCursorPosition(
+            cursor = cursor,
+            expectedLine = 2,
+            expectedColumn = 2,
+            expectedOffset = 2,
+        )
+    }
+
+    private fun assertCursorPosition(
+        cursor: ReaderCharacterCursor,
+        expectedLine: Int,
+        expectedColumn: Int,
+        expectedOffset: Long,
+    ) {
         assertEquals(
-            SourcePosition(2, 2, 2),
-            cursor.position,
+            expected = SourcePosition(
+                line = expectedLine,
+                column = expectedColumn,
+                offset = expectedOffset,
+            ),
+            actual = cursor.position,
         )
     }
 }

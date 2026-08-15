@@ -10,38 +10,38 @@ import printscript.token.TokenType
 private const val EOF_LEXEME = ""
 
 internal class ScanningTokenSource(
-    private val cursor: ReaderCharacterCursor,
-    private val scannerDispatcher: TokenScannerDispatcher,
+    private val characterCursor: ReaderCharacterCursor,
+    private val tokenScannerDispatcher: TokenScannerDispatcher,
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
-        skipWhitespace()
+        consumeLeadingWhitespace()
 
-        val currentCharacter = cursor.peek()
-            ?: return createEofToken()
+        val nextCharacter = characterCursor.peek()
+            ?: return createEofTokenSuccess()
 
-        return scannerDispatcher.scan(
-            cursor = cursor,
-            currentCharacter = currentCharacter,
+        return tokenScannerDispatcher.scan(
+            cursor = characterCursor,
+            currentCharacter = nextCharacter,
         )
     }
 
-    private fun skipWhitespace() {
-        while (cursor.peek()?.isWhitespace() == true) {
-            cursor.advance()
+    private fun consumeLeadingWhitespace() {
+        while (characterCursor.peek()?.isWhitespace() == true) {
+            characterCursor.advance()
         }
     }
 
-    private fun createEofToken(): TokenReadResult {
-        val eofPosition = cursor.position
+    private fun createEofTokenSuccess(): TokenReadResult.Success {
+        val endOfInputPosition = characterCursor.position
 
         return TokenReadResult.Success(
             Token(
                 type = TokenType.EOF,
                 lexeme = EOF_LEXEME,
                 span = SourceSpan(
-                    start = eofPosition,
-                    end = eofPosition,
+                    start = endOfInputPosition,
+                    end = endOfInputPosition,
                 ),
             ),
         )

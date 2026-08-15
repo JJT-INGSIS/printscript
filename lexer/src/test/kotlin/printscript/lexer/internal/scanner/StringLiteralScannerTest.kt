@@ -10,6 +10,7 @@ import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class StringLiteralScannerTest {
@@ -17,15 +18,40 @@ class StringLiteralScannerTest {
     private val scanner = StringLiteralScanner()
 
     @Test
-    fun `accepts single and double quote delimiters`() {
-        assertTrue(scanner.canStartWith('"'))
-        assertTrue(scanner.canStartWith('\''))
-        assertFalse(scanner.canStartWith('a'))
+    fun `accepts single and double quotes as opening delimiters`() {
+        val supportedOpeningQuotes = listOf(
+            '"',
+            '\'',
+        )
+
+        for (openingQuote in supportedOpeningQuotes) {
+            assertTrue(
+                actual = scanner.canStartWith(openingQuote),
+                message = "Scanner should accept '$openingQuote'",
+            )
+        }
     }
 
     @Test
-    fun `recognizes valid string literals`() {
-        val validStrings = listOf(
+    fun `does not accept characters that are not string quotes`() {
+        val unsupportedCharacters = listOf(
+            'a',
+            '1',
+            '_',
+            '+',
+        )
+
+        for (unsupportedCharacter in unsupportedCharacters) {
+            assertFalse(
+                actual = scanner.canStartWith(unsupportedCharacter),
+                message = "Scanner should not accept '$unsupportedCharacter'",
+            )
+        }
+    }
+
+    @Test
+    fun `scans valid string literals delimited by either quote style`() {
+        val validStringLiterals = listOf(
             "\"hello\"",
             "'hello'",
             "\"\"",
@@ -34,7 +60,7 @@ class StringLiteralScannerTest {
             "'say \"hello\"'",
         )
 
-        for (stringLiteral in validStrings) {
+        for (stringLiteral in validStringLiterals) {
             val cursor = cursorFor(stringLiteral)
 
             val token = scanner.scan(
@@ -42,93 +68,150 @@ class StringLiteralScannerTest {
                 startingCharacter = stringLiteral.first(),
             ).assertSuccessToken()
 
-            assertEquals(TokenType.STRING_LITERAL, token.type)
-            assertEquals(stringLiteral, token.lexeme)
             assertEquals(
-                SourceSpan(
-                    start = SourcePosition(1, 1, 0),
-                    end = SourcePosition(
-                        line = 1,
-                        column = stringLiteral.length + 1,
-                        offset = stringLiteral.length.toLong(),
-                    ),
-                ),
-                token.span,
+                expected = TokenType.STRING_LITERAL,
+                actual = token.type,
             )
+
+            assertEquals(
+                expected = stringLiteral,
+                actual = token.lexeme,
+            )
+
+            assertSingleLineSpan(
+                actualSpan = token.span,
+                consumedCharacterCount = stringLiteral.length,
+            )
+
+            assertNull(cursor.peek())
         }
     }
 
     @Test
-    fun `requires closing quote to match opening quote`() {
-        val cases = listOf(
-            "\"hello'" to '"',
-            "'hello\"" to '\'',
-        )
+    fun `stops after matching closing quote`() {
+        val sourceText = "\"hello\"remaining"
+        val expectedStringLexeme = "\"hello\""
+        val cursor = cursorFor(sourceText)
 
-        for ((source, openingQuote) in cases) {
-            val cursor = cursorFor(source)
-
-            val error = scanner.scan(
-                cursor = cursor,
-                startingCharacter = openingQuote,
-            ).assertLexicalError<LexicalError.UnterminatedString>()
-
-            assertEquals(openingQuote, error.openingQuote)
-            assertEquals(
-                source.length.toLong(),
-                error.span.end.offset,
-            )
-        }
-    }
-
-    @Test
-    fun `returns UnterminatedString at EOF`() {
-        val cases = listOf(
-            "\"hello" to '"',
-            "'hello" to '\'',
-        )
-
-        for ((source, openingQuote) in cases) {
-            val cursor = cursorFor(source)
-
-            val error = scanner.scan(
-                cursor = cursor,
-                startingCharacter = openingQuote,
-            ).assertLexicalError<LexicalError.UnterminatedString>()
-
-            assertEquals(openingQuote, error.openingQuote)
-            assertEquals(
-                SourceSpan(
-                    start = SourcePosition(1, 1, 0),
-                    end = SourcePosition(
-                        line = 1,
-                        column = source.length + 1,
-                        offset = source.length.toLong(),
-                    ),
-                ),
-                error.span,
-            )
-        }
-    }
-
-    @Test
-    fun `returns UnterminatedString before line break`() {
-        val cursor = cursorFor("\"hello\nworld")
-
-        val error = scanner.scan(
+        val token = scanner.scan(
             cursor = cursor,
-            startingCharacter = '"',
-        ).assertLexicalError<LexicalError.UnterminatedString>()
+            startingCharacter = sourceText.first(),
+        ).assertSuccessToken()
 
-        assertEquals('"', error.openingQuote)
         assertEquals(
-            SourceSpan(
-                start = SourcePosition(1, 1, 0),
-                end = SourcePosition(1, 7, 6),
-            ),
-            error.span,
+            expected = TokenType.STRING_LITERAL,
+            actual = token.type,
         )
 
-        assertEquals('\n', cursor.peek())
+        assertEquals(
+            expected = expectedStringLexeme,
+            actual = token.lexeme,
+        )
+
+        assertSingleLineSpan(
+            actualSpan = token.span,
+            consumedCharacterCount = expectedStringLexeme.length,
+        )
+
+        assertEquals(
+            expected = 'r',
+            actual = cursor.peek(),
+        )
     }
+
+    @Test
+    fun `returns unterminated string failure when input ends before closing quote`() {
+        val unterminatedStringSources = listOf(
+            "\"hello",
+            "'hello",
+        )
+
+        for (sourceText in unterminatedStringSources) {
+            val openingQuote = sourceText.first()
+            val cursor = cursorFor(sourceText)
+
+            val error = scanner.scan(
+                cursor = cursor,
+                startingCharacter = openingQuote,
+            ).assertLexicalError<LexicalError.UnterminatedString>()
+
+            assertEquals(
+                expected = openingQuote,
+                actual = error.openingQuote,
+            )
+
+            assertSingleLineSpan(
+                actualSpan = error.span,
+                consumedCharacterCount = sourceText.length,
+            )
+
+            assertNull(cursor.peek())
+        }
+    }
+
+    @Test
+    fun `returns unterminated string failure without consuming line break`() {
+        val lineBreakCases = listOf(
+            UnterminatedStringAtLineBreakCase(
+                sourceText = "\"hello\nworld",
+                expectedLineBreak = '\n',
+            ),
+            UnterminatedStringAtLineBreakCase(
+                sourceText = "'hello\rworld",
+                expectedLineBreak = '\r',
+            ),
+        )
+
+        for (case in lineBreakCases) {
+            val openingQuote = case.sourceText.first()
+            val cursor = cursorFor(case.sourceText)
+
+            val error = scanner.scan(
+                cursor = cursor,
+                startingCharacter = openingQuote,
+            ).assertLexicalError<LexicalError.UnterminatedString>()
+
+            assertEquals(
+                expected = openingQuote,
+                actual = error.openingQuote,
+            )
+
+            assertSingleLineSpan(
+                actualSpan = error.span,
+                consumedCharacterCount =
+                    case.sourceText.indexOf(case.expectedLineBreak),
+            )
+
+            assertEquals(
+                expected = case.expectedLineBreak,
+                actual = cursor.peek(),
+            )
+        }
+    }
+
+    private fun assertSingleLineSpan(
+        actualSpan: SourceSpan,
+        consumedCharacterCount: Int,
+    ) {
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition(
+                    line = 1,
+                    column = 1,
+                    offset = 0,
+                ),
+                end = SourcePosition(
+                    line = 1,
+                    column = consumedCharacterCount + 1,
+                    offset = consumedCharacterCount.toLong(),
+                ),
+            ),
+            actual = actualSpan,
+        )
+    }
+
+    private data class UnterminatedStringAtLineBreakCase(
+        val sourceText: String,
+        val expectedLineBreak: Char,
+    )
 }
