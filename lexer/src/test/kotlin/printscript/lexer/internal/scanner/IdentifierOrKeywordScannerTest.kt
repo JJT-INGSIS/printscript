@@ -1,10 +1,8 @@
 package printscript.lexer.internal.scanner
 
+import printscript.lexer.assertInitialSingleLineSpan
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
-import printscript.lexer.internal.printScriptV1FixedTokens
-import printscript.model.source.SourcePosition
-import printscript.model.source.SourceSpan
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,101 +11,118 @@ import kotlin.test.assertTrue
 
 class IdentifierOrKeywordScannerTest {
 
-    private val scanner =
-        IdentifierOrKeywordScanner(printScriptV1FixedTokens)
+    private val configuredKeywordTokenTypesByLexeme = mapOf(
+        "let" to TokenType.LET,
+        "println" to TokenType.PRINTLN,
+    )
+
+    private val scanner = IdentifierOrKeywordScanner(
+        configuredKeywordTokenTypesByLexeme,
+    )
 
     @Test
-    fun `recognizes every keyword`() {
-        val expectedKeywords = mapOf(
-            "let" to TokenType.LET,
-            "number" to TokenType.NUMBER_TYPE,
-            "string" to TokenType.STRING_TYPE,
-            "println" to TokenType.PRINTLN,
+    fun `accepts letters and underscore as starting characters`() {
+        val validStartingCharacters = listOf(
+            'a',
+            'Z',
+            '_',
         )
 
-        for ((lexeme, expectedType) in expectedKeywords) {
-            val cursor = cursorFor(lexeme)
-            val startingCharacter = lexeme.first()
-
-            assertTrue(scanner.canStartWith(startingCharacter))
-
-            val token = scanner.scan(
-                cursor = cursor,
-                startingCharacter = startingCharacter,
-            ).assertSuccessToken()
-
-            assertEquals(expectedType, token.type)
-            assertEquals(lexeme, token.lexeme)
-            assertEquals(
-                SourceSpan(
-                    start = SourcePosition(1, 1, 0),
-                    end = SourcePosition(
-                        line = 1,
-                        column = lexeme.length + 1,
-                        offset = lexeme.length.toLong(),
-                    ),
-                ),
-                token.span,
+        for (startingCharacter in validStartingCharacters) {
+            assertTrue(
+                actual = scanner.canStartWith(startingCharacter),
+                message = "Scanner should accept '$startingCharacter'",
             )
         }
     }
 
     @Test
-    fun `recognizes valid identifiers`() {
-        val identifiers = listOf(
-            "letter",
-            "variable",
-            "_value",
-            "value_2",
+    fun `does not accept digits or symbols as starting characters`() {
+        val invalidStartingCharacters = listOf(
+            '1',
+            '+',
+            '"',
+            '.',
         )
 
-        for (identifier in identifiers) {
-            val cursor = cursorFor(identifier)
-
-            val token = scanner.scan(
-                cursor = cursor,
-                startingCharacter = identifier.first(),
-            ).assertSuccessToken()
-
-            assertEquals(TokenType.IDENTIFIER, token.type)
-            assertEquals(identifier, token.lexeme)
+        for (startingCharacter in invalidStartingCharacters) {
+            assertFalse(
+                actual = scanner.canStartWith(startingCharacter),
+                message = "Scanner should not accept '$startingCharacter'",
+            )
         }
     }
 
     @Test
-    fun `keyword prefix does not split identifier`() {
-        val cursor = cursorFor("letter")
-
-        val token = scanner.scan(
-            cursor = cursor,
-            startingCharacter = 'l',
-        ).assertSuccessToken()
-
-        assertEquals(TokenType.IDENTIFIER, token.type)
-        assertEquals("letter", token.lexeme)
+    fun `classifies configured lexemes as keyword tokens`() {
+        for (
+        (keywordLexeme, expectedTokenType)
+        in configuredKeywordTokenTypesByLexeme
+        ) {
+            assertScansLexemeAs(
+                lexeme = keywordLexeme,
+                expectedTokenType = expectedTokenType,
+            )
+        }
     }
 
     @Test
-    fun `stops before character outside identifier`() {
-        val cursor = cursorFor("value+other")
+    fun `classifies valid unconfigured lexemes as identifiers`() {
+        val identifierLexemes = listOf(
+            "variable",
+            "_",
+            "_value",
+            "value_2",
+            "Variable",
+        )
 
-        val token = scanner.scan(
-            cursor = cursor,
-            startingCharacter = 'v',
-        ).assertSuccessToken()
+        for (identifierLexeme in identifierLexemes) {
+            assertScansLexemeAs(
+                lexeme = identifierLexeme,
+                expectedTokenType = TokenType.IDENTIFIER,
+            )
+        }
+    }
 
-        assertEquals("value", token.lexeme)
-        assertEquals('+', cursor.peek())
-        assertEquals(
-            SourcePosition(1, 6, 5),
-            cursor.position,
+    @Test
+    fun `keyword prefix remains part of longer identifier`() {
+        assertScansLexemeAs(
+            lexeme = "letter",
+            expectedTokenType = TokenType.IDENTIFIER,
         )
     }
 
-    @Test
-    fun `does not accept invalid starting characters`() {
-        assertFalse(scanner.canStartWith('1'))
-        assertFalse(scanner.canStartWith('+'))
-        assertFalse(scanner.canStartWith('"'))
+    private fun assertScansLexemeAs(
+        lexeme: String,
+        expectedTokenType: TokenType,
+    ) {
+        val followingCharacter = '+'
+        val sourceText = "$lexeme$followingCharacter"
+        val cursor = cursorFor(sourceText)
+
+        val scannedToken = scanner.scan(
+            cursor = cursor,
+            startingCharacter = lexeme.first(),
+        ).assertSuccessToken()
+
+        assertEquals(
+            expected = expectedTokenType,
+            actual = scannedToken.type,
+        )
+
+        assertEquals(
+            expected = lexeme,
+            actual = scannedToken.lexeme,
+        )
+
+        assertInitialSingleLineSpan(
+            actualSpan = scannedToken.span,
+            consumedCharacterCount = lexeme.length,
+        )
+
+        assertEquals(
+            expected = followingCharacter,
+            actual = cursor.peek(),
+        )
     }
 }

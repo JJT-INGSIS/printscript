@@ -1,6 +1,7 @@
 package printscript.lexer.internal.scanner
 
 import printscript.lexer.internal.ReaderCharacterCursor
+import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
 import printscript.token.Token
@@ -19,36 +20,80 @@ internal class SymbolScanner(
         cursor: ReaderCharacterCursor,
         startingCharacter: Char,
     ): TokenReadResult {
-        val start = cursor.position
-        val lexeme = startingCharacter.toString()
-        val tokenType = fixedTokens[lexeme]
+        val startPosition = cursor.position
+        val symbolLexeme = consumeSymbol(cursor, startingCharacter)
+        val matchedTokenType = fixedTokens[symbolLexeme]
 
+        return createTokenReadResult(
+            tokenType = matchedTokenType,
+            lexeme = symbolLexeme,
+            character = startingCharacter,
+            start = startPosition,
+            end = cursor.position,
+        )
+    }
+
+    private fun consumeSymbol(
+        cursor: ReaderCharacterCursor,
+        character: Char,
+    ): String {
         cursor.advance()
+        return character.toString()
+    }
 
+    private fun createTokenReadResult(
+        tokenType: TokenType?,
+        lexeme: String,
+        character: Char,
+        start: SourcePosition,
+        end: SourcePosition,
+    ): TokenReadResult {
         val span = SourceSpan(
             start = start,
-            end = cursor.position,
+            end = end,
         )
 
         return if (tokenType != null) {
-            TokenReadResult.Success(
-                Token(
-                    type = tokenType,
-                    lexeme = lexeme,
-                    span = span,
-                ),
+            createSuccessResult(
+                tokenType = tokenType,
+                lexeme = lexeme,
+                span = span,
             )
         } else {
-            /*
-             * Esta rama solamente sería alcanzable si se incumpliera
-             * el contrato entre canStartWith() y scan().
-             */
-            TokenReadResult.Failure(
-                LexicalError.UnexpectedCharacter(
-                    character = startingCharacter,
-                    span = span,
-                ),
+            createUnexpectedCharacterFailure(
+                character = character,
+                span = span,
             )
         }
+    }
+
+    private fun createSuccessResult(
+        tokenType: TokenType,
+        lexeme: String,
+        span: SourceSpan,
+    ): TokenReadResult {
+        return TokenReadResult.Success(
+            Token(
+                type = tokenType,
+                lexeme = lexeme,
+                span = span,
+            ),
+        )
+    }
+
+    private fun createUnexpectedCharacterFailure(
+        character: Char,
+        span: SourceSpan,
+    ): TokenReadResult {
+        /*
+         * Esta rama solo debería alcanzarse si se incumple el contrato
+         * entre canStartWith() y scan().
+         */
+        return TokenReadResult.Failure(
+            LexicalError.UnexpectedCharacter(
+                character = character,
+                span = span,
+            ),
+        )
     }
 }

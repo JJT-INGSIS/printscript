@@ -22,17 +22,17 @@ internal class TokenScannerDispatcher(
             }
         }
 
-        return unexpectedCharacter(
+        return createUnexpectedCharacterFailure(
             cursor = cursor,
             character = currentCharacter,
         )
     }
 
-    private fun unexpectedCharacter(
+    private fun createUnexpectedCharacterFailure(
         cursor: ReaderCharacterCursor,
         character: Char,
     ): TokenReadResult.Failure {
-        val start = cursor.position
+        val startPosition = cursor.position
 
         cursor.advance()
 
@@ -40,7 +40,7 @@ internal class TokenScannerDispatcher(
             LexicalError.UnexpectedCharacter(
                 character = character,
                 span = SourceSpan(
-                    start = start,
+                    start = startPosition,
                     end = cursor.position,
                 ),
             ),

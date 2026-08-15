@@ -1,11 +1,15 @@
 package printscript.lexer.internal
 
+import printscript.lexer.ExpectedToken
 import printscript.lexer.assertLexicalError
-import printscript.lexer.assertSuccessToken
-import printscript.lexer.scanningTokenSourceFor
+import printscript.lexer.assertNextToken
+import printscript.lexer.cursorFor
+import printscript.lexer.internal.scanner.IdentifierOrKeywordScanner
+import printscript.lexer.internal.scanner.TokenScannerDispatcher
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
+import printscript.token.TokenSource
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,111 +17,142 @@ import kotlin.test.assertEquals
 class ScanningTokenSourceTest {
 
     @Test
-    fun `empty input produces EOF`() {
-        val source = scanningTokenSourceFor("")
+    fun `empty input produces EOF at initial position`() {
+        val tokenSource = createTokenSourceFor("")
 
-        val token = source.nextToken().assertSuccessToken()
+        val eofToken = tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.EOF,
+                lexeme = "",
+            ),
+        )
 
-        assertEquals(TokenType.EOF, token.type)
-        assertEquals("", token.lexeme)
         assertEquals(
-            SourceSpan(
+            expected = SourceSpan(
                 start = SourcePosition(1, 1, 0),
                 end = SourcePosition(1, 1, 0),
             ),
-            token.span,
+            actual = eofToken.span,
         )
     }
 
     @Test
-    fun `EOF remains stable`() {
-        val source = scanningTokenSourceFor("")
+    fun `EOF remains stable across repeated requests`() {
+        val tokenSource = createTokenSourceFor("")
 
-        val firstEof = source.nextToken().assertSuccessToken()
-        val secondEof = source.nextToken().assertSuccessToken()
+        val expectedEof = ExpectedToken(
+            tokenType = TokenType.EOF,
+            lexeme = "",
+        )
+
+        val firstEof = tokenSource.assertNextToken(expectedEof)
+        val secondEof = tokenSource.assertNextToken(expectedEof)
 
         assertEquals(firstEof, secondEof)
     }
 
     @Test
-    fun `skips whitespace before token`() {
-        val source = scanningTokenSourceFor(" \n let")
+    fun `whitespace-only input produces EOF after consumed whitespace`() {
+        val tokenSource = createTokenSourceFor(" \n")
 
-        val token = source.nextToken().assertSuccessToken()
-
-        assertEquals(TokenType.LET, token.type)
-        assertEquals(
-            SourceSpan(
-                start = SourcePosition(2, 2, 3),
-                end = SourcePosition(2, 5, 6),
+        val eofToken = tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.EOF,
+                lexeme = "",
             ),
-            token.span,
+        )
+
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition(2, 1, 2),
+                end = SourcePosition(2, 1, 2),
+            ),
+            actual = eofToken.span,
         )
     }
 
     @Test
-    fun `selects correct scanners`() {
-        val source = scanningTokenSourceFor(
-            "name 12.5 'text' +",
+    fun `leading whitespace is consumed before each token`() {
+        val tokenSource = createTokenSourceFor(
+            " token \n next",
         )
 
-        val expected = listOf(
-            TokenType.IDENTIFIER to "name",
-            TokenType.NUMBER_LITERAL to "12.5",
-            TokenType.STRING_LITERAL to "'text'",
-            TokenType.PLUS to "+",
-            TokenType.EOF to "",
+        val firstToken = tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.IDENTIFIER,
+                lexeme = "token",
+            ),
         )
 
-        for ((expectedType, expectedLexeme) in expected) {
-            val token = source.nextToken().assertSuccessToken()
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition(1, 2, 1),
+                end = SourcePosition(1, 7, 6),
+            ),
+            actual = firstToken.span,
+        )
 
-            assertEquals(expectedType, token.type)
-            assertEquals(expectedLexeme, token.lexeme)
-        }
+        val secondToken = tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.IDENTIFIER,
+                lexeme = "next",
+            ),
+        )
+
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition(2, 2, 9),
+                end = SourcePosition(2, 6, 13),
+            ),
+            actual = secondToken.span,
+        )
     }
 
     @Test
-    fun `unexpected character produces error and advances`() {
-        val source = scanningTokenSourceFor("@let")
+    fun `lexical failure does not prevent reading following token`() {
+        val tokenSource = createTokenSourceFor("@token")
 
-        val error = source.nextToken()
+        val lexicalError = tokenSource.nextToken()
             .assertLexicalError<LexicalError.UnexpectedCharacter>()
 
-        assertEquals('@', error.character)
+        assertEquals('@', lexicalError.character)
+
         assertEquals(
-            SourceSpan(
+            expected = SourceSpan(
                 start = SourcePosition(1, 1, 0),
                 end = SourcePosition(1, 2, 1),
             ),
-            error.span,
+            actual = lexicalError.span,
         )
 
-        val nextToken = source.nextToken().assertSuccessToken()
-
-        assertEquals(TokenType.LET, nextToken.type)
-        assertEquals("let", nextToken.lexeme)
-        assertEquals(
-            SourceSpan(
-                start = SourcePosition(1, 2, 1),
-                end = SourcePosition(1, 5, 4),
+        val followingToken = tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.IDENTIFIER,
+                lexeme = "token",
             ),
-            nextToken.span,
+        )
+
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition(1, 2, 1),
+                end = SourcePosition(1, 7, 6),
+            ),
+            actual = followingToken.span,
         )
     }
 
-    @Test
-    fun `number beginning with dot produces error before number`() {
-        val source = scanningTokenSourceFor(".5")
+    private fun createTokenSourceFor(
+        sourceText: String,
+    ): TokenSource {
+        val tokenScannerDispatcher = TokenScannerDispatcher(
+            scanners = listOf(
+                IdentifierOrKeywordScanner(emptyMap()),
+            ),
+        )
 
-        val error = source.nextToken()
-            .assertLexicalError<LexicalError.UnexpectedCharacter>()
-
-        assertEquals('.', error.character)
-
-        val number = source.nextToken().assertSuccessToken()
-
-        assertEquals(TokenType.NUMBER_LITERAL, number.type)
-        assertEquals("5", number.lexeme)
+        return ScanningTokenSource(
+            characterCursor = cursorFor(sourceText),
+            tokenScannerDispatcher = tokenScannerDispatcher,
+        )
     }
 }

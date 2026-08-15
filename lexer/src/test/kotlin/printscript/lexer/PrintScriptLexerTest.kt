@@ -1,5 +1,7 @@
 package printscript.lexer
 
+import printscript.lexer.internal.scanner.IdentifierOrKeywordScanner
+import printscript.token.LexicalError
 import printscript.token.TokenType
 import java.io.StringReader
 import kotlin.test.Test
@@ -9,92 +11,168 @@ import kotlin.test.assertTrue
 
 class PrintScriptLexerTest {
 
-    private val lexer: Lexer = PrintScriptLexer()
+    private val lexer: Lexer =
+        PrintScriptLexerFactory.createV1()
 
     @Test
-    fun `tokenizes complete PrintScript program`() {
+    fun `tokenizes complete PrintScript V1 program in token order`() {
         val sourceCode = """
+            let age: number = 12.5;
             let name: string = 'Joe';
             println(name + " Doe");
         """.trimIndent()
 
-        val source = lexer.tokenize(
+        val tokenSource = lexer.tokenize(
             StringReader(sourceCode),
         )
 
-        val expected = listOf(
-            TokenType.LET to "let",
-            TokenType.IDENTIFIER to "name",
-            TokenType.COLON to ":",
-            TokenType.STRING_TYPE to "string",
-            TokenType.ASSIGN to "=",
-            TokenType.STRING_LITERAL to "'Joe'",
-            TokenType.SEMICOLON to ";",
-            TokenType.PRINTLN to "println",
-            TokenType.LEFT_PAREN to "(",
-            TokenType.IDENTIFIER to "name",
-            TokenType.PLUS to "+",
-            TokenType.STRING_LITERAL to "\" Doe\"",
-            TokenType.RIGHT_PAREN to ")",
-            TokenType.SEMICOLON to ";",
-            TokenType.EOF to "",
+        val expectedTokens = listOf(
+            ExpectedToken(TokenType.LET, "let"),
+            ExpectedToken(TokenType.IDENTIFIER, "age"),
+            ExpectedToken(TokenType.COLON, ":"),
+            ExpectedToken(TokenType.NUMBER_TYPE, "number"),
+            ExpectedToken(TokenType.ASSIGN, "="),
+            ExpectedToken(TokenType.NUMBER_LITERAL, "12.5"),
+            ExpectedToken(TokenType.SEMICOLON, ";"),
+
+            ExpectedToken(TokenType.LET, "let"),
+            ExpectedToken(TokenType.IDENTIFIER, "name"),
+            ExpectedToken(TokenType.COLON, ":"),
+            ExpectedToken(TokenType.STRING_TYPE, "string"),
+            ExpectedToken(TokenType.ASSIGN, "="),
+            ExpectedToken(TokenType.STRING_LITERAL, "'Joe'"),
+            ExpectedToken(TokenType.SEMICOLON, ";"),
+
+            ExpectedToken(TokenType.PRINTLN, "println"),
+            ExpectedToken(TokenType.LEFT_PAREN, "("),
+            ExpectedToken(TokenType.IDENTIFIER, "name"),
+            ExpectedToken(TokenType.PLUS, "+"),
+            ExpectedToken(TokenType.STRING_LITERAL, "\" Doe\""),
+            ExpectedToken(TokenType.RIGHT_PAREN, ")"),
+            ExpectedToken(TokenType.SEMICOLON, ";"),
+
+            ExpectedToken(TokenType.EOF, ""),
         )
 
-        for ((expectedType, expectedLexeme) in expected) {
-            val token = source.nextToken().assertSuccessToken()
-
-            assertEquals(expectedType, token.type)
-            assertEquals(expectedLexeme, token.lexeme)
-        }
+        tokenSource.assertProducesTokenSequence(expectedTokens)
     }
 
     @Test
-    fun `tokenize is lazy`() {
-        val reader = TrackingReader("let")
+    fun `uses injected scanner configuration without V1 defaults`() {
+        val configurableLexer: Lexer = PrintScriptLexer(
+            tokenScanners = listOf(
+                IdentifierOrKeywordScanner(
+                    fixedTokenTypesByLexeme = mapOf(
+                        "var" to TokenType.LET,
+                    ),
+                ),
+            ),
+        )
 
-        val source = lexer.tokenize(reader)
+        val tokenSource = configurableLexer.tokenize(
+            StringReader("var let"),
+        )
 
-        assertEquals(0, reader.readCalls)
-
-        val token = source.nextToken().assertSuccessToken()
-
-        assertEquals(TokenType.LET, token.type)
-        assertTrue(reader.readCalls > 0)
+        tokenSource.assertProducesTokenSequence(
+            listOf(
+                ExpectedToken(
+                    tokenType = TokenType.LET,
+                    lexeme = "var",
+                ),
+                ExpectedToken(
+                    tokenType = TokenType.IDENTIFIER,
+                    lexeme = "let",
+                ),
+                ExpectedToken(
+                    tokenType = TokenType.EOF,
+                    lexeme = "",
+                ),
+            ),
+        )
     }
 
     @Test
-    fun `lexer does not close reader`() {
-        val reader = TrackingReader("let")
-        val source = lexer.tokenize(reader)
+    fun `tokenize does not read input until first token is requested`() {
+        val inputReader = TrackingReader("let")
 
-        source.nextToken()
-        source.nextToken()
+        val tokenSource = lexer.tokenize(inputReader)
 
-        assertFalse(reader.wasClosed)
+        assertEquals(
+            expected = 0,
+            actual = inputReader.readCalls,
+        )
+
+        tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.LET,
+                lexeme = "let",
+            ),
+        )
+
+        assertTrue(inputReader.readCalls > 0)
+    }
+
+    @Test
+    fun `lexer leaves input reader open`() {
+        val inputReader = TrackingReader("let")
+        val tokenSource = lexer.tokenize(inputReader)
+
+        tokenSource.assertProducesTokenSequence(
+            listOf(
+                ExpectedToken(TokenType.LET, "let"),
+                ExpectedToken(TokenType.EOF, ""),
+            ),
+        )
+
+        assertFalse(inputReader.wasClosed)
     }
 
     @Test
     fun `one lexer instance creates independent token sources`() {
-        val firstSource = lexer.tokenize(
-            StringReader("let"),
+        val firstTokenSource = lexer.tokenize(
+            StringReader("let first"),
         )
 
-        val secondSource = lexer.tokenize(
-            StringReader("println"),
+        val secondTokenSource = lexer.tokenize(
+            StringReader("println second"),
         )
+
+        firstTokenSource.assertNextToken(
+            ExpectedToken(TokenType.LET, "let"),
+        )
+
+        secondTokenSource.assertNextToken(
+            ExpectedToken(TokenType.PRINTLN, "println"),
+        )
+
+        firstTokenSource.assertNextToken(
+            ExpectedToken(TokenType.IDENTIFIER, "first"),
+        )
+
+        secondTokenSource.assertNextToken(
+            ExpectedToken(TokenType.IDENTIFIER, "second"),
+        )
+    }
+
+    @Test
+    fun `decimal separator cannot start number literal`() {
+        val tokenSource = lexer.tokenize(
+            StringReader(".5"),
+        )
+
+        val lexicalError = tokenSource.nextToken()
+            .assertLexicalError<LexicalError.UnexpectedCharacter>()
 
         assertEquals(
-            TokenType.LET,
-            firstSource.nextToken()
-                .assertSuccessToken()
-                .type,
+            expected = '.',
+            actual = lexicalError.character,
         )
 
-        assertEquals(
-            TokenType.PRINTLN,
-            secondSource.nextToken()
-                .assertSuccessToken()
-                .type,
+        tokenSource.assertNextToken(
+            ExpectedToken(
+                tokenType = TokenType.NUMBER_LITERAL,
+                lexeme = "5",
+            ),
         )
     }
 }
