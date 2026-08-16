@@ -28,6 +28,13 @@ internal class PrintlnExecutor : StatementExecutor {
             context.evaluate(printlnStatement.argument)
                 .orReturn { return it }
 
+        return emit(value, context)
+    }
+
+    private fun emit(
+        value: RuntimeValue,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
         context.emit(value.asText())
 
         return ExecutionResult.Success(Unit)

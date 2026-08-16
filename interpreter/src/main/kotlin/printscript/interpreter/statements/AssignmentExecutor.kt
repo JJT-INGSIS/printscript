@@ -4,6 +4,7 @@ import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.environment.VariableBinding
+import printscript.interpreter.orFail
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
 import printscript.model.ast.statement.AssignmentStatement
@@ -25,36 +26,53 @@ internal class AssignmentExecutor : StatementExecutor {
             statementOrFail(statement, AssignmentStatement::class)
                 .orReturn { return it }
 
-        val name: String = assignment.target.value
-
-        val binding: VariableBinding? =
-            context.environment.lookup(name)
-
-        if (binding == null) {
-            return ExecutionResult.Failure(
-                SemanticError.UndeclaredVariable(
-                    name = name,
-                    span = assignment.span,
-                ),
-            )
-        }
+        val binding: VariableBinding =
+            resolveBinding(assignment, context)
+                .orReturn { return it }
 
         val value: RuntimeValue =
             context.evaluate(assignment.expression)
                 .orReturn { return it }
 
-        if (value.type != binding.type) {
-            return ExecutionResult.Failure(
-                SemanticError.TypeMismatch(
-                    name = name,
-                    expected = binding.type,
-                    actual = value.type,
-                    span = assignment.span,
-                ),
-            )
-        }
+        ensureTypeMatches(assignment, binding, value)
+            .orReturn { return it }
 
-        context.environment.update(name, value)
+        return update(assignment, value, context)
+    }
+
+    private fun resolveBinding(
+        assignment: AssignmentStatement,
+        context: ExecutionContext,
+    ): ExecutionResult<VariableBinding> {
+        val name: String = assignment.target.value
+
+        return context.environment.lookup(name)
+            .orFail {
+                SemanticError.UndeclaredVariable(
+                    name = name,
+                    span = assignment.span,
+                )
+            }
+    }
+
+    private fun ensureTypeMatches(
+        assignment: AssignmentStatement,
+        binding: VariableBinding,
+        value: RuntimeValue,
+    ): ExecutionResult<Unit> =
+        ensureType(
+            name = assignment.target.value,
+            expected = binding.type,
+            actual = value.type,
+            span = assignment.span,
+        )
+
+    private fun update(
+        assignment: AssignmentStatement,
+        value: RuntimeValue,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
+        context.environment.update(assignment.target.value, value)
 
         return ExecutionResult.Success(Unit)
     }

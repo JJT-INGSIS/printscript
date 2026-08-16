@@ -26,9 +26,23 @@ internal class DeclarationExecutor : StatementExecutor {
             statementOrFail(statement, VariableDeclarationStatement::class)
                 .orReturn { return it }
 
+        ensureNotAlreadyDeclared(declaration, context)
+            .orReturn { return it }
+
+        val initialValue: RuntimeValue? =
+            evaluateInitializer(declaration, context)
+                .orReturn { return it }
+
+        return declare(declaration, initialValue, context)
+    }
+
+    private fun ensureNotAlreadyDeclared(
+        declaration: VariableDeclarationStatement,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
         val name: String = declaration.identifier.value
 
-        if (isAlreadyDeclared(name, context)) {
+        if (context.environment.lookup(name) != null) {
             return ExecutionResult.Failure(
                 SemanticError.AlreadyDeclaredVariable(
                     name = name,
@@ -37,25 +51,22 @@ internal class DeclarationExecutor : StatementExecutor {
             )
         }
 
-        val initialValue: RuntimeValue? =
-            evaluateInitializer(declaration, context)
-                .orReturn { return it }
-
-        val binding = VariableBinding(
-            type = declaration.declaredType,
-            value = initialValue,
-        )
-
-        context.environment.declare(name, binding)
-
         return ExecutionResult.Success(Unit)
     }
 
-    private fun isAlreadyDeclared(
-        name: String,
+    private fun declare(
+        declaration: VariableDeclarationStatement,
+        value: RuntimeValue?,
         context: ExecutionContext,
-    ): Boolean {
-        return context.environment.lookup(name) != null
+    ): ExecutionResult<Unit> {
+        val binding = VariableBinding(
+            type = declaration.declaredType,
+            value = value,
+        )
+
+        context.environment.declare(declaration.identifier.value, binding)
+
+        return ExecutionResult.Success(Unit)
     }
 
     private fun evaluateInitializer(
@@ -69,16 +80,12 @@ internal class DeclarationExecutor : StatementExecutor {
             context.evaluate(initializer)
                 .orReturn { return it }
 
-        if (value.type != statement.declaredType) {
-            return ExecutionResult.Failure(
-                SemanticError.TypeMismatch(
-                    name = statement.identifier.value,
-                    expected = statement.declaredType,
-                    actual = value.type,
-                    span = statement.span,
-                ),
-            )
-        }
+        ensureType(
+            name = statement.identifier.value,
+            expected = statement.declaredType,
+            actual = value.type,
+            span = statement.span,
+        ).orReturn { return it }
 
         return ExecutionResult.Success(value)
     }
