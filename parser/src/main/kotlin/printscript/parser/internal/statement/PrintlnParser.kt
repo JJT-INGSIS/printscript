@@ -4,74 +4,59 @@ import printscript.model.ast.expression.Expression
 import printscript.model.ast.statement.PrintlnStatement
 import printscript.model.ast.statement.Statement
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.TokenLookahead
+import printscript.parser.internal.context.TokenLookahead
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.token.Token
 import printscript.token.TokenType
 
+
 internal class PrintlnParser(
     private val expressionParser: ExpressionParser,
+    private val keywordTokens: Set<TokenType> = DEFAULT_KEYWORD_TOKENS,
 ) : StatementParser {
 
-    override fun match(
+    private val matcher = StatementMatcher(
+        listOf(keywordTokens),
+    )
+
+    override fun matchInitialTokens(
         lookahead: TokenLookahead,
     ): StatementMatch {
-        return when (val result = lookahead.peek()) {
-            is ParsingResult.Success -> {
-                val token = result.value
-
-                if (token.type == TokenType.PRINTLN) {
-                    StatementMatch.Match
-                } else {
-                    StatementMatch.NoMatch(
-                        StatementMismatch.atCurrentToken(
-                            expected = PRINTLN_START_TOKENS,
-                            actual = token,
-                        ),
-                    )
-                }
-            }
-
-            is ParsingResult.Failure -> {
-                StatementMatch.Failure(result.error)
-            }
-        }
+        return matcher.matchInitialTokens(lookahead)
     }
 
     override fun parse(
         context: ParsingContext,
     ): ParsingResult<Statement> {
-        val parts = parseParts(context)
+        val components = readComponents(context)
             .orReturn { return it }
-        return ParsingResult.Success(build(parts))
+
+        return ParsingResult.Success(buildStatement(components))
     }
 
-    private fun parseParts(
+    private fun readComponents(
         context: ParsingContext,
-    ): ParsingResult<Parts> {
-        val printlnToken =
-            context.expect(TokenType.PRINTLN)
-                .orReturn { return it }
+    ): ParsingResult<PrintlnComponents> {
+        val printlnToken = context.expect(keywordTokens)
+            .orReturn { return it }
 
         context.expect(TokenType.LEFT_PAREN)
             .orReturn { return it }
 
-        val argument =
-            expressionParser.parse(context)
-                .orReturn { return it }
+        val argument = expressionParser.parse(context)
+            .orReturn { return it }
 
         context.expect(TokenType.RIGHT_PAREN)
             .orReturn { return it }
 
-        val semicolonToken =
-            context.expect(TokenType.SEMICOLON)
-                .orReturn { return it }
+        val semicolonToken = context.expect(TokenType.SEMICOLON)
+            .orReturn { return it }
 
         return ParsingResult.Success(
-            Parts(
+            PrintlnComponents(
                 printlnToken = printlnToken,
                 argument = argument,
                 semicolonToken = semicolonToken,
@@ -79,26 +64,26 @@ internal class PrintlnParser(
         )
     }
 
-    private fun build(
-        parts: Parts,
+    private fun buildStatement(
+        components: PrintlnComponents,
     ): Statement {
         return PrintlnStatement(
-            argument = parts.argument,
+            argument = components.argument,
             span = SourceSpan(
-                start = parts.printlnToken.span.start,
-                end = parts.semicolonToken.span.end,
+                start = components.printlnToken.span.start,
+                end = components.semicolonToken.span.end,
             ),
         )
     }
 
-    private data class Parts(
+    private data class PrintlnComponents(
         val printlnToken: Token,
         val argument: Expression,
         val semicolonToken: Token,
     )
 
     private companion object {
-        val PRINTLN_START_TOKENS = setOf(
+        val DEFAULT_KEYWORD_TOKENS = setOf(
             TokenType.PRINTLN,
         )
     }

@@ -1,27 +1,13 @@
-package printscript.parser.internal
+package printscript.parser.internal.context
 
 import printscript.model.ast.statement.Statement
+import printscript.parser.internal.ParsingResult
 import printscript.token.Token
 import printscript.token.TokenType
-
-private const val CURRENT_TOKEN_OFFSET = 0
-
-internal interface TokenLookahead {
-
-    fun peekAt(
-        offset: Int,
-    ): ParsingResult<Token>
-
-    fun peek(): ParsingResult<Token> {
-        return peekAt(CURRENT_TOKEN_OFFSET)
-    }
-}
 
 internal interface ParsingContext : TokenLookahead {
 
     fun consume(): ParsingResult<Token>
-
-    fun parseStatement(): ParsingResult<Statement>
 
     fun expect(
         expected: Set<TokenType>,
@@ -32,4 +18,5 @@ internal interface ParsingContext : TokenLookahead {
     ): ParsingResult<Token> {
         return expect(setOf(expected))
     }
+    fun parseStatement(): ParsingResult<Statement>
 }

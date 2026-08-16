@@ -1,7 +1,6 @@
 package printscript.parser.internal.context
 
 import printscript.model.ast.statement.Statement
-import printscript.parser.internal.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.orReturn
 import printscript.parser.internal.statement.StatementParserDispatcher

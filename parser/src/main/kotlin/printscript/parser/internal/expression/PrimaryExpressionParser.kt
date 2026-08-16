@@ -8,7 +8,7 @@ import printscript.model.ast.expression.NumberLiteralExpression
 import printscript.model.ast.expression.StringLiteralExpression
 import printscript.model.ast.expression.StringQuoteStyle
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
@@ -28,30 +28,30 @@ internal class PrimaryExpressionParser(
 
         return when (token.type) {
             TokenType.NUMBER_LITERAL ->
-                consumeAndParse(context, ::numberLiteral)
+                consumeAndBuild(context, ::numberLiteral)
 
             TokenType.STRING_LITERAL ->
-                consumeAndParse(context, ::stringLiteral)
+                consumeAndBuild(context, ::stringLiteral)
 
             TokenType.IDENTIFIER ->
-                consumeAndParse(context, ::identifier)
+                consumeAndBuild(context, ::identifier)
 
             TokenType.LEFT_PAREN ->
-                grouping(context)
+                parseGrouping(context)
 
             else ->
                 unexpectedToken(token)
         }
     }
 
-    private fun consumeAndParse(
+    private fun consumeAndBuild(
         context: ParsingContext,
-        parser: (Token) -> ParsingResult<Expression>,
+        build: (Token) -> ParsingResult<Expression>,
     ): ParsingResult<Expression> {
         val token = context.consume()
             .orReturn { return it }
 
-        return parser(token)
+        return build(token)
     }
 
     private fun numberLiteral(
@@ -78,21 +78,16 @@ internal class PrimaryExpressionParser(
         val openingQuote = token.lexeme.first()
         val closingQuote = token.lexeme.last()
 
-        val quoteStyle = QUOTE_STYLES[openingQuote]
+        val quoteStyle = QUOTE_STYLE_BY_DELIMITER[openingQuote]
             ?: return invalidLiteral(token)
 
         if (openingQuote != closingQuote) {
             return invalidLiteral(token)
         }
 
-        val value = token.lexeme.substring(
-            startIndex = QUOTE_LENGTH,
-            endIndex = token.lexeme.length - QUOTE_LENGTH,
-        )
-
         return ParsingResult.Success(
             StringLiteralExpression(
-                value = value,
+                value = unquote(token.lexeme),
                 quoteStyle = quoteStyle,
                 span = token.span,
             ),
@@ -112,7 +107,7 @@ internal class PrimaryExpressionParser(
         )
     }
 
-    private fun grouping(
+    private fun parseGrouping(
         context: ParsingContext,
     ): ParsingResult<Expression> {
         val openParenthesis = context.expect(TokenType.LEFT_PAREN)
@@ -132,6 +127,15 @@ internal class PrimaryExpressionParser(
                     end = closeParenthesis.span.end,
                 ),
             ),
+        )
+    }
+
+    private fun unquote(
+        lexeme: String,
+    ): String {
+        return lexeme.substring(
+            startIndex = QUOTE_LENGTH,
+            endIndex = lexeme.length - QUOTE_LENGTH,
         )
     }
 
@@ -158,7 +162,7 @@ internal class PrimaryExpressionParser(
         const val QUOTE_LENGTH = 1
         const val MINIMUM_QUOTED_LITERAL_LENGTH = QUOTE_LENGTH * 2
 
-        val QUOTE_STYLES = mapOf(
+        val QUOTE_STYLE_BY_DELIMITER = mapOf(
             '\'' to StringQuoteStyle.SINGLE,
             '"' to StringQuoteStyle.DOUBLE,
         )

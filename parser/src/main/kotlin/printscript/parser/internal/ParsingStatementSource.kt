@@ -1,12 +1,19 @@
 package printscript.parser.internal
 
-
+import printscript.parser.internal.context.ParsingContext
 import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import printscript.token.Token
 import printscript.token.TokenType
 
+/**
+ * Entrega las sentencias del programa de a una, parseándolas a demanda.
+ *
+ * Corta en el primer error: una vez que reporta un Failure, las
+ * llamadas siguientes devuelven EndOfInput. Un programa con un error
+ * de sintaxis no se parsea más allá de ese punto.
+ */
 internal class ParsingStatementSource(
     private val context: ParsingContext,
 ) : StatementSource {
@@ -32,16 +39,16 @@ internal class ParsingStatementSource(
     private fun parseOrEnd(
         token: Token,
     ): StatementReadResult {
-        return if (token.type == TokenType.EOF) {
-            finish()
-            StatementReadResult.EndOfInput
-        } else {
-            parseNextStatement()
+        if (token.type == TokenType.EOF) {
+            finished = true
+            return StatementReadResult.EndOfInput
         }
+
+        return parseNextStatement()
     }
 
-    private fun parseNextStatement(): StatementReadResult =
-        when (val result = context.parseStatement()) {
+    private fun parseNextStatement(): StatementReadResult {
+        return when (val result = context.parseStatement()) {
             is ParsingResult.Success -> {
                 StatementReadResult.Success(result.value)
             }
@@ -50,15 +57,12 @@ internal class ParsingStatementSource(
                 fail(result.error)
             }
         }
+    }
 
     private fun fail(
         error: ParseError,
     ): StatementReadResult.Failure {
-        finish()
-        return StatementReadResult.Failure(error)
-    }
-
-    private fun finish() {
         finished = true
+        return StatementReadResult.Failure(error)
     }
 }

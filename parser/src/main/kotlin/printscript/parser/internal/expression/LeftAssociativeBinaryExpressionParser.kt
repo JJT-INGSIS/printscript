@@ -3,7 +3,7 @@ package printscript.parser.internal.expression
 import printscript.model.ast.expression.BinaryExpression
 import printscript.model.ast.expression.BinaryOperator
 import printscript.model.ast.expression.Expression
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.orReturn
 import printscript.token.TokenType

@@ -1,12 +1,12 @@
 package printscript.parser.internal.statement
 
 import printscript.model.ast.statement.Statement
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.TokenLookahead
+import printscript.parser.internal.context.TokenLookahead
 
 internal interface StatementParser {
-    fun match(
+    fun matchInitialTokens(
         lookahead: TokenLookahead,
     ): StatementMatch
 

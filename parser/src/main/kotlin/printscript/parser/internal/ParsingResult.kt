@@ -20,4 +20,3 @@ internal inline fun <T> ParsingResult<T>.orReturn(
         is ParsingResult.Success -> value
         is ParsingResult.Failure -> onFailure(this)
     }
-
