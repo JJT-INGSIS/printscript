@@ -7,6 +7,7 @@ import printscript.interpreter.statements.StatementExecutor
 import printscript.interpreter.statements.StatementExecutorDispatcher
 import printscript.interpreter.value.RuntimeValue
 import printscript.model.ast.expression.Expression
+import printscript.model.ast.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
@@ -28,33 +29,38 @@ internal class PrintScriptInterpreter(
         source: StatementSource,
     ): InterpretationResult {
         while (true) {
-            when (val readResult = source.nextStatement()) {
-                StatementReadResult.EndOfInput -> {
-                    return InterpretationResult.Success
-                }
-
-                is StatementReadResult.Failure -> {
-                    return InterpretationResult.ParseFailure(
-                        error = readResult.error,
-                    )
-                }
-
-                is StatementReadResult.Success -> {
-                    val executionResult =
-                        statementExecutorDispatcher.execute(
-                            statement = readResult.statement,
-                            context = this,
-                        )
-
-                    if (executionResult is ExecutionResult.Failure) {
-                        return InterpretationResult.SemanticFailure(
-                            error = executionResult.error,
-                        )
-                    }
-                }
-            }
+            return interpretNext(source) ?: continue
         }
     }
+
+    private fun interpretNext(
+        source: StatementSource,
+    ): InterpretationResult? =
+        when (val readResult = source.nextStatement()) {
+            StatementReadResult.EndOfInput -> InterpretationResult.Success
+
+            is StatementReadResult.Failure -> InterpretationResult.ParseFailure(
+                error = readResult.error,
+            )
+
+            is StatementReadResult.Success -> executeStatement(readResult.statement)
+        }
+
+    private fun executeStatement(
+        statement: Statement,
+    ): InterpretationResult? =
+        when (
+            val executionResult = statementExecutorDispatcher.execute(
+                statement = statement,
+                context = this,
+            )
+        ) {
+            is ExecutionResult.Success -> null
+
+            is ExecutionResult.Failure -> InterpretationResult.SemanticFailure(
+                error = executionResult.error,
+            )
+        }
 
     override fun evaluate(
         expression: Expression,
