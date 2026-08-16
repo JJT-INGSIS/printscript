@@ -7,3 +7,12 @@ inline fun <T> ExecutionResult<T>.orReturn(
         is ExecutionResult.Success -> value
         is ExecutionResult.Failure -> onFailure(this)
     }
+
+inline fun <T : Any> T?.orFail(
+    error: () -> SemanticError,
+): ExecutionResult<T> =
+    if (this == null) {
+        ExecutionResult.Failure(error())
+    } else {
+        ExecutionResult.Success(this)
+    }
