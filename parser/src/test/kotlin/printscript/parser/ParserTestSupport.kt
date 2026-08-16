@@ -13,80 +13,189 @@ import printscript.token.TokenReadResult
 import printscript.token.TokenSource
 import printscript.token.TokenType
 
-val ANY_SPAN = SourceSpan(SourcePosition(1, 1, 0), SourcePosition(1, 1, 0))
+val ANY_SPAN = SourceSpan(
+    start = SourcePosition(1, 1, 0),
+    end = SourcePosition(1, 1, 0),
+)
 
-/** Fuente de tokens en memoria. Al agotarse emite EOF, como el lexer real. */
-class FakeTokenSource(private val results: List<TokenReadResult>) : TokenSource {
-    private var index = 0
-    override fun nextToken(): TokenReadResult =
-        if (index < results.size) results[index++]
-        else TokenReadResult.Success(Token(TokenType.EOF, "", ANY_SPAN))
-}
+class FakeTokenSource(
+    private val results: List<TokenReadResult>,
+) : TokenSource {
 
-/**
- * DSL para construir listas de tokens de forma legible.
- * Extensible: cuando el lenguaje sume un token, agregas un atajo acá y ya lo usan todos los tests.
- */
-class TokenListBuilder {
-    private val results = mutableListOf<TokenReadResult>()
+    private var nextResultIndex: Int = 0
 
-    fun token(type: TokenType, lexeme: String = "") = apply {
-        results += TokenReadResult.Success(Token(type, lexeme, ANY_SPAN))
+    override fun nextToken(): TokenReadResult {
+        if (nextResultIndex >= results.size) {
+            return endOfInputToken()
+        }
+
+        return results[nextResultIndex++]
     }
 
-    fun lexicalError(character: Char = '@') = apply {
-        results += TokenReadResult.Failure(LexicalError.UnexpectedCharacter(character, ANY_SPAN))
+    private fun endOfInputToken(): TokenReadResult {
+        return TokenReadResult.Success(
+            Token(
+                type = TokenType.EOF,
+                lexeme = "",
+                span = ANY_SPAN,
+            ),
+        )
+    }
+}
+
+class TokenListBuilder {
+
+    private val results =
+        mutableListOf<TokenReadResult>()
+
+    fun token(
+        type: TokenType,
+        lexeme: String = "",
+    ): TokenListBuilder {
+        results.add(
+            TokenReadResult.Success(
+                Token(
+                    type = type,
+                    lexeme = lexeme,
+                    span = ANY_SPAN,
+                ),
+            ),
+        )
+
+        return this
+    }
+
+    fun lexicalError(
+        character: Char = '@',
+    ): TokenListBuilder {
+        results.add(
+            TokenReadResult.Failure(
+                LexicalError.UnexpectedCharacter(
+                    character = character,
+                    span = ANY_SPAN,
+                ),
+            ),
+        )
+
+        return this
     }
 
     fun let() = token(TokenType.LET, "let")
-    fun id(name: String) = token(TokenType.IDENTIFIER, name)
-    fun numberType() = token(TokenType.NUMBER_TYPE, "number")
-    fun stringType() = token(TokenType.STRING_TYPE, "string")
-    fun println() = token(TokenType.PRINTLN, "println")
-    fun number(value: String) = token(TokenType.NUMBER_LITERAL, value)
-    fun string(literal: String) = token(TokenType.STRING_LITERAL, literal)
-    fun assign() = token(TokenType.ASSIGN, "=")
-    fun colon() = token(TokenType.COLON, ":")
-    fun semicolon() = token(TokenType.SEMICOLON, ";")
-    fun plus() = token(TokenType.PLUS, "+")
-    fun minus() = token(TokenType.MINUS, "-")
-    fun star() = token(TokenType.STAR, "*")
-    fun slash() = token(TokenType.SLASH, "/")
-    fun open() = token(TokenType.LEFT_PAREN, "(")
-    fun close() = token(TokenType.RIGHT_PAREN, ")")
-    fun eof() = token(TokenType.EOF, "")
 
-    fun build(): List<TokenReadResult> = results.toList()
+    fun id(name: String) =
+        token(TokenType.IDENTIFIER, name)
+
+    fun numberType() =
+        token(TokenType.NUMBER_TYPE, "number")
+
+    fun stringType() =
+        token(TokenType.STRING_TYPE, "string")
+
+    fun println() =
+        token(TokenType.PRINTLN, "println")
+
+    fun number(value: String) =
+        token(TokenType.NUMBER_LITERAL, value)
+
+    fun string(literal: String) =
+        token(TokenType.STRING_LITERAL, literal)
+
+    fun assign() =
+        token(TokenType.ASSIGN, "=")
+
+    fun colon() =
+        token(TokenType.COLON, ":")
+
+    fun semicolon() =
+        token(TokenType.SEMICOLON, ";")
+
+    fun plus() =
+        token(TokenType.PLUS, "+")
+
+    fun minus() =
+        token(TokenType.MINUS, "-")
+
+    fun star() =
+        token(TokenType.STAR, "*")
+
+    fun slash() =
+        token(TokenType.SLASH, "/")
+
+    fun open() =
+        token(TokenType.LEFT_PAREN, "(")
+
+    fun close() =
+        token(TokenType.RIGHT_PAREN, ")")
+
+    fun eof() =
+        token(TokenType.EOF, "")
+
+    fun build(): List<TokenReadResult> {
+        return results.toList()
+    }
 }
 
-fun tokens(block: TokenListBuilder.() -> Unit): List<TokenReadResult> =
-    TokenListBuilder().apply(block).build()
+fun tokens(
+    block: TokenListBuilder.() -> Unit,
+): List<TokenReadResult> {
+    val builder = TokenListBuilder()
+    builder.block()
 
-fun sourceOf(tokens: List<TokenReadResult>): StatementSource =
-    PrintScriptParser().parse(FakeTokenSource(tokens))
+    return builder.build()
+}
 
-fun parseFirst(tokens: List<TokenReadResult>): StatementReadResult =
-    sourceOf(tokens).nextStatement()
+fun sourceOf(
+    tokens: List<TokenReadResult>,
+): StatementSource {
+    val parser = PrintScriptParserFactory.createV1()
 
-/** Drena la fuente hasta EndOfInput (para probar streaming / varios errores). */
-fun parseAll(tokens: List<TokenReadResult>): List<StatementReadResult> {
+    return parser.parse(
+        tokens = FakeTokenSource(tokens),
+    )
+}
+
+fun parseFirst(
+    tokens: List<TokenReadResult>,
+): StatementReadResult {
+    return sourceOf(tokens).nextStatement()
+}
+
+fun parseAll(
+    tokens: List<TokenReadResult>,
+): List<StatementReadResult> {
     val source = sourceOf(tokens)
-    return generateSequence { source.nextStatement() }
-        .takeWhile { it != StatementReadResult.EndOfInput }
-        .toList()
+    val results = mutableListOf<StatementReadResult>()
+
+    var result = source.nextStatement()
+
+    while (result != StatementReadResult.EndOfInput) {
+        results.add(result)
+        result = source.nextStatement()
+    }
+
+    return results
 }
 
-fun statementOf(tokens: List<TokenReadResult>): Statement =
-    (parseFirst(tokens) as StatementReadResult.Success).statement
+fun statementOf(
+    tokens: List<TokenReadResult>,
+): Statement {
+    val result = parseFirst(tokens)
 
-/** Parsea una expresión aislada envolviéndola en `x = <expr> ;`. */
-fun expressionOf(expression: TokenListBuilder.() -> Unit): Expression {
+    return (result as StatementReadResult.Success).statement
+}
+
+fun expressionOf(
+    expression: TokenListBuilder.() -> Unit,
+): Expression {
     val statement = statementOf(
         tokens {
-            id("x"); assign()
+            id("x")
+            assign()
             expression()
-            semicolon(); eof()
+            semicolon()
+            eof()
         },
     )
+
     return (statement as AssignmentStatement).expression
 }

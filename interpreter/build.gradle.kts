@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":statement-source"))
-    implementation(project(":common"))
+    api(project(":statement-source"))
+    api(project(":common"))
 }
