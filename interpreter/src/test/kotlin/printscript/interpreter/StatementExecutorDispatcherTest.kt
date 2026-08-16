@@ -1,12 +1,15 @@
-package printscript.interpreter.statements
+package printscript.interpreter
 
-import printscript.interpreter.ExecutionContext
-import printscript.interpreter.ExecutionResult
-import printscript.interpreter.InMemoryOutput
-import printscript.interpreter.Interpreter
-import printscript.interpreter.SemanticError
+import printscript.interpreter.environment.Environment
+import printscript.interpreter.statements.AssignmentExecutor
+import printscript.interpreter.statements.DeclarationExecutor
+import printscript.interpreter.statements.PrintlnExecutor
+import printscript.interpreter.statements.StatementExecutor
+import printscript.interpreter.statements.StatementExecutorDispatcher
+import printscript.interpreter.value.RuntimeValue
 import printscript.model.ast.DeclaredType
 import printscript.model.ast.Identifier
+import printscript.model.ast.expression.Expression
 import printscript.model.ast.expression.NumberLiteralExpression
 import printscript.model.ast.statement.AssignmentStatement
 import printscript.model.ast.statement.PrintlnStatement
@@ -19,6 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class StatementExecutorDispatcherTest {
 
@@ -35,7 +39,10 @@ class StatementExecutorDispatcherTest {
 
     private val declarationStatement =
         VariableDeclarationStatement(
-            identifier = Identifier("x", anySpan),
+            identifier = Identifier(
+                value = "x",
+                span = anySpan,
+            ),
             declaredType = DeclaredType.NUMBER,
             initializer = numberExpression,
             span = anySpan,
@@ -43,7 +50,10 @@ class StatementExecutorDispatcherTest {
 
     private val assignmentStatement =
         AssignmentStatement(
-            target = Identifier("x", anySpan),
+            target = Identifier(
+                value = "x",
+                span = anySpan,
+            ),
             expression = numberExpression,
             span = anySpan,
         )
@@ -57,13 +67,19 @@ class StatementExecutorDispatcherTest {
     @Test
     fun `dispatcher executes the first supporting executor`() {
         val nonMatchingExecutor =
-            RecordingExecutor(supportsStatement = false)
+            RecordingExecutor(
+                supportsStatement = false,
+            )
 
         val selectedExecutor =
-            RecordingExecutor(supportsStatement = true)
+            RecordingExecutor(
+                supportsStatement = true,
+            )
 
         val executorAfterMatch =
-            RecordingExecutor(supportsStatement = true)
+            RecordingExecutor(
+                supportsStatement = true,
+            )
 
         val dispatcher = StatementExecutorDispatcher(
             executors = listOf(
@@ -79,13 +95,24 @@ class StatementExecutorDispatcherTest {
         )
 
         assertEquals(
-            ExecutionResult.Success(Unit),
-            result,
+            expected = ExecutionResult.Success(Unit),
+            actual = result,
         )
 
-        assertEquals(0, nonMatchingExecutor.executionCount)
-        assertEquals(1, selectedExecutor.executionCount)
-        assertEquals(0, executorAfterMatch.executionCount)
+        assertEquals(
+            expected = 0,
+            actual = nonMatchingExecutor.executionCount,
+        )
+
+        assertEquals(
+            expected = 1,
+            actual = selectedExecutor.executionCount,
+        )
+
+        assertEquals(
+            expected = 0,
+            actual = executorAfterMatch.executionCount,
+        )
     }
 
     @Test
@@ -109,8 +136,15 @@ class StatementExecutorDispatcherTest {
             context = executionContext(),
         )
 
-        assertEquals(expectedFailure, result)
-        assertEquals(1, executor.executionCount)
+        assertEquals(
+            expected = expectedFailure,
+            actual = result,
+        )
+
+        assertEquals(
+            expected = 1,
+            actual = executor.executionCount,
+        )
     }
 
     @Test
@@ -125,12 +159,12 @@ class StatementExecutorDispatcherTest {
         )
 
         assertEquals(
-            ExecutionResult.Failure(
+            expected = ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(
                     span = anySpan,
                 ),
             ),
-            result,
+            actual = result,
         )
     }
 
@@ -172,7 +206,7 @@ class StatementExecutorDispatcherTest {
     }
 
     private fun executionContext(): ExecutionContext {
-        return Interpreter(InMemoryOutput())
+        return UnusedExecutionContext
     }
 
     private class RecordingExecutor(
@@ -197,6 +231,30 @@ class StatementExecutorDispatcherTest {
             executionCount++
 
             return result
+        }
+    }
+
+    private object UnusedExecutionContext : ExecutionContext {
+
+        override val environment: Environment
+            get() = fail(
+                "Dispatcher test must not access the environment",
+            )
+
+        override fun evaluate(
+            expression: Expression,
+        ): ExecutionResult<RuntimeValue> {
+            fail(
+                "Dispatcher test must not evaluate expressions",
+            )
+        }
+
+        override fun emit(
+            line: String,
+        ) {
+            fail(
+                "Dispatcher test must not emit output",
+            )
         }
     }
 }

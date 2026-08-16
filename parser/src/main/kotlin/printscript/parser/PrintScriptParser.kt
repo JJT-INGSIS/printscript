@@ -2,38 +2,30 @@ package printscript.parser
 
 import printscript.parser.internal.ParsingStatementSource
 import printscript.parser.internal.context.DefaultParsingContext
-import printscript.parser.internal.expression.RecursiveDescentExpressionParser
-import printscript.parser.internal.statement.AssignmentParser
-import printscript.parser.internal.statement.DeclarationParser
-import printscript.parser.internal.statement.PrintlnParser
+import printscript.parser.internal.statement.StatementParser
 import printscript.parser.internal.statement.StatementParserDispatcher
 import printscript.statement.StatementSource
 import printscript.token.TokenSource
 
-class PrintScriptParser : Parser {
+internal class PrintScriptParser(
+    statementParsers: List<StatementParser>,
+) : Parser {
+
+    private val statementParserDispatcher =
+        StatementParserDispatcher(
+            parsers = statementParsers.toList(),
+        )
 
     override fun parse(
         tokens: TokenSource,
     ): StatementSource {
-        val context = DefaultParsingContext(
+        val parsingContext = DefaultParsingContext(
             tokens = tokens,
-            statementParserDispatcher = statementParserDispatcher(),
+            statementParserDispatcher = statementParserDispatcher,
         )
 
         return ParsingStatementSource(
-            context = context,
-        )
-    }
-
-    private fun statementParserDispatcher(): StatementParserDispatcher {
-        val expressionParser = RecursiveDescentExpressionParser()
-
-        return StatementParserDispatcher(
-            parsers = listOf(
-                DeclarationParser(expressionParser),
-                AssignmentParser(expressionParser),
-                PrintlnParser(expressionParser),
-            ),
+            context = parsingContext,
         )
     }
 }
