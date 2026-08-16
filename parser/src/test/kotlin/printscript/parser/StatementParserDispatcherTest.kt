@@ -1,96 +1,97 @@
 package printscript.parser
 
-import printscript.statement.ParseError
-import printscript.statement.StatementReadResult
-import printscript.token.LexicalError
+import printscript.model.ast.statement.AssignmentStatement
+import printscript.model.ast.statement.PrintlnStatement
+import printscript.model.ast.statement.VariableDeclarationStatement
 import printscript.token.TokenType
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class StatementParserDispatcherTest {
 
     @Test
-    fun `uses mismatch that inspected the furthest token`() {
-        val result = parseFirst(
+    fun `dispatches to the declaration parser`() {
+        val statement = parseFirst(
             tokens {
-                id("x")
+                let()
+                id("a")
+                colon()
+                numberType()
+                semicolon()
                 eof()
             },
-        )
+        ).assertSuccessStatement()
 
-        val failure =
-            assertIs<StatementReadResult.Failure>(result)
-
-        val error =
-            assertIs<ParseError.UnexpectedToken>(failure.error)
-
-        assertEquals(
-            setOf(TokenType.ASSIGN),
-            error.expected,
-        )
-
-        assertEquals(
-            TokenType.EOF,
-            error.actual.type,
-        )
+        assertIs<VariableDeclarationStatement>(statement)
     }
 
     @Test
-    fun `combines expectations from mismatches at the same offset`() {
-        val result = parseFirst(
+    fun `dispatches to the assignment parser`() {
+        val statement = parseFirst(
             tokens {
-                plus()
+                id("a")
+                assign()
+                number("5")
+                semicolon()
                 eof()
             },
-        )
+        ).assertSuccessStatement()
 
-        val failure =
-            assertIs<StatementReadResult.Failure>(result)
+        assertIs<AssignmentStatement>(statement)
+    }
 
-        val error =
-            assertIs<ParseError.UnexpectedToken>(failure.error)
+    @Test
+    fun `dispatches to the println parser`() {
+        val statement = parseFirst(
+            tokens {
+                println()
+                open()
+                id("a")
+                close()
+                semicolon()
+                eof()
+            },
+        ).assertSuccessStatement()
 
-        assertEquals(
-            setOf(
+        assertIs<PrintlnStatement>(statement)
+    }
+
+    @Test
+    fun `reports every statement start when nothing matches`() {
+        parseFirst(
+            tokens {
+                number("12")
+                plus()
+                number("3")
+                semicolon()
+                eof()
+            },
+        ).assertUnexpectedToken(
+            expectedTokenTypes = setOf(
                 TokenType.LET,
                 TokenType.IDENTIFIER,
                 TokenType.PRINTLN,
             ),
-            error.expected,
-        )
-
-        assertEquals(
-            TokenType.PLUS,
-            error.actual.type,
+            actualTokenType = TokenType.NUMBER_LITERAL,
         )
     }
 
     @Test
-    fun `propagates lexical failure during assignment lookahead`() {
-        val result = parseFirst(
+    fun `reports the mismatch of the parser that got furthest`() {
+        // Un identificador sin "=" no es una asignación, pero el parser
+        // de asignaciones llegó más lejos que los otros dos, así que su
+        // desajuste es el que mejor describe el problema.
+        parseFirst(
             tokens {
-                id("x")
-                lexicalError()
+                id("a")
+                plus()
+                number("5")
                 semicolon()
                 eof()
             },
-        )
-
-        val failure =
-            assertIs<StatementReadResult.Failure>(result)
-
-        val parseError =
-            assertIs<ParseError.Lexical>(failure.error)
-
-        val lexicalError =
-            assertIs<LexicalError.UnexpectedCharacter>(
-                parseError.error,
-            )
-
-        assertEquals(
-            '@',
-            lexicalError.character,
+        ).assertUnexpectedToken(
+            expectedTokenTypes = setOf(TokenType.ASSIGN),
+            actualTokenType = TokenType.PLUS,
         )
     }
 }

@@ -1,10 +1,22 @@
 package printscript.parser.internal.statement
 
 import printscript.model.ast.statement.Statement
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
+import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
+import printscript.token.TokenType
 
+/**
+ * Elige qué parser se hace cargo de la próxima sentencia.
+ *
+ * Les pregunta a todos en orden hasta que uno la reclame. Ninguna de
+ * esas preguntas consume tokens, así que todos miran la misma posición.
+ *
+ * Si nadie la reclama, arma el error con el desajuste del parser que
+ * llegó más lejos: ese es el que mejor interpretó la intención de quien
+ * escribió el código, y por lo tanto el que da el mensaje más útil.
+ */
 internal class StatementParserDispatcher(
     private val parsers: List<StatementParser>,
 ) {
@@ -15,7 +27,7 @@ internal class StatementParserDispatcher(
         val mismatches = mutableListOf<StatementMismatch>()
 
         for (parser in parsers) {
-            when (val match = parser.match(context)) {
+            when (val match = parser.matchInitialTokens(context)) {
                 StatementMatch.Match -> {
                     return parser.parse(context)
                 }
@@ -30,31 +42,47 @@ internal class StatementParserDispatcher(
             }
         }
 
-        return noMatchingStatement(mismatches)
+        return unrecognizedStatementError(context, mismatches)
     }
 
-    private fun noMatchingStatement(
+    private fun unrecognizedStatementError(
+        context: ParsingContext,
         mismatches: List<StatementMismatch>,
-    ): ParsingResult.Failure {
-        val furthestOffset = mismatches.maxOf {
-            it.lookaheadOffset
-        }
+    ): ParsingResult<Statement> {
+        val furthestOffset = mismatches.maxOfOrNull { it.lookaheadOffset }
+            ?: return noParsersConfigured(context)
 
-        val furthestMismatches = mismatches.filter {
+        val furthest = mismatches.filter {
             it.lookaheadOffset == furthestOffset
         }
 
-        val actualToken = furthestMismatches.first().actual
+        return ParsingResult.Failure(
+            ParseError.UnexpectedToken(
+                expected = expectedTokensOf(furthest),
+                actual = furthest.first().actual,
+            ),
+        )
+    }
 
-        val expectedTokens = furthestMismatches
-            .flatMap { it.expected }
-            .toSet()
+    private fun noParsersConfigured(
+        context: ParsingContext,
+    ): ParsingResult<Statement> {
+        val token = context.peek()
+            .orReturn { return it }
 
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
-                expected = expectedTokens,
-                actual = actualToken,
+                expected = emptySet(),
+                actual = token,
             ),
         )
+    }
+
+    private fun expectedTokensOf(
+        mismatches: List<StatementMismatch>,
+    ): Set<TokenType> {
+        return mismatches
+            .flatMap { it.expected }
+            .toSet()
     }
 }

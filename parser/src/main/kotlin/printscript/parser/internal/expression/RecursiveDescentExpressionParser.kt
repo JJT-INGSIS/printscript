@@ -3,7 +3,7 @@ package printscript.parser.internal.expression
 import printscript.model.ast.expression.BinaryOperator
 import printscript.model.ast.expression.Expression
 import printscript.model.ast.expression.UnaryOperator
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.token.TokenType
 
@@ -24,15 +24,17 @@ private val UNARY_OPERATORS: Map<TokenType, UnaryOperator> = mapOf(
 
 internal class RecursiveDescentExpressionParser : ExpressionParser {
 
-    private val expressionParser: ExpressionParser = buildParserChain()
+    private val topLevelParser: ExpressionParser = buildPrecedenceChain()
 
     override fun parse(
         context: ParsingContext,
     ): ParsingResult<Expression> {
-        return expressionParser.parse(context)
+        return topLevelParser.parse(context)
     }
 
-    private fun buildParserChain(): ExpressionParser {
+    private fun buildPrecedenceChain(): ExpressionParser {
+        // Los paréntesis vuelven al tope de la cadena, no a este nivel:
+        // adentro de "(...)" tienen que valer todas las precedencias.
         val primaryParser = PrimaryExpressionParser(
             parseNestedExpression = this::parse,
         )
@@ -42,15 +44,16 @@ internal class RecursiveDescentExpressionParser : ExpressionParser {
             operators = UNARY_OPERATORS,
         )
 
-        val multiplicativeParser =
-            LeftAssociativeBinaryExpressionParser(
-                operandParser = unaryParser,
-                operators = MULTIPLICATIVE_OPERATORS,
-            )
+        val multiplicativeParser = LeftAssociativeBinaryExpressionParser(
+            operandParser = unaryParser,
+            operators = MULTIPLICATIVE_OPERATORS,
+        )
 
-        return LeftAssociativeBinaryExpressionParser(
+        val additiveParser = LeftAssociativeBinaryExpressionParser(
             operandParser = multiplicativeParser,
             operators = ADDITIVE_OPERATORS,
         )
+
+        return additiveParser
     }
 }

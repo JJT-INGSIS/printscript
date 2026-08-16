@@ -5,130 +5,92 @@ import printscript.model.ast.expression.Expression
 import printscript.model.ast.statement.AssignmentStatement
 import printscript.model.ast.statement.Statement
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.TokenLookahead
+import printscript.parser.internal.context.TokenLookahead
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.token.Token
 import printscript.token.TokenType
 
-private const val ASSIGN_OPERATOR_OFFSET = 1
-
-private val ASSIGNMENT_START_TOKENS = setOf(
-    TokenType.IDENTIFIER,
-)
-
-private val ASSIGN_OPERATOR_TOKENS = setOf(
-    TokenType.ASSIGN,
-)
-
 internal class AssignmentParser(
     private val expressionParser: ExpressionParser,
+    private val targetTokens: Set<TokenType> = DEFAULT_TARGET_TOKENS,
+    private val assignmentTokens: Set<TokenType> = DEFAULT_ASSIGNMENT_TOKENS,
 ) : StatementParser {
 
-    override fun match(
+    private val matcher = StatementMatcher(
+        listOf(targetTokens, assignmentTokens),
+    )
+
+    override fun matchInitialTokens(
         lookahead: TokenLookahead,
     ): StatementMatch {
-        val firstToken = when (val result = lookahead.peek()) {
-            is ParsingResult.Success -> {
-                result.value
-            }
-
-            is ParsingResult.Failure -> {
-                return StatementMatch.Failure(result.error)
-            }
-        }
-
-        if (firstToken.type != TokenType.IDENTIFIER) {
-            return StatementMatch.NoMatch(
-                StatementMismatch.atCurrentToken(
-                    expected = ASSIGNMENT_START_TOKENS,
-                    actual = firstToken,
-                ),
-            )
-        }
-
-        val secondToken = when (
-            val result = lookahead.peekAt(ASSIGN_OPERATOR_OFFSET)
-        ) {
-            is ParsingResult.Success -> {
-                result.value
-            }
-
-            is ParsingResult.Failure -> {
-                return StatementMatch.Failure(result.error)
-            }
-        }
-
-        return if (secondToken.type == TokenType.ASSIGN) {
-            StatementMatch.Match
-        } else {
-            StatementMatch.NoMatch(
-                StatementMismatch(
-                    lookaheadOffset = ASSIGN_OPERATOR_OFFSET,
-                    expected = ASSIGN_OPERATOR_TOKENS,
-                    actual = secondToken,
-                ),
-            )
-        }
+        return matcher.matchInitialTokens(lookahead)
     }
 
     override fun parse(
         context: ParsingContext,
     ): ParsingResult<Statement> {
-        val parts = parseParts(context)
+        val components = readComponents(context)
             .orReturn { return it }
 
-        return ParsingResult.Success(build(parts))
+        return ParsingResult.Success(buildStatement(components))
     }
 
-    private fun parseParts(
+    private fun readComponents(
         context: ParsingContext,
-    ): ParsingResult<Parts> {
-        val identifierToken =
-            context.expect(TokenType.IDENTIFIER)
-                .orReturn { return it }
-
-        context.expect(TokenType.ASSIGN)
+    ): ParsingResult<AssignmentComponents> {
+        val targetToken = context.expect(targetTokens)
             .orReturn { return it }
 
-        val expression =
-            expressionParser.parse(context)
-                .orReturn { return it }
+        context.expect(assignmentTokens)
+            .orReturn { return it }
 
-        val semicolonToken =
-            context.expect(TokenType.SEMICOLON)
-                .orReturn { return it }
+        val expression = expressionParser.parse(context)
+            .orReturn { return it }
+
+        val semicolonToken = context.expect(TokenType.SEMICOLON)
+            .orReturn { return it }
 
         return ParsingResult.Success(
-            Parts(
-                identifierToken = identifierToken,
+            AssignmentComponents(
+                targetToken = targetToken,
                 expression = expression,
                 semicolonToken = semicolonToken,
             ),
         )
     }
 
-    private fun build(
-        parts: Parts,
+    private fun buildStatement(
+        components: AssignmentComponents,
     ): Statement {
         return AssignmentStatement(
             target = Identifier(
-                value = parts.identifierToken.lexeme,
-                span = parts.identifierToken.span,
+                value = components.targetToken.lexeme,
+                span = components.targetToken.span,
             ),
-            expression = parts.expression,
+            expression = components.expression,
             span = SourceSpan(
-                start = parts.identifierToken.span.start,
-                end = parts.semicolonToken.span.end,
+                start = components.targetToken.span.start,
+                end = components.semicolonToken.span.end,
             ),
         )
     }
 
-    private data class Parts(
-        val identifierToken: Token,
+    private data class AssignmentComponents(
+        val targetToken: Token,
         val expression: Expression,
         val semicolonToken: Token,
     )
+
+    private companion object {
+        val DEFAULT_TARGET_TOKENS = setOf(
+            TokenType.IDENTIFIER,
+        )
+
+        val DEFAULT_ASSIGNMENT_TOKENS = setOf(
+            TokenType.ASSIGN,
+        )
+    }
 }

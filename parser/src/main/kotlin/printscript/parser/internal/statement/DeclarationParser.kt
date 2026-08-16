@@ -6,9 +6,9 @@ import printscript.model.ast.expression.Expression
 import printscript.model.ast.statement.Statement
 import printscript.model.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.ParsingContext
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.TokenLookahead
+import printscript.parser.internal.context.TokenLookahead
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
@@ -17,75 +17,55 @@ import printscript.token.TokenType
 
 internal class DeclarationParser(
     private val expressionParser: ExpressionParser,
+    private val keywordTokens: Set<TokenType> = DEFAULT_KEYWORD_TOKENS,
+    private val declaredTypeByToken: Map<TokenType, DeclaredType> = DEFAULT_DECLARED_TYPES,
 ) : StatementParser {
 
-    override fun match(
+    private val typeTokens: Set<TokenType> = declaredTypeByToken.keys
+
+    private val matcher = StatementMatcher(
+        listOf(keywordTokens),
+    )
+
+    override fun matchInitialTokens(
         lookahead: TokenLookahead,
     ): StatementMatch {
-        return when (val result = lookahead.peek()) {
-            is ParsingResult.Success -> {
-                val token = result.value
-
-                if (token.type == TokenType.LET) {
-                    StatementMatch.Match
-                } else {
-                    StatementMatch.NoMatch(
-                        StatementMismatch.atCurrentToken(
-                            expected = DECLARATION_START_TOKENS,
-                            actual = token,
-                        ),
-                    )
-                }
-            }
-
-            is ParsingResult.Failure -> {
-                StatementMatch.Failure(result.error)
-            }
-        }
+        return matcher.matchInitialTokens(lookahead)
     }
 
     override fun parse(
         context: ParsingContext,
     ): ParsingResult<Statement> {
-        val parts = parseParts(context)
+        val components = readComponents(context)
             .orReturn { return it }
 
-        return ParsingResult.Success(build(parts))
+        return ParsingResult.Success(buildStatement(components))
     }
 
-    private fun parseParts(
+    private fun readComponents(
         context: ParsingContext,
-    ): ParsingResult<Parts> {
-        val letToken =
-            context.expect(TokenType.LET)
-                .orReturn { return it }
+    ): ParsingResult<DeclarationComponents> {
+        val keywordToken = context.expect(keywordTokens)
+            .orReturn { return it }
 
-        val identifierToken =
-            context.expect(TokenType.IDENTIFIER)
-                .orReturn { return it }
+        val identifierToken = context.expect(TokenType.IDENTIFIER)
+            .orReturn { return it }
 
         context.expect(TokenType.COLON)
             .orReturn { return it }
 
-        val typeToken =
-            context.expect(DECLARED_TYPES_BY_TOKEN.keys)
-                .orReturn { return it }
+        val declaredType = readDeclaredType(context)
+            .orReturn { return it }
 
-        val declaredType =
-            declaredTypeOf(typeToken)
-                .orReturn { return it }
+        val initializer = readOptionalInitializer(context)
+            .orReturn { return it }
 
-        val initializer =
-            parseInitializer(context)
-                .orReturn { return it }
-
-        val semicolonToken =
-            context.expect(TokenType.SEMICOLON)
-                .orReturn { return it }
+        val semicolonToken = context.expect(TokenType.SEMICOLON)
+            .orReturn { return it }
 
         return ParsingResult.Success(
-            Parts(
-                letToken = letToken,
+            DeclarationComponents(
+                keywordToken = keywordToken,
                 identifierToken = identifierToken,
                 declaredType = declaredType,
                 initializer = initializer,
@@ -94,13 +74,16 @@ internal class DeclarationParser(
         )
     }
 
-    private fun declaredTypeOf(
-        typeToken: Token,
+    private fun readDeclaredType(
+        context: ParsingContext,
     ): ParsingResult<DeclaredType> {
-        val declaredType = DECLARED_TYPES_BY_TOKEN[typeToken.type]
+        val typeToken = context.expect(typeTokens)
+            .orReturn { return it }
+
+        val declaredType = declaredTypeByToken[typeToken.type]
             ?: return ParsingResult.Failure(
                 ParseError.UnexpectedToken(
-                    expected = DECLARED_TYPES_BY_TOKEN.keys,
+                    expected = typeTokens,
                     actual = typeToken,
                 ),
             )
@@ -108,7 +91,7 @@ internal class DeclarationParser(
         return ParsingResult.Success(declaredType)
     }
 
-    private fun parseInitializer(
+    private fun readOptionalInitializer(
         context: ParsingContext,
     ): ParsingResult<Expression?> {
         val nextToken = context.peek()
@@ -127,25 +110,25 @@ internal class DeclarationParser(
         return ParsingResult.Success(expression)
     }
 
-    private fun build(
-        parts: Parts,
+    private fun buildStatement(
+        components: DeclarationComponents,
     ): Statement {
         return VariableDeclarationStatement(
             identifier = Identifier(
-                value = parts.identifierToken.lexeme,
-                span = parts.identifierToken.span,
+                value = components.identifierToken.lexeme,
+                span = components.identifierToken.span,
             ),
-            declaredType = parts.declaredType,
-            initializer = parts.initializer,
+            declaredType = components.declaredType,
+            initializer = components.initializer,
             span = SourceSpan(
-                start = parts.letToken.span.start,
-                end = parts.semicolonToken.span.end,
+                start = components.keywordToken.span.start,
+                end = components.semicolonToken.span.end,
             ),
         )
     }
 
-    private data class Parts(
-        val letToken: Token,
+    private data class DeclarationComponents(
+        val keywordToken: Token,
         val identifierToken: Token,
         val declaredType: DeclaredType,
         val initializer: Expression?,
@@ -153,11 +136,11 @@ internal class DeclarationParser(
     )
 
     private companion object {
-        val DECLARATION_START_TOKENS = setOf(
+        val DEFAULT_KEYWORD_TOKENS = setOf(
             TokenType.LET,
         )
 
-        val DECLARED_TYPES_BY_TOKEN = mapOf(
+        val DEFAULT_DECLARED_TYPES = mapOf(
             TokenType.NUMBER_TYPE to DeclaredType.NUMBER,
             TokenType.STRING_TYPE to DeclaredType.STRING,
         )
