@@ -22,31 +22,27 @@ internal class DeclarationExecutor : StatementExecutor {
         statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
-        if (statement !is VariableDeclarationStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(
-                    span = statement.span,
-                ),
-            )
-        }
+        val declaration: VariableDeclarationStatement =
+            statementOrFail(statement, VariableDeclarationStatement::class)
+                .orReturn { return it }
 
-        val name: String = statement.identifier.value
+        val name: String = declaration.identifier.value
 
         if (isAlreadyDeclared(name, context)) {
             return ExecutionResult.Failure(
                 SemanticError.AlreadyDeclaredVariable(
                     name = name,
-                    span = statement.span,
+                    span = declaration.span,
                 ),
             )
         }
 
         val initialValue: RuntimeValue? =
-            evaluateInitializer(statement, context)
+            evaluateInitializer(declaration, context)
                 .orReturn { return it }
 
         val binding = VariableBinding(
-            type = statement.declaredType,
+            type = declaration.declaredType,
             value = initialValue,
         )
 

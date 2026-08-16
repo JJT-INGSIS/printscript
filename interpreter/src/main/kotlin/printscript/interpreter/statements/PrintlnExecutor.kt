@@ -20,16 +20,12 @@ internal class PrintlnExecutor : StatementExecutor {
         statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
-        if (statement !is PrintlnStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(
-                    span = statement.span,
-                ),
-            )
-        }
+        val printlnStatement: PrintlnStatement =
+            statementOrFail(statement, PrintlnStatement::class)
+                .orReturn { return it }
 
         val value: RuntimeValue =
-            context.evaluate(statement.argument)
+            context.evaluate(printlnStatement.argument)
                 .orReturn { return it }
 
         context.emit(value.asText())

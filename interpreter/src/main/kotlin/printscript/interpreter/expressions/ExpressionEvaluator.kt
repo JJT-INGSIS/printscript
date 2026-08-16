@@ -76,12 +76,10 @@ internal class ExpressionEvaluator(
                 ),
             )
         }
-
         val result: NumberValue = when (expression.operator) {
             UnaryOperator.PLUS -> operand
             UnaryOperator.MINUS -> NumberValue(operand.value.negate())
         }
-
         return ExecutionResult.Success(result)
     }
 

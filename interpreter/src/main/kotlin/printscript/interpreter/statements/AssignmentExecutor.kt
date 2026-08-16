@@ -21,15 +21,11 @@ internal class AssignmentExecutor : StatementExecutor {
         statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
-        if (statement !is AssignmentStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(
-                    span = statement.span,
-                ),
-            )
-        }
+        val assignment: AssignmentStatement =
+            statementOrFail(statement, AssignmentStatement::class)
+                .orReturn { return it }
 
-        val name: String = statement.target.value
+        val name: String = assignment.target.value
 
         val binding: VariableBinding? =
             context.environment.lookup(name)
@@ -38,13 +34,13 @@ internal class AssignmentExecutor : StatementExecutor {
             return ExecutionResult.Failure(
                 SemanticError.UndeclaredVariable(
                     name = name,
-                    span = statement.span,
+                    span = assignment.span,
                 ),
             )
         }
 
         val value: RuntimeValue =
-            context.evaluate(statement.expression)
+            context.evaluate(assignment.expression)
                 .orReturn { return it }
 
         if (value.type != binding.type) {
@@ -53,7 +49,7 @@ internal class AssignmentExecutor : StatementExecutor {
                     name = name,
                     expected = binding.type,
                     actual = value.type,
-                    span = statement.span,
+                    span = assignment.span,
                 ),
             )
         }
