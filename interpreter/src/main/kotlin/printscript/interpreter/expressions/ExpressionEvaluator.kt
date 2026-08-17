@@ -6,6 +6,7 @@ import printscript.interpreter.environment.Environment
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.operations.BinaryOperation
 import printscript.interpreter.operations.BinaryOperationRegistry
+import printscript.interpreter.orFail
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
@@ -52,25 +53,13 @@ internal class ExpressionEvaluator(
     ): ExecutionResult<RuntimeValue> {
         val name: String = expression.identifier.value
 
-        val binding: VariableBinding? = environment.lookup(name)
-        if (binding == null) {
-            return ExecutionResult.Failure(
-                SemanticError.UndeclaredVariable(
-                    name = name,
-                    span = expression.span,
-                ),
-            )
-        }
+        val binding: VariableBinding = environment.lookup(name)
+            .orFail { SemanticError.UndeclaredVariable(name = name, span = expression.span) }
+            .orReturn { return it }
 
-        val value: RuntimeValue? = binding.value
-        if (value == null) {
-            return ExecutionResult.Failure(
-                SemanticError.UninitializedVariable(
-                    name = name,
-                    span = expression.span,
-                ),
-            )
-        }
+        val value: RuntimeValue = binding.value
+            .orFail { SemanticError.UninitializedVariable(name = name, span = expression.span) }
+            .orReturn { return it }
 
         return ExecutionResult.Success(value)
     }
@@ -87,12 +76,10 @@ internal class ExpressionEvaluator(
                 ),
             )
         }
-
         val result: NumberValue = when (expression.operator) {
             UnaryOperator.PLUS -> operand
             UnaryOperator.MINUS -> NumberValue(operand.value.negate())
         }
-
         return ExecutionResult.Success(result)
     }
 

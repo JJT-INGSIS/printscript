@@ -25,4 +25,5 @@ internal class DivideOperation : ArithmeticOperation(BinaryOperator.DIVIDE) {
     private fun isZero(value: BigDecimal): Boolean {
         return value.signum() == 0
     }
+
 }

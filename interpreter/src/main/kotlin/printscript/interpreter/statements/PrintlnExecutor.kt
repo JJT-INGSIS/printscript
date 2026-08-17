@@ -20,18 +20,21 @@ internal class PrintlnExecutor : StatementExecutor {
         statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
-        if (statement !is PrintlnStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(
-                    span = statement.span,
-                ),
-            )
-        }
-
-        val value: RuntimeValue =
-            context.evaluate(statement.argument)
+        val printlnStatement: PrintlnStatement =
+            statementOrFail(statement, PrintlnStatement::class)
                 .orReturn { return it }
 
+        val value: RuntimeValue =
+            context.evaluate(printlnStatement.argument)
+                .orReturn { return it }
+
+        return emit(value, context)
+    }
+
+    private fun emit(
+        value: RuntimeValue,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
         context.emit(value.asText())
 
         return ExecutionResult.Success(Unit)
