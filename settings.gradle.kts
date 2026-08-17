@@ -21,5 +21,6 @@ include(
     "parser",
     "token-source",
     "interpreter",
-    "statement-source"
+    "statement-source",
+    "e2e-tests",
 )
