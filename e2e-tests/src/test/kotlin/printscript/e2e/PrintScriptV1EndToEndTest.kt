@@ -213,6 +213,38 @@ class PrintScriptV1EndToEndTest {
         assertNoOutputWasProduced(execution)
     }
 
+    @Test
+    fun `evaluates subtraction and division from left to right`() {
+        val execution = runV1Script(
+            """
+        let result: number = 20 / 2 - 3;
+        println(result);
+        """.trimIndent(),
+        )
+
+        assertSuccessfulExecution(
+            execution,
+            listOf("7"),
+        )
+    }
+
+    @Test
+    fun `uses latest assigned value`() {
+        val execution = runV1Script(
+            """
+        let value: number = 10;
+        value = 20;
+        value = value + 5;
+        println(value);
+        """.trimIndent(),
+        )
+
+        assertSuccessfulExecution(
+            execution,
+            listOf("25"),
+        )
+    }
+
     private fun assertSuccessfulExecution(
         execution: ProgramExecution,
         expectedOutputLines: List<String>,
