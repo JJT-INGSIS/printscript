@@ -1,15 +1,15 @@
 package printscript.parser
 
-import printscript.model.ast.expression.BinaryExpression
-import printscript.model.ast.expression.BinaryOperator
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.expression.GroupingExpression
-import printscript.model.ast.expression.IdentifierExpression
-import printscript.model.ast.expression.NumberLiteralExpression
-import printscript.model.ast.expression.StringLiteralExpression
-import printscript.model.ast.expression.StringQuoteStyle
-import printscript.model.ast.expression.UnaryExpression
-import printscript.model.ast.expression.UnaryOperator
+import printscript.ast.expression.BinaryExpression
+import printscript.ast.expression.BinaryOperator
+import printscript.ast.expression.Expression
+import printscript.ast.expression.GroupingExpression
+import printscript.ast.expression.IdentifierExpression
+import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.expression.StringLiteralExpression
+import printscript.ast.expression.StringQuoteStyle
+import printscript.ast.expression.UnaryExpression
+import printscript.ast.expression.UnaryOperator
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals

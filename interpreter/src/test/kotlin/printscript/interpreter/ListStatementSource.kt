@@ -1,6 +1,6 @@
 package printscript.interpreter
 
-import printscript.model.ast.statement.Statement
+import printscript.ast.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 

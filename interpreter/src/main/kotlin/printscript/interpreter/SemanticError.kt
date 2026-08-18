@@ -1,8 +1,6 @@
 package printscript.interpreter
 
-import printscript.model.ast.DeclaredType
-import printscript.model.ast.expression.BinaryOperator
-import printscript.model.ast.expression.UnaryOperator
+import printscript.ast.expression.UnaryOperator
 import printscript.model.source.SourceSpan
 
 sealed interface SemanticError {
@@ -25,21 +23,21 @@ sealed interface SemanticError {
 
     data class TypeMismatch(
         val name: String,
-        val expected: DeclaredType,
-        val actual: DeclaredType,
+        val expected: printscript.ast.DeclaredType,
+        val actual: printscript.ast.DeclaredType,
         override val span: SourceSpan,
     ) : SemanticError
 
     data class InvalidBinaryOperands(
-        val operator: BinaryOperator,
-        val left: DeclaredType,
-        val right: DeclaredType,
+        val operator: printscript.ast.expression.BinaryOperator,
+        val left: printscript.ast.DeclaredType,
+        val right: printscript.ast.DeclaredType,
         override val span: SourceSpan,
     ) : SemanticError
 
     data class InvalidUnaryOperand(
         val operator: UnaryOperator,
-        val operand: DeclaredType,
+        val operand: printscript.ast.DeclaredType,
         override val span: SourceSpan,
     ) : SemanticError
 
@@ -48,7 +46,7 @@ sealed interface SemanticError {
     ) : SemanticError
 
     data class UnsupportedBinaryOperator(
-        val operator: BinaryOperator,
+        val operator: printscript.ast.expression.BinaryOperator,
         override val span: SourceSpan,
     ) : SemanticError
 

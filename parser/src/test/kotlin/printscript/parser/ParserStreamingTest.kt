@@ -1,7 +1,8 @@
 package printscript.parser
 
-import printscript.model.ast.statement.AssignmentStatement
-import printscript.model.ast.statement.VariableDeclarationStatement
+
+import printscript.ast.statement.AssignmentStatement
+import printscript.ast.statement.VariableDeclarationStatement
 import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
 import kotlin.test.Test

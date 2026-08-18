@@ -6,8 +6,8 @@ import printscript.interpreter.output.ProgramOutput
 import printscript.interpreter.statements.StatementExecutor
 import printscript.interpreter.statements.StatementExecutorDispatcher
 import printscript.interpreter.value.RuntimeValue
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.statement.Statement
+import printscript.ast.expression.Expression
+import printscript.ast.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
@@ -47,7 +47,7 @@ internal class PrintScriptInterpreter(
         }
 
     private fun executeStatement(
-        statement: Statement,
+        statement: printscript.ast.statement.Statement,
     ): InterpretationResult? =
         when (
             val executionResult = statementExecutorDispatcher.dispatchExecutors(
@@ -63,7 +63,7 @@ internal class PrintScriptInterpreter(
         }
 
     override fun evaluate( //extraerlo a otra parte, no cumple solid, sacar esto y mandar de los executors al expressionevaluator
-        expression: Expression,
+        expression: printscript.ast.expression.Expression,
     ): ExecutionResult<RuntimeValue> {
         return expressionEvaluator.evaluateExpression(expression)
     }

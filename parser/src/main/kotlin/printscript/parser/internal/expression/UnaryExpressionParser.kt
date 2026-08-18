@@ -1,8 +1,8 @@
 package printscript.parser.internal.expression
 
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.expression.UnaryExpression
-import printscript.model.ast.expression.UnaryOperator
+import printscript.ast.expression.UnaryExpression
+import printscript.ast.expression.Expression
+import printscript.ast.expression.UnaryOperator
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.orReturn

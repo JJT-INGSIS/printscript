@@ -1,6 +1,6 @@
 package printscript.statement
 
-import printscript.model.ast.statement.Statement
+import printscript.ast.statement.Statement
 
 sealed interface StatementReadResult {
 

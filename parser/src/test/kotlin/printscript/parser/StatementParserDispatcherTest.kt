@@ -1,8 +1,8 @@
 package printscript.parser
 
-import printscript.model.ast.statement.AssignmentStatement
-import printscript.model.ast.statement.PrintlnStatement
-import printscript.model.ast.statement.VariableDeclarationStatement
+import printscript.ast.statement.AssignmentStatement
+import printscript.ast.statement.PrintlnStatement
+import printscript.ast.statement.VariableDeclarationStatement
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertIs

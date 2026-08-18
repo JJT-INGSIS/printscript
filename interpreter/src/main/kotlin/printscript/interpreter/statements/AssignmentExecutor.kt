@@ -1,5 +1,7 @@
 package printscript.interpreter.statements
 
+import printscript.ast.statement.AssignmentStatement
+import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
@@ -7,8 +9,6 @@ import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.orFail
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
-import printscript.model.ast.statement.AssignmentStatement
-import printscript.model.ast.statement.Statement
 
 internal class AssignmentExecutor : StatementExecutor {
 

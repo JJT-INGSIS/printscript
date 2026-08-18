@@ -1,14 +1,14 @@
 package printscript.interpreter.statements
 
+import printscript.ast.expression.Expression
+import printscript.ast.statement.Statement
+import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.statement.Statement
-import printscript.model.ast.statement.VariableDeclarationStatement
 
 internal class DeclarationExecutor : StatementExecutor {
 

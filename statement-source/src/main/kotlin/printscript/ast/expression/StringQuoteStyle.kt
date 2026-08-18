@@ -1,4 +1,4 @@
-package printscript.model.ast.expression
+package printscript.ast.expression
 
 enum class StringQuoteStyle {
     SINGLE,

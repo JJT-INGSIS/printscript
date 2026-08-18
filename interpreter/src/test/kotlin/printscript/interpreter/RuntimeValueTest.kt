@@ -1,8 +1,8 @@
 package printscript.interpreter
 
+import printscript.ast.DeclaredType
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.StringValue
-import printscript.model.ast.DeclaredType
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals

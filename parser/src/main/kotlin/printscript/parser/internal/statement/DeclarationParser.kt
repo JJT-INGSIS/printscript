@@ -1,10 +1,10 @@
 package printscript.parser.internal.statement
 
-import printscript.model.ast.DeclaredType
-import printscript.model.ast.Identifier
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.statement.Statement
-import printscript.model.ast.statement.VariableDeclarationStatement
+import printscript.ast.DeclaredType
+import printscript.ast.Identifier
+import printscript.ast.expression.Expression
+import printscript.ast.statement.Statement
+import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourceSpan
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult

@@ -1,11 +1,12 @@
 package printscript.parser.internal.expression
 
-import printscript.model.ast.expression.BinaryOperator
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.expression.UnaryOperator
+import printscript.ast.expression.Expression
+import printscript.ast.expression.BinaryOperator
+import printscript.ast.expression.UnaryOperator
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.token.TokenType
+
 
 private val ADDITIVE_OPERATORS: Map<TokenType, BinaryOperator> = mapOf(
     TokenType.PLUS to BinaryOperator.ADD,

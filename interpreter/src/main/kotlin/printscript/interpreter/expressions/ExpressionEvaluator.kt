@@ -11,45 +11,39 @@ import printscript.interpreter.orReturn
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
 import printscript.interpreter.value.StringValue
-import printscript.model.ast.expression.BinaryExpression
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.expression.GroupingExpression
-import printscript.model.ast.expression.IdentifierExpression
-import printscript.model.ast.expression.NumberLiteralExpression
-import printscript.model.ast.expression.StringLiteralExpression
-import printscript.model.ast.expression.UnaryExpression
-import printscript.model.ast.expression.UnaryOperator
+import printscript.ast.expression.BinaryExpression
+import printscript.ast.expression.UnaryOperator
 
 internal class ExpressionEvaluator(
     private val environment: Environment,
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
 ) {
 
-    fun evaluateExpression(expression: Expression): ExecutionResult<RuntimeValue> {
+    fun evaluateExpression(expression: printscript.ast.expression.Expression): ExecutionResult<RuntimeValue> {
         return when (expression) {
-            is NumberLiteralExpression -> evaluateNumberLiteral(expression)
-            is StringLiteralExpression -> evaluateStringLiteral(expression)
-            is GroupingExpression -> evaluateExpression(expression.expression)
-            is IdentifierExpression -> evaluateIdentifier(expression)
-            is UnaryExpression -> evaluateUnary(expression)
-            is BinaryExpression -> evaluateBinary(expression)
+            is printscript.ast.expression.NumberLiteralExpression -> evaluateNumberLiteral(expression)
+            is printscript.ast.expression.StringLiteralExpression -> evaluateStringLiteral(expression)
+            is printscript.ast.expression.GroupingExpression -> evaluateExpression(expression.expression)
+            is printscript.ast.expression.IdentifierExpression -> evaluateIdentifier(expression)
+            is printscript.ast.expression.UnaryExpression -> evaluateUnary(expression)
+            is printscript.ast.expression.BinaryExpression -> evaluateBinary(expression)
         }
     }
 
     private fun evaluateNumberLiteral(
-        expression: NumberLiteralExpression,
+        expression: printscript.ast.expression.NumberLiteralExpression,
     ): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(NumberValue(expression.value))
     }
 
     private fun evaluateStringLiteral(
-        expression: StringLiteralExpression,
+        expression: printscript.ast.expression.StringLiteralExpression,
     ): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(StringValue(expression.value))
     }
 
     private fun evaluateIdentifier(
-        expression: IdentifierExpression,
+        expression: printscript.ast.expression.IdentifierExpression,
     ): ExecutionResult<RuntimeValue> {
         val name: String = expression.identifier.value
 
@@ -64,7 +58,7 @@ internal class ExpressionEvaluator(
         return ExecutionResult.Success(value)
     }
 
-    private fun evaluateUnary(expression: UnaryExpression): ExecutionResult<RuntimeValue> {
+    private fun evaluateUnary(expression: printscript.ast.expression.UnaryExpression): ExecutionResult<RuntimeValue> {
         val operand: RuntimeValue = evaluateExpression(expression.operand).orReturn { return it }
 
         if (operand !is NumberValue) {

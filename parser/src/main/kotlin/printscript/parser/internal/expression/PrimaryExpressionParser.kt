@@ -1,12 +1,12 @@
 package printscript.parser.internal.expression
 
-import printscript.model.ast.Identifier
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.expression.GroupingExpression
-import printscript.model.ast.expression.IdentifierExpression
-import printscript.model.ast.expression.NumberLiteralExpression
-import printscript.model.ast.expression.StringLiteralExpression
-import printscript.model.ast.expression.StringQuoteStyle
+import printscript.ast.Identifier
+import printscript.ast.expression.Expression
+import printscript.ast.expression.GroupingExpression
+import printscript.ast.expression.IdentifierExpression
+import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.expression.StringLiteralExpression
+import printscript.ast.expression.StringQuoteStyle
 import printscript.model.source.SourceSpan
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult

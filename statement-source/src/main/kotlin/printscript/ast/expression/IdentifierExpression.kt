@@ -1,6 +1,6 @@
-package printscript.model.ast.expression
+package printscript.ast.expression
 
-import printscript.model.ast.Identifier
+import printscript.ast.Identifier
 import printscript.model.source.SourceSpan
 
 data class IdentifierExpression(

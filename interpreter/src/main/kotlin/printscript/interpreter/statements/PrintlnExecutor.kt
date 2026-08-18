@@ -1,12 +1,11 @@
 package printscript.interpreter.statements
 
+import printscript.ast.statement.PrintlnStatement
+import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
-import printscript.model.ast.statement.PrintlnStatement
-import printscript.model.ast.statement.Statement
 
 internal class PrintlnExecutor : StatementExecutor {
 

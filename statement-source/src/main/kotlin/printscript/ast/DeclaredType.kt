@@ -1,4 +1,4 @@
-package printscript.model.ast
+package printscript.ast
 
 enum class DeclaredType {
     NUMBER,
