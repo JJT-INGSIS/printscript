@@ -18,11 +18,11 @@ internal class ParsingStatementSource(
     private val context: ParsingContext,
 ) : StatementSource {
 
-    private var finished = false
+    private var finished = false // no es inmutable
 
     override fun nextStatement(): StatementReadResult {
         if (finished) {
-            return StatementReadResult.EndOfInput
+            return StatementReadResult.EndOfInput // hacer q tenga una misma firma a lo largo del proyecto (interpreter)
         }
 
         return when (val lookahead = context.peek()) {
@@ -31,7 +31,7 @@ internal class ParsingStatementSource(
             }
 
             is ParsingResult.Failure -> {
-                fail(lookahead.error)
+                fail(lookahead.error) // hacer un fail mas declarativo
             }
         }
     }
@@ -59,7 +59,7 @@ internal class ParsingStatementSource(
         }
     }
 
-    private fun fail(
+    private fun fail( // esto esta pinchi, arregalr todo esto
         error: ParseError,
     ): StatementReadResult.Failure {
         finished = true

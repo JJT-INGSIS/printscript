@@ -4,7 +4,7 @@ import printscript.interpreter.value.RuntimeValue
 
 class MapEnvironment : Environment {
 
-    private val bindings = mutableMapOf<String, VariableBinding>()
+    private val bindings = mutableMapOf<String, VariableBinding>() // hacerlo inmutable, o chequweear q no mutee en runtime
 
     override fun lookup(name: String): VariableBinding? {
         return bindings[name]

@@ -34,9 +34,9 @@ internal class PrintScriptInterpreter(
     }
 
     private fun interpretNext(
-        source: StatementSource,
+        statementSource: StatementSource,
     ): InterpretationResult? =
-        when (val readResult = source.nextStatement()) {
+        when (val readResult = statementSource.nextStatement()) {
             StatementReadResult.EndOfInput -> InterpretationResult.Success
 
             is StatementReadResult.Failure -> InterpretationResult.ParseFailure(
@@ -55,20 +55,20 @@ internal class PrintScriptInterpreter(
                 context = this,
             )
         ) {
-            is ExecutionResult.Success -> null
+            is ExecutionResult.Success -> null //cambiar null a algo mas declarativo
 
             is ExecutionResult.Failure -> InterpretationResult.SemanticFailure(
                 error = executionResult.error,
             )
         }
 
-    override fun evaluate(
+    override fun evaluate( //extraerlo a otra parte, no cumple solid, sacar esto y mandar de los executors al expressionevaluator
         expression: Expression,
     ): ExecutionResult<RuntimeValue> {
         return expressionEvaluator.evaluate(expression)
     }
 
-    override fun emit(
+    override fun emit( // cambiar nomrbe a mas declarativo
         line: String,
     ) {
         output.emit(line)
