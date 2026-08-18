@@ -1,6 +1,6 @@
 package printscript.parser.internal.context
 
-import printscript.model.ast.statement.Statement
+import printscript.ast.statement.Statement
 import printscript.parser.internal.ParsingResult
 import printscript.token.Token
 import printscript.token.TokenType

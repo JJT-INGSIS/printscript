@@ -1,6 +1,6 @@
 package printscript.interpreter.value
 
-import printscript.model.ast.DeclaredType
+import printscript.ast.DeclaredType
 import java.math.BigDecimal
 
 sealed interface RuntimeValue {

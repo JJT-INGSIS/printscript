@@ -1,6 +1,6 @@
 package printscript.interpreter.operations
 
-import printscript.model.ast.expression.BinaryOperator
+import printscript.ast.expression.BinaryOperator
 
 internal class BinaryOperationRegistry {
 

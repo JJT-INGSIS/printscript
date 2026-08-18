@@ -1,7 +1,7 @@
-package printscript.model.ast.statement
+package printscript.ast.statement
 
-import printscript.model.ast.Identifier
-import printscript.model.ast.expression.Expression
+import printscript.ast.Identifier
+import printscript.ast.expression.Expression
 import printscript.model.source.SourceSpan
 
 data class AssignmentStatement(

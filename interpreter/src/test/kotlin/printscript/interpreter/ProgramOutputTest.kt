@@ -1,6 +1,5 @@
 package printscript.interpreter
 
-import printscript.interpreter.InMemoryOutput
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

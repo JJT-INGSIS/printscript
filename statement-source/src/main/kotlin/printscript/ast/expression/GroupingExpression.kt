@@ -1,4 +1,4 @@
-package printscript.model.ast.expression
+package printscript.ast.expression
 
 import printscript.model.source.SourceSpan
 

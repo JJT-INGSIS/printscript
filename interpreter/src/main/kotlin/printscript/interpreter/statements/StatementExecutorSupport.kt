@@ -1,9 +1,9 @@
 package printscript.interpreter.statements
 
+import printscript.ast.DeclaredType
+import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
-import printscript.model.ast.DeclaredType
-import printscript.model.ast.statement.Statement
 import printscript.model.source.SourceSpan
 import kotlin.reflect.KClass
 

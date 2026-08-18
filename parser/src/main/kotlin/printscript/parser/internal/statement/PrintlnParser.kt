@@ -1,8 +1,8 @@
 package printscript.parser.internal.statement
 
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.statement.PrintlnStatement
-import printscript.model.ast.statement.Statement
+import printscript.ast.expression.Expression
+import printscript.ast.statement.PrintlnStatement
+import printscript.ast.statement.Statement
 import printscript.model.source.SourceSpan
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult

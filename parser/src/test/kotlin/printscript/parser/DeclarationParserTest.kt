@@ -1,8 +1,8 @@
 package printscript.parser
 
-import printscript.model.ast.DeclaredType
-import printscript.model.ast.expression.NumberLiteralExpression
-import printscript.model.ast.statement.VariableDeclarationStatement
+import printscript.ast.DeclaredType
+import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.TokenReadResult

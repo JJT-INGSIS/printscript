@@ -1,6 +1,6 @@
 package printscript.parser.internal.statement
 
-import printscript.model.ast.statement.Statement
+import printscript.ast.statement.Statement
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.orReturn
@@ -24,7 +24,7 @@ internal class StatementParserDispatcher(
     fun parseStatement(
         context: ParsingContext,
     ): ParsingResult<Statement> {
-        val mismatches = mutableListOf<StatementMismatch>() // inmutable?
+        val mismatches = mutableListOf<StatementMismatch>()
 
         for (parser in parsers) {
             when (val match = parser.matchInitialTokens(context)) {

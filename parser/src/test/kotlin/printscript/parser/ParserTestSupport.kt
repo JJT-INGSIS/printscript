@@ -1,8 +1,8 @@
 package printscript.parser
 
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.statement.AssignmentStatement
-import printscript.model.ast.statement.Statement
+import printscript.ast.expression.Expression
+import printscript.ast.statement.AssignmentStatement
+import printscript.ast.statement.Statement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError

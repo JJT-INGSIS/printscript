@@ -1,10 +1,10 @@
 package printscript.interpreter.operations
 
+import printscript.ast.expression.BinaryOperator
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
-import printscript.model.ast.expression.BinaryOperator
 import printscript.model.source.SourceSpan
 import java.math.BigDecimal
 

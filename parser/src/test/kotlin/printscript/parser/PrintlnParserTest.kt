@@ -1,9 +1,9 @@
 package printscript.parser
 
-import printscript.model.ast.expression.BinaryExpression
-import printscript.model.ast.expression.BinaryOperator
-import printscript.model.ast.expression.StringLiteralExpression
-import printscript.model.ast.statement.PrintlnStatement
+import printscript.ast.statement.PrintlnStatement
+import printscript.ast.expression.BinaryExpression
+import printscript.ast.expression.BinaryOperator
+import printscript.ast.expression.StringLiteralExpression
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.TokenReadResult

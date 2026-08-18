@@ -1,7 +1,7 @@
 package printscript.parser
 
-import printscript.model.ast.expression.NumberLiteralExpression
-import printscript.model.ast.statement.AssignmentStatement
+import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.statement.AssignmentStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.TokenReadResult

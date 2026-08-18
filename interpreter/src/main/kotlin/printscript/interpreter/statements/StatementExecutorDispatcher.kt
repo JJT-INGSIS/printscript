@@ -1,9 +1,9 @@
 package printscript.interpreter.statements
 
+import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
-import printscript.model.ast.statement.Statement
 
 internal class StatementExecutorDispatcher(
     private val executors: List<StatementExecutor>,

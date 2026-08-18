@@ -1,9 +1,9 @@
 package printscript.interpreter
 
+import printscript.ast.DeclaredType
 import printscript.interpreter.environment.MapEnvironment
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.value.NumberValue
-import printscript.model.ast.DeclaredType
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals

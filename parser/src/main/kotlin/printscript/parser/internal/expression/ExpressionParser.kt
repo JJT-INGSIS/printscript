@@ -1,11 +1,11 @@
 package printscript.parser.internal.expression
 
-import printscript.model.ast.expression.Expression
+import printscript.ast.expression.Expression
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 
 internal interface ExpressionParser {
-    fun parse( //cambiar a parseExpression
+    fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression>
 }

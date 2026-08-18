@@ -1,5 +1,13 @@
 package printscript.interpreter
 
+import printscript.ast.DeclaredType
+import printscript.ast.Identifier
+import printscript.ast.expression.Expression
+import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.statement.AssignmentStatement
+import printscript.ast.statement.PrintlnStatement
+import printscript.ast.statement.Statement
+import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.environment.Environment
 import printscript.interpreter.statements.AssignmentExecutor
 import printscript.interpreter.statements.DeclarationExecutor
@@ -7,14 +15,6 @@ import printscript.interpreter.statements.PrintlnExecutor
 import printscript.interpreter.statements.StatementExecutor
 import printscript.interpreter.statements.StatementExecutorDispatcher
 import printscript.interpreter.value.RuntimeValue
-import printscript.model.ast.DeclaredType
-import printscript.model.ast.Identifier
-import printscript.model.ast.expression.Expression
-import printscript.model.ast.expression.NumberLiteralExpression
-import printscript.model.ast.statement.AssignmentStatement
-import printscript.model.ast.statement.PrintlnStatement
-import printscript.model.ast.statement.Statement
-import printscript.model.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import java.math.BigDecimal
