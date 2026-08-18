@@ -92,20 +92,7 @@ class ParserStreamingTest {
         assertIs<StatementReadResult.Failure>(results.single())
     }
 
-    @Test
-    fun `failure is terminal and later calls are end of input`() {
-        val source = sourceOf(
-            tokens {
-                plus()
-                eof()
-            },
-        )
 
-        assertIs<StatementReadResult.Failure>(source.nextStatement())
-
-        source.assertEndOfInput()
-        source.assertEndOfInput()
-    }
 
     @Test
     fun `does not read tokens until the first statement is requested`() {

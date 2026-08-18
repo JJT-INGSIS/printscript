@@ -20,7 +20,7 @@ internal class PrimaryExpressionParser(
         (ParsingContext) -> ParsingResult<Expression>,
 ) : ExpressionParser {
 
-    override fun parse(
+    override fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression> {
         val token = context.peek()

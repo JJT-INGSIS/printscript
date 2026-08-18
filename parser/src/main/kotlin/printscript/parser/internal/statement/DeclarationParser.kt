@@ -33,7 +33,7 @@ internal class DeclarationParser(
         return matcher.matchInitialTokens(lookahead)
     }
 
-    override fun parse(
+    override fun parseStatement(
         context: ParsingContext,
     ): ParsingResult<Statement> {
         val components = readComponents(context)
@@ -104,7 +104,7 @@ internal class DeclarationParser(
         context.expect(TokenType.ASSIGN)
             .orReturn { return it }
 
-        val expression = expressionParser.parse(context)
+        val expression = expressionParser.parseExpression(context)
             .orReturn { return it }
 
         return ParsingResult.Success(expression)

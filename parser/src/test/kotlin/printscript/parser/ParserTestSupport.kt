@@ -222,16 +222,23 @@ internal fun parseAll(
     val source = sourceOf(tokens)
     val results = mutableListOf<StatementReadResult>()
 
-    var result = source.nextStatement()
+    while (true) {
+        when (val result = source.nextStatement()) {
+            is StatementReadResult.Success -> {
+                results.add(result)
+            }
 
-    while (result != StatementReadResult.EndOfInput) {
-        results.add(result)
-        result = source.nextStatement()
+            is StatementReadResult.Failure -> {
+                results.add(result)
+                return results.toList()
+            }
+
+            StatementReadResult.EndOfInput -> {
+                return results.toList()
+            }
+        }
     }
-
-    return results
 }
-
 // --------------------------------------------------------------------
 // Aserciones sobre resultados
 // --------------------------------------------------------------------

@@ -26,17 +26,17 @@ internal class RecursiveDescentExpressionParser : ExpressionParser {
 
     private val topLevelParser: ExpressionParser = buildPrecedenceChain()
 
-    override fun parse(
+    override fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression> {
-        return topLevelParser.parse(context)
+        return topLevelParser.parseExpression(context)
     }
 
     private fun buildPrecedenceChain(): ExpressionParser {
         // Los paréntesis vuelven al tope de la cadena, no a este nivel:
         // adentro de "(...)" tienen que valer todas las precedencias.
         val primaryParser = PrimaryExpressionParser(
-            parseNestedExpression = this::parse,
+            parseNestedExpression = this::parseExpression,
         )
 
         val unaryParser = UnaryExpressionParser(

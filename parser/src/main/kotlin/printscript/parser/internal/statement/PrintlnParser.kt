@@ -28,7 +28,7 @@ internal class PrintlnParser(
         return matcher.matchInitialTokens(lookahead)
     }
 
-    override fun parse(
+    override fun parseStatement(
         context: ParsingContext,
     ): ParsingResult<Statement> {
         val components = readComponents(context)
@@ -46,7 +46,7 @@ internal class PrintlnParser(
         context.expect(TokenType.LEFT_PAREN)
             .orReturn { return it }
 
-        val argument = expressionParser.parse(context)
+        val argument = expressionParser.parseExpression(context)
             .orReturn { return it }
 
         context.expect(TokenType.RIGHT_PAREN)

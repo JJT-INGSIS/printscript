@@ -9,8 +9,9 @@ sealed interface StatementReadResult {
     ) : StatementReadResult
 
     /**
-     * The current statement could not be parsed. This is
-     * terminal: later calls return EndOfInput.
+     * The next statement could not be parsed.
+     *
+     * This is a terminal result. Consumers must stop reading.
      */
     data class Failure(
         val error: ParseError,

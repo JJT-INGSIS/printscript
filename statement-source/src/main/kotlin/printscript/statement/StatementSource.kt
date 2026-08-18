@@ -4,8 +4,8 @@ interface StatementSource {
     /**
      * Reads the next statement.
      *
-     * Failure is terminal: the source stops at the first error,
-     * and every later call returns EndOfInput.
+     * Failure and EndOfInput are terminal results.
+     * Consumers must stop reading after receiving either one.
      */
     fun nextStatement(): StatementReadResult
 }

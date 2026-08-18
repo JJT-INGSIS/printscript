@@ -29,7 +29,7 @@ internal class AssignmentParser(
         return matcher.matchInitialTokens(lookahead)
     }
 
-    override fun parse(
+    override fun parseStatement(
         context: ParsingContext,
     ): ParsingResult<Statement> {
         val components = readComponents(context)
@@ -47,7 +47,7 @@ internal class AssignmentParser(
         context.expect(assignmentTokens)
             .orReturn { return it }
 
-        val expression = expressionParser.parse(context)
+        val expression = expressionParser.parseExpression(context)
             .orReturn { return it }
 
         val semicolonToken = context.expect(TokenType.SEMICOLON)
