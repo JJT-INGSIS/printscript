@@ -9,7 +9,7 @@ internal class StatementExecutorDispatcher(
     private val executors: List<StatementExecutor>,
 ) {
 
-    fun execute(
+    fun dispatchExecutors(
         statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {

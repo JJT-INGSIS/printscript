@@ -37,7 +37,7 @@ internal class AssignmentExecutor : StatementExecutor {
         ensureTypeMatches(assignment, binding, value)
             .orReturn { return it }
 
-        return update(assignment, value, context)
+        return updateVariable(assignment, value, context)
     }
 
     private fun resolveBinding(
@@ -67,7 +67,7 @@ internal class AssignmentExecutor : StatementExecutor {
             span = assignment.span,
         )
 
-    private fun update(
+    private fun updateVariable(
         assignment: AssignmentStatement,
         value: RuntimeValue,
         context: ExecutionContext,

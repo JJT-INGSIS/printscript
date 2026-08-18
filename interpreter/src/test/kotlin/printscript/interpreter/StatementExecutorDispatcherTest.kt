@@ -89,7 +89,7 @@ class StatementExecutorDispatcherTest {
             ),
         )
 
-        val result = dispatcher.execute(
+        val result = dispatcher.dispatchExecutors(
             statement = printlnStatement,
             context = executionContext(),
         )
@@ -131,7 +131,7 @@ class StatementExecutorDispatcherTest {
             executors = listOf(executor),
         )
 
-        val result = dispatcher.execute(
+        val result = dispatcher.dispatchExecutors(
             statement = printlnStatement,
             context = executionContext(),
         )
@@ -153,7 +153,7 @@ class StatementExecutorDispatcherTest {
             executors = emptyList(),
         )
 
-        val result = dispatcher.execute(
+        val result = dispatcher.dispatchExecutors(
             statement = printlnStatement,
             context = executionContext(),
         )

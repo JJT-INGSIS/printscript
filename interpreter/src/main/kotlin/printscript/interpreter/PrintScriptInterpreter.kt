@@ -29,7 +29,7 @@ internal class PrintScriptInterpreter(
         source: StatementSource,
     ): InterpretationResult {
         while (true) {
-            return interpretNext(source) ?: continue
+            return interpretNext(source) ?: continue // esta raro esto
         }
     }
 
@@ -50,7 +50,7 @@ internal class PrintScriptInterpreter(
         statement: Statement,
     ): InterpretationResult? =
         when (
-            val executionResult = statementExecutorDispatcher.execute(
+            val executionResult = statementExecutorDispatcher.dispatchExecutors(
                 statement = statement,
                 context = this,
             )
@@ -65,7 +65,7 @@ internal class PrintScriptInterpreter(
     override fun evaluate( //extraerlo a otra parte, no cumple solid, sacar esto y mandar de los executors al expressionevaluator
         expression: Expression,
     ): ExecutionResult<RuntimeValue> {
-        return expressionEvaluator.evaluate(expression)
+        return expressionEvaluator.evaluateExpression(expression)
     }
 
     override fun emit( // cambiar nomrbe a mas declarativo
