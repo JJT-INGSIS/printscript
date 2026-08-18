@@ -6,6 +6,7 @@ import printscript.interpreter.environment.Environment
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.operations.BinaryOperation
 import printscript.interpreter.operations.BinaryOperationRegistry
+import printscript.interpreter.orFail
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
@@ -24,11 +25,11 @@ internal class ExpressionEvaluator(
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
 ) {
 
-    fun evaluate(expression: Expression): ExecutionResult<RuntimeValue> {
+    fun evaluateExpression(expression: Expression): ExecutionResult<RuntimeValue> {
         return when (expression) {
             is NumberLiteralExpression -> evaluateNumberLiteral(expression)
             is StringLiteralExpression -> evaluateStringLiteral(expression)
-            is GroupingExpression -> evaluate(expression.expression)
+            is GroupingExpression -> evaluateExpression(expression.expression)
             is IdentifierExpression -> evaluateIdentifier(expression)
             is UnaryExpression -> evaluateUnary(expression)
             is BinaryExpression -> evaluateBinary(expression)
@@ -52,31 +53,19 @@ internal class ExpressionEvaluator(
     ): ExecutionResult<RuntimeValue> {
         val name: String = expression.identifier.value
 
-        val binding: VariableBinding? = environment.lookup(name)
-        if (binding == null) {
-            return ExecutionResult.Failure(
-                SemanticError.UndeclaredVariable(
-                    name = name,
-                    span = expression.span,
-                ),
-            )
-        }
+        val binding: VariableBinding = environment.lookup(name)
+            .orFail { SemanticError.UndeclaredVariable(name = name, span = expression.span) }
+            .orReturn { return it }
 
-        val value: RuntimeValue? = binding.value
-        if (value == null) {
-            return ExecutionResult.Failure(
-                SemanticError.UninitializedVariable(
-                    name = name,
-                    span = expression.span,
-                ),
-            )
-        }
+        val value: RuntimeValue = binding.value
+            .orFail { SemanticError.UninitializedVariable(name = name, span = expression.span) }
+            .orReturn { return it }
 
         return ExecutionResult.Success(value)
     }
 
     private fun evaluateUnary(expression: UnaryExpression): ExecutionResult<RuntimeValue> {
-        val operand: RuntimeValue = evaluate(expression.operand).orReturn { return it }
+        val operand: RuntimeValue = evaluateExpression(expression.operand).orReturn { return it }
 
         if (operand !is NumberValue) {
             return ExecutionResult.Failure(
@@ -87,28 +76,23 @@ internal class ExpressionEvaluator(
                 ),
             )
         }
-
         val result: NumberValue = when (expression.operator) {
             UnaryOperator.PLUS -> operand
             UnaryOperator.MINUS -> NumberValue(operand.value.negate())
         }
-
         return ExecutionResult.Success(result)
     }
 
     private fun evaluateBinary(expression: BinaryExpression): ExecutionResult<RuntimeValue> {
-        val left: RuntimeValue = evaluate(expression.left).orReturn { return it }
-        val right: RuntimeValue = evaluate(expression.right).orReturn { return it }
+        val left: RuntimeValue = evaluateExpression(expression.left).orReturn { return it }
+        val right: RuntimeValue = evaluateExpression(expression.right).orReturn { return it }
 
-        val operation: BinaryOperation? = operations.forOperator(expression.operator)
-        if (operation == null) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedBinaryOperator(
-                    operator = expression.operator,
-                    span = expression.operatorSpan,
-                ),
-            )
-        }
+        val operation: BinaryOperation = operations.forOperator(expression.operator) ?: return ExecutionResult.Failure(
+            SemanticError.UnsupportedBinaryOperator(
+                operator = expression.operator,
+                span = expression.operatorSpan,
+            ),
+        )
 
         return operation.apply(left, right, expression.operatorSpan)
     }

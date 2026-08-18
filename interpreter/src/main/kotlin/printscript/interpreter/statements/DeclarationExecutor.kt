@@ -22,44 +22,51 @@ internal class DeclarationExecutor : StatementExecutor {
         statement: Statement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
-        if (statement !is VariableDeclarationStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(
-                    span = statement.span,
-                ),
-            )
-        }
+        val declaration: VariableDeclarationStatement =
+            statementOrFail(statement, VariableDeclarationStatement::class)
+                .orReturn { return it }
 
-        val name: String = statement.identifier.value
+        ensureNotAlreadyDeclared(declaration, context)
+            .orReturn { return it }
 
-        if (isAlreadyDeclared(name, context)) {
+        val initialValue: RuntimeValue? =
+            evaluateInitializer(declaration, context)
+                .orReturn { return it }
+
+        return declare(declaration, initialValue, context)
+    }
+
+    private fun ensureNotAlreadyDeclared(
+        declaration: VariableDeclarationStatement,
+        context: ExecutionContext,
+    ): ExecutionResult<Unit> {
+        val name: String = declaration.identifier.value
+
+        if (context.environment.lookup(name) != null) {
             return ExecutionResult.Failure(
                 SemanticError.AlreadyDeclaredVariable(
                     name = name,
-                    span = statement.span,
+                    span = declaration.span,
                 ),
             )
         }
-
-        val initialValue: RuntimeValue? =
-            evaluateInitializer(statement, context)
-                .orReturn { return it }
-
-        val binding = VariableBinding(
-            type = statement.declaredType,
-            value = initialValue,
-        )
-
-        context.environment.declare(name, binding)
 
         return ExecutionResult.Success(Unit)
     }
 
-    private fun isAlreadyDeclared(
-        name: String,
+    private fun declare(
+        declaration: VariableDeclarationStatement,
+        value: RuntimeValue?,
         context: ExecutionContext,
-    ): Boolean {
-        return context.environment.lookup(name) != null
+    ): ExecutionResult<Unit> {
+        val binding = VariableBinding(
+            type = declaration.declaredType,
+            value = value,
+        )
+
+        context.environment.declare(declaration.identifier.value, binding)
+
+        return ExecutionResult.Success(Unit)
     }
 
     private fun evaluateInitializer(
@@ -73,16 +80,12 @@ internal class DeclarationExecutor : StatementExecutor {
             context.evaluate(initializer)
                 .orReturn { return it }
 
-        if (value.type != statement.declaredType) {
-            return ExecutionResult.Failure(
-                SemanticError.TypeMismatch(
-                    name = statement.identifier.value,
-                    expected = statement.declaredType,
-                    actual = value.type,
-                    span = statement.span,
-                ),
-            )
-        }
+        ensureType(
+            name = statement.identifier.value,
+            expected = statement.declaredType,
+            actual = value.type,
+            span = statement.span,
+        ).orReturn { return it }
 
         return ExecutionResult.Success(value)
     }

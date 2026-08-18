@@ -24,7 +24,7 @@ internal class StatementParserDispatcher(
     fun parseStatement(
         context: ParsingContext,
     ): ParsingResult<Statement> {
-        val mismatches = mutableListOf<StatementMismatch>()
+        val mismatches = mutableListOf<StatementMismatch>() // inmutable?
 
         for (parser in parsers) {
             when (val match = parser.matchInitialTokens(context)) {

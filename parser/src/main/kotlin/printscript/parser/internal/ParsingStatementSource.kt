@@ -9,8 +9,14 @@ internal class ParsingStatementSource(
     private val context: ParsingContext,
 ) : StatementSource {
 
+    private var finished = false // no es inmutable
+
     override fun nextStatement(): StatementReadResult {
-        return when (val result = context.peek()) {
+        if (finished) {
+            return StatementReadResult.EndOfInput // hacer q tenga una misma firma a lo largo del proyecto (interpreter)
+        }
+
+        return when (val lookahead = context.peek()) {
             is ParsingResult.Success -> {
                 if (result.value.type == TokenType.EOF) {
                     StatementReadResult.EndOfInput
@@ -19,10 +25,18 @@ internal class ParsingStatementSource(
                 }
             }
 
-            is ParsingResult.Failure ->
-                StatementReadResult.Failure(
-                    error = result.error,
-                )
+            is ParsingResult.Failure -> {
+                fail(lookahead.error) // hacer un fail mas declarativo
+            }
+        }
+    }
+
+    private fun parseOrEnd(
+        token: Token,
+    ): StatementReadResult {
+        if (token.type == TokenType.EOF) {
+            finished = true
+            return StatementReadResult.EndOfInput
         }
     }
 
@@ -38,5 +52,12 @@ internal class ParsingStatementSource(
                     error = result.error,
                 )
         }
+    }
+
+    private fun fail( // esto esta pinchi, arregalr todo esto
+        error: ParseError,
+    ): StatementReadResult.Failure {
+        finished = true
+        return StatementReadResult.Failure(error)
     }
 }

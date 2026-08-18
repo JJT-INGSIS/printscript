@@ -5,7 +5,7 @@ import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
 
 internal interface ExpressionParser {
-    fun parseExpression(
+    fun parse( //cambiar a parseExpression
         context: ParsingContext,
     ): ParsingResult<Expression>
 }
