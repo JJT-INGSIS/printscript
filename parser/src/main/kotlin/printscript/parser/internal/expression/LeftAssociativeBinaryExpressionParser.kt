@@ -13,10 +13,10 @@ internal class LeftAssociativeBinaryExpressionParser(
     private val operators: Map<TokenType, BinaryOperator>,
 ) : ExpressionParser {
 
-    override fun parse(
+    override fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression> {
-        var left = operandParser.parse(context)
+        var left = operandParser.parseExpression(context)
             .orReturn { return it }
 
         while (true) {
@@ -29,7 +29,7 @@ internal class LeftAssociativeBinaryExpressionParser(
             val operatorToken = context.consume()
                 .orReturn { return it }
 
-            val right = operandParser.parse(context)
+            val right = operandParser.parseExpression(context)
                 .orReturn { return it }
 
             left = BinaryExpression(

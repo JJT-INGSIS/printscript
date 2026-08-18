@@ -10,7 +10,7 @@ internal interface StatementParser {
         lookahead: TokenLookahead,
     ): StatementMatch
 
-    fun parse(
+    fun parseStatement(
         context: ParsingContext,
     ): ParsingResult<Statement>
 }

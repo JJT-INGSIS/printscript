@@ -46,7 +46,7 @@ internal class DefaultParsingContext(
     }
 
     override fun parseStatement(): ParsingResult<Statement> {
-        return statementParserDispatcher.parse(this)
+        return statementParserDispatcher.parseStatement(this)
     }
 
     private fun TokenReadResult.toParsingResult(): ParsingResult<Token> {

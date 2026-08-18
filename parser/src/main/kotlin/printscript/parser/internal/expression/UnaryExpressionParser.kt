@@ -13,19 +13,19 @@ internal class UnaryExpressionParser(
     private val operators: Map<TokenType, UnaryOperator>,
 ) : ExpressionParser {
 
-    override fun parse(
+    override fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression> {
         val nextToken = context.peek()
             .orReturn { return it }
 
         val operator = operators[nextToken.type]
-            ?: return operandParser.parse(context)
+            ?: return operandParser.parseExpression(context)
 
         val operatorToken = context.consume()
             .orReturn { return it }
 
-        val operand = parse(context)
+        val operand = parseExpression(context)
             .orReturn { return it }
 
         return ParsingResult.Success(
