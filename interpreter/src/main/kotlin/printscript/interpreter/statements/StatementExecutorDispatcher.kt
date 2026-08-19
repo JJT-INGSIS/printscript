@@ -4,18 +4,21 @@ import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
+import printscript.interpreter.environment.Environment
 
 internal class StatementExecutorDispatcher(
-    private val executors: List<StatementExecutor>,
+    executors: List<StatementExecutor>,
 ) {
 
-    fun dispatchExecutors(
+    private val executors: List<StatementExecutor> = executors.toList()
+
+    fun dispatchToExecutor(
         statement: Statement,
         context: ExecutionContext,
-    ): ExecutionResult<Unit> {
+    ): ExecutionResult<Environment> {
         for (executor in executors) {
-            if (executor.supports(statement)) {
-                return executor.execute(
+            if (executor.supportsStatement(statement)) {
+                return executor.executeStatement(
                     statement = statement,
                     context = context,
                 )

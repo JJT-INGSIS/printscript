@@ -1,21 +1,16 @@
 package printscript.interpreter.environment
 
-import printscript.interpreter.value.RuntimeValue
+class MapEnvironment private constructor(
+    private val bindings: Map<String, VariableBinding>,
+) : Environment {
 
-class MapEnvironment : Environment {
+    constructor() : this(emptyMap())
 
-    private val bindings = mutableMapOf<String, VariableBinding>() // hacerlo inmutable, o chequweear q no mutee en runtime
-
-    override fun lookup(name: String): VariableBinding? {
+    override fun lookupBinding(name: String): VariableBinding? {
         return bindings[name]
     }
 
-    override fun declare(name: String, binding: VariableBinding) {
-        bindings[name] = binding
-    }
-
-    override fun update(name: String, value: RuntimeValue) {
-        val current = bindings[name] ?: return
-        bindings[name] = VariableBinding(current.type, value)
+    override fun withBinding(name: String, binding: VariableBinding): Environment {
+        return MapEnvironment(bindings + (name to binding))
     }
 }

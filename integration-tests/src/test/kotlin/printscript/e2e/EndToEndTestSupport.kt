@@ -49,7 +49,7 @@ private class RecordingProgramOutput : ProgramOutput {
     private val emittedLines =
         mutableListOf<String>()
 
-    override fun emit(
+    override fun writeLine(
         line: String,
     ) {
         emittedLines.add(line)

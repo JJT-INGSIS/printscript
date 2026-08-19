@@ -6,65 +6,62 @@ import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
+import printscript.interpreter.environment.Environment
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
+import printscript.interpreter.value.verifyAccepts
 
 internal class DeclarationExecutor : StatementExecutor {
 
-    override fun supports(
+    override fun supportsStatement(
         statement: Statement,
     ): Boolean {
         return statement is VariableDeclarationStatement
     }
 
-    override fun execute(
+    override fun executeStatement(
         statement: Statement,
         context: ExecutionContext,
-    ): ExecutionResult<Unit> {
-        val declaration: VariableDeclarationStatement =
-            statementOrFail(statement, VariableDeclarationStatement::class)
-                .orReturn { return it }
-
-        ensureNotAlreadyDeclared(declaration, context)
-            .orReturn { return it }
-
-        val initialValue: RuntimeValue? =
-            evaluateInitializer(declaration, context)
-                .orReturn { return it }
-
-        return declare(declaration, initialValue, context)
-    }
-
-    private fun ensureNotAlreadyDeclared(
-        declaration: VariableDeclarationStatement,
-        context: ExecutionContext,
-    ): ExecutionResult<Unit> {
-        val name: String = declaration.identifier.value
-
-        if (context.environment.lookup(name) != null) {
+    ): ExecutionResult<Environment> {
+        if (statement !is VariableDeclarationStatement) {
             return ExecutionResult.Failure(
-                SemanticError.AlreadyDeclaredVariable(
-                    name = name,
-                    span = declaration.span,
-                ),
+                SemanticError.UnsupportedStatement(span = statement.span),
             )
         }
 
-        return ExecutionResult.Success(Unit)
+        ensureNotAlreadyDeclared(statement, context)
+            .orReturn { return it }
+
+        val initialValue: RuntimeValue? =
+            evaluateInitializer(statement, context)
+                .orReturn { return it }
+
+        return ExecutionResult.Success(
+            context.environment.withBinding(
+                name = statement.identifier.value,
+                binding = VariableBinding(
+                    type = statement.declaredType,
+                    value = initialValue,
+                ),
+            ),
+        )
     }
 
-    private fun declare(
-        declaration: VariableDeclarationStatement,
-        value: RuntimeValue?,
+    private fun ensureNotAlreadyDeclared(
+        statement: VariableDeclarationStatement,
         context: ExecutionContext,
     ): ExecutionResult<Unit> {
-        val binding = VariableBinding(
-            type = declaration.declaredType,
-            value = value,
-        )
+        val name: String = statement.identifier.value
 
-        context.environment.declare(declaration.identifier.value, binding)
+        if (context.environment.lookupBinding(name) != null) {
+            return ExecutionResult.Failure(
+                SemanticError.AlreadyDeclaredVariable(
+                    name = name,
+                    span = statement.span,
+                ),
+            )
+        }
 
         return ExecutionResult.Success(Unit)
     }
@@ -77,13 +74,12 @@ internal class DeclarationExecutor : StatementExecutor {
             ?: return ExecutionResult.Success(null)
 
         val value: RuntimeValue =
-            context.evaluate(initializer)
+            context.evaluateExpression(initializer)
                 .orReturn { return it }
 
-        ensureType(
-            name = statement.identifier.value,
-            expected = statement.declaredType,
-            actual = value.type,
+        statement.declaredType.verifyAccepts(
+            value = value,
+            variableName = statement.identifier.value,
             span = statement.span,
         ).orReturn { return it }
 

@@ -9,6 +9,7 @@ import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.environment.Environment
+import printscript.interpreter.environment.MapEnvironment
 import printscript.interpreter.statements.AssignmentExecutor
 import printscript.interpreter.statements.DeclarationExecutor
 import printscript.interpreter.statements.PrintlnExecutor
@@ -30,6 +31,8 @@ class StatementExecutorDispatcherTest {
         start = SourcePosition(1, 1, 0),
         end = SourcePosition(1, 1, 0),
     )
+
+    private val resultingEnvironment: Environment = MapEnvironment()
 
     private val numberExpression =
         NumberLiteralExpression(
@@ -69,16 +72,19 @@ class StatementExecutorDispatcherTest {
         val nonMatchingExecutor =
             RecordingExecutor(
                 supportsStatement = false,
+                result = ExecutionResult.Success(resultingEnvironment),
             )
 
         val selectedExecutor =
             RecordingExecutor(
                 supportsStatement = true,
+                result = ExecutionResult.Success(resultingEnvironment),
             )
 
         val executorAfterMatch =
             RecordingExecutor(
                 supportsStatement = true,
+                result = ExecutionResult.Success(resultingEnvironment),
             )
 
         val dispatcher = StatementExecutorDispatcher(
@@ -89,13 +95,13 @@ class StatementExecutorDispatcherTest {
             ),
         )
 
-        val result = dispatcher.dispatchExecutors(
+        val result = dispatcher.dispatchToExecutor(
             statement = printlnStatement,
             context = executionContext(),
         )
 
         assertEquals(
-            expected = ExecutionResult.Success(Unit),
+            expected = ExecutionResult.Success(resultingEnvironment),
             actual = result,
         )
 
@@ -117,7 +123,7 @@ class StatementExecutorDispatcherTest {
 
     @Test
     fun `dispatcher propagates executor failure`() {
-        val expectedFailure: ExecutionResult<Unit> =
+        val expectedFailure: ExecutionResult<Environment> =
             ExecutionResult.Failure(
                 SemanticError.DivisionByZero(anySpan),
             )
@@ -131,7 +137,7 @@ class StatementExecutorDispatcherTest {
             executors = listOf(executor),
         )
 
-        val result = dispatcher.dispatchExecutors(
+        val result = dispatcher.dispatchToExecutor(
             statement = printlnStatement,
             context = executionContext(),
         )
@@ -153,7 +159,7 @@ class StatementExecutorDispatcherTest {
             executors = emptyList(),
         )
 
-        val result = dispatcher.dispatchExecutors(
+        val result = dispatcher.dispatchToExecutor(
             statement = printlnStatement,
             context = executionContext(),
         )
@@ -175,33 +181,33 @@ class StatementExecutorDispatcherTest {
         val printlnExecutor = PrintlnExecutor()
 
         assertTrue(
-            declarationExecutor.supports(declarationStatement),
+            declarationExecutor.supportsStatement(declarationStatement),
         )
         assertFalse(
-            declarationExecutor.supports(assignmentStatement),
+            declarationExecutor.supportsStatement(assignmentStatement),
         )
         assertFalse(
-            declarationExecutor.supports(printlnStatement),
+            declarationExecutor.supportsStatement(printlnStatement),
         )
 
         assertTrue(
-            assignmentExecutor.supports(assignmentStatement),
+            assignmentExecutor.supportsStatement(assignmentStatement),
         )
         assertFalse(
-            assignmentExecutor.supports(declarationStatement),
+            assignmentExecutor.supportsStatement(declarationStatement),
         )
         assertFalse(
-            assignmentExecutor.supports(printlnStatement),
+            assignmentExecutor.supportsStatement(printlnStatement),
         )
 
         assertTrue(
-            printlnExecutor.supports(printlnStatement),
+            printlnExecutor.supportsStatement(printlnStatement),
         )
         assertFalse(
-            printlnExecutor.supports(declarationStatement),
+            printlnExecutor.supportsStatement(declarationStatement),
         )
         assertFalse(
-            printlnExecutor.supports(assignmentStatement),
+            printlnExecutor.supportsStatement(assignmentStatement),
         )
     }
 
@@ -209,25 +215,29 @@ class StatementExecutorDispatcherTest {
         return UnusedExecutionContext
     }
 
+    /**
+     * Ejecutor falso que solo registra si lo llamaron y devuelve lo que
+     * le indiquen. Sirve para probar a quién elige el dispatcher, sin
+     * depender de la lógica de ningún ejecutor real.
+     */
     private class RecordingExecutor(
         private val supportsStatement: Boolean,
-        private val result: ExecutionResult<Unit> =
-            ExecutionResult.Success(Unit),
+        private val result: ExecutionResult<Environment>,
     ) : StatementExecutor {
 
         var executionCount: Int = 0
             private set
 
-        override fun supports(
+        override fun supportsStatement(
             statement: Statement,
         ): Boolean {
             return supportsStatement
         }
 
-        override fun execute(
+        override fun executeStatement(
             statement: Statement,
             context: ExecutionContext,
-        ): ExecutionResult<Unit> {
+        ): ExecutionResult<Environment> {
             executionCount++
 
             return result
@@ -241,7 +251,7 @@ class StatementExecutorDispatcherTest {
                 "Dispatcher test must not access the environment",
             )
 
-        override fun evaluate(
+        override fun evaluateExpression(
             expression: Expression,
         ): ExecutionResult<RuntimeValue> {
             fail(
@@ -249,11 +259,11 @@ class StatementExecutorDispatcherTest {
             )
         }
 
-        override fun emit(
+        override fun writeLine(
             line: String,
         ) {
             fail(
-                "Dispatcher test must not emit output",
+                "Dispatcher test must not write output",
             )
         }
     }
