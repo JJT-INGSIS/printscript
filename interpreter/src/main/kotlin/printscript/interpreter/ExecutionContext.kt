@@ -1,14 +1,14 @@
 package printscript.interpreter
 
+import printscript.ast.expression.Expression
 import printscript.interpreter.environment.Environment
 import printscript.interpreter.value.RuntimeValue
-import printscript.ast.expression.Expression
 
 interface ExecutionContext {
 
     val environment: Environment
 
-    fun evaluate(expression: printscript.ast.expression.Expression): ExecutionResult<RuntimeValue>
+    fun evaluateExpression(expression: Expression): ExecutionResult<RuntimeValue>
 
-    fun emit(line: String)
+    fun writeLine(line: String)
 }

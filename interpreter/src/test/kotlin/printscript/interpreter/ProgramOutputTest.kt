@@ -9,8 +9,8 @@ class ProgramOutputTest {
     fun `the in memory output keeps the lines in order`() {
         val output = InMemoryOutput()
 
-        output.emit("uno")
-        output.emit("dos")
+        output.writeLine("uno")
+        output.writeLine("dos")
 
         assertEquals(listOf("uno", "dos"), output.lines())
     }

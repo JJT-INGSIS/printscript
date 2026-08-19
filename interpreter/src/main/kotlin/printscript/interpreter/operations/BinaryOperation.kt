@@ -6,7 +6,7 @@ import printscript.model.source.SourceSpan
 
 internal interface BinaryOperation {
 
-    fun apply(
+    fun applyToOperands(
         left: RuntimeValue,
         right: RuntimeValue,
         span: SourceSpan,

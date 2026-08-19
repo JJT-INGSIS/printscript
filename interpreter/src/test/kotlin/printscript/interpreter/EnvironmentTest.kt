@@ -12,35 +12,62 @@ import kotlin.test.assertNull
 
 class EnvironmentTest {
 
+    private val uninitializedNumber =
+        VariableBinding(
+            type = DeclaredType.NUMBER,
+            value = null,
+        )
+
+    private val five =
+        VariableBinding(
+            type = DeclaredType.NUMBER,
+            value = NumberValue(BigDecimal("5")),
+        )
+
     @Test
     fun `an undeclared variable does not exist`() {
-        val environment = MapEnvironment()
-        assertNull(environment.lookup("x"))
+        assertNull(MapEnvironment().lookupBinding("x"))
     }
 
     @Test
-    fun `a variable can be declared without initializing it`() {
+    fun `a variable can be added without initializing it`() {
         val environment = MapEnvironment()
-        environment.declare("x", VariableBinding(DeclaredType.NUMBER, null))
+            .withBinding("x", uninitializedNumber)
 
-        val binding = environment.lookup("x")
+        val binding = environment.lookupBinding("x")
 
         assertNotNull(binding)
-        assertEquals(DeclaredType.NUMBER, binding.type)
+
+        assertEquals(
+            expected = DeclaredType.NUMBER,
+            actual = binding.type,
+        )
+
         assertNull(binding.value)
     }
 
     @Test
-    fun `updating preserves the declared type`() {
-        val environment = MapEnvironment()
-        environment.declare("x", VariableBinding(DeclaredType.NUMBER, null))
+    fun `adding a binding leaves the original environment untouched`() {
+        val original = MapEnvironment()
 
-        environment.update("x", NumberValue(BigDecimal("5")))
+        original.withBinding("x", uninitializedNumber)
 
-        val binding = environment.lookup("x")
+        assertNull(original.lookupBinding("x"))
+    }
 
-        assertNotNull(binding)
-        assertEquals(DeclaredType.NUMBER, binding.type)
-        assertEquals(NumberValue(BigDecimal("5")), binding.value)
+    @Test
+    fun `replacing a binding does not affect the previous environment`() {
+        val declared = MapEnvironment()
+            .withBinding("x", uninitializedNumber)
+
+        val initialized = declared
+            .withBinding("x", five)
+
+        assertNull(declared.lookupBinding("x")?.value)
+
+        assertEquals(
+            expected = NumberValue(BigDecimal("5")),
+            actual = initialized.lookupBinding("x")?.value,
+        )
     }
 }

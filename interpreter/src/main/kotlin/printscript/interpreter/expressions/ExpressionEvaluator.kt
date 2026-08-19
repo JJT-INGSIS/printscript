@@ -1,65 +1,90 @@
 package printscript.interpreter.expressions
 
+import printscript.ast.expression.BinaryExpression
+import printscript.ast.expression.Expression
+import printscript.ast.expression.GroupingExpression
+import printscript.ast.expression.IdentifierExpression
+import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.expression.StringLiteralExpression
+import printscript.ast.expression.UnaryExpression
+import printscript.ast.expression.UnaryOperator
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.environment.Environment
 import printscript.interpreter.environment.VariableBinding
 import printscript.interpreter.operations.BinaryOperation
 import printscript.interpreter.operations.BinaryOperationRegistry
-import printscript.interpreter.orFail
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
 import printscript.interpreter.value.StringValue
-import printscript.ast.expression.BinaryExpression
-import printscript.ast.expression.UnaryOperator
+
 
 internal class ExpressionEvaluator(
-    private val environment: Environment,
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
 ) {
 
-    fun evaluateExpression(expression: printscript.ast.expression.Expression): ExecutionResult<RuntimeValue> {
+    fun evaluateExpression(
+        expression: Expression,
+        environment: Environment,
+    ): ExecutionResult<RuntimeValue> {
         return when (expression) {
-            is printscript.ast.expression.NumberLiteralExpression -> evaluateNumberLiteral(expression)
-            is printscript.ast.expression.StringLiteralExpression -> evaluateStringLiteral(expression)
-            is printscript.ast.expression.GroupingExpression -> evaluateExpression(expression.expression)
-            is printscript.ast.expression.IdentifierExpression -> evaluateIdentifier(expression)
-            is printscript.ast.expression.UnaryExpression -> evaluateUnary(expression)
-            is printscript.ast.expression.BinaryExpression -> evaluateBinary(expression)
+            is NumberLiteralExpression -> evaluateNumberLiteral(expression)
+            is StringLiteralExpression -> evaluateStringLiteral(expression)
+            is GroupingExpression -> evaluateExpression(expression.expression, environment)
+            is IdentifierExpression -> evaluateIdentifier(expression, environment)
+            is UnaryExpression -> evaluateUnary(expression, environment)
+            is BinaryExpression -> evaluateBinary(expression, environment)
         }
     }
 
     private fun evaluateNumberLiteral(
-        expression: printscript.ast.expression.NumberLiteralExpression,
+        expression: NumberLiteralExpression,
     ): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(NumberValue(expression.value))
     }
 
     private fun evaluateStringLiteral(
-        expression: printscript.ast.expression.StringLiteralExpression,
+        expression: StringLiteralExpression,
     ): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(StringValue(expression.value))
     }
 
+    /**
+     * Una variable puede fallar de dos maneras distintas, y el error
+     * tiene que decir cuál: no existe, o existe pero nunca recibió valor.
+     */
     private fun evaluateIdentifier(
-        expression: printscript.ast.expression.IdentifierExpression,
+        expression: IdentifierExpression,
+        environment: Environment,
     ): ExecutionResult<RuntimeValue> {
         val name: String = expression.identifier.value
 
-        val binding: VariableBinding = environment.lookup(name)
-            .orFail { SemanticError.UndeclaredVariable(name = name, span = expression.span) }
-            .orReturn { return it }
+        val binding: VariableBinding = environment.lookupBinding(name)
+            ?: return ExecutionResult.Failure(
+                SemanticError.UndeclaredVariable(
+                    name = name,
+                    span = expression.span,
+                ),
+            )
 
         val value: RuntimeValue = binding.value
-            .orFail { SemanticError.UninitializedVariable(name = name, span = expression.span) }
-            .orReturn { return it }
+            ?: return ExecutionResult.Failure(
+                SemanticError.UninitializedVariable(
+                    name = name,
+                    span = expression.span,
+                ),
+            )
 
         return ExecutionResult.Success(value)
     }
 
-    private fun evaluateUnary(expression: printscript.ast.expression.UnaryExpression): ExecutionResult<RuntimeValue> {
-        val operand: RuntimeValue = evaluateExpression(expression.operand).orReturn { return it }
+    private fun evaluateUnary(
+        expression: UnaryExpression,
+        environment: Environment,
+    ): ExecutionResult<RuntimeValue> {
+        val operand: RuntimeValue = evaluateExpression(expression.operand, environment)
+            .orReturn { return it }
 
         if (operand !is NumberValue) {
             return ExecutionResult.Failure(
@@ -70,24 +95,37 @@ internal class ExpressionEvaluator(
                 ),
             )
         }
+
         val result: NumberValue = when (expression.operator) {
             UnaryOperator.PLUS -> operand
             UnaryOperator.MINUS -> NumberValue(operand.value.negate())
         }
+
         return ExecutionResult.Success(result)
     }
 
-    private fun evaluateBinary(expression: BinaryExpression): ExecutionResult<RuntimeValue> {
-        val left: RuntimeValue = evaluateExpression(expression.left).orReturn { return it }
-        val right: RuntimeValue = evaluateExpression(expression.right).orReturn { return it }
+    private fun evaluateBinary(
+        expression: BinaryExpression,
+        environment: Environment,
+    ): ExecutionResult<RuntimeValue> {
+        val left: RuntimeValue = evaluateExpression(expression.left, environment)
+            .orReturn { return it }
 
-        val operation: BinaryOperation = operations.forOperator(expression.operator) ?: return ExecutionResult.Failure(
-            SemanticError.UnsupportedBinaryOperator(
-                operator = expression.operator,
-                span = expression.operatorSpan,
-            ),
+        val right: RuntimeValue = evaluateExpression(expression.right, environment)
+            .orReturn { return it }
+
+        val operation: BinaryOperation = operations.forOperator(expression.operator)
+            ?: return ExecutionResult.Failure(
+                SemanticError.UnsupportedBinaryOperator(
+                    operator = expression.operator,
+                    span = expression.operatorSpan,
+                ),
+            )
+
+        return operation.applyToOperands(
+            left = left,
+            right = right,
+            span = expression.operatorSpan,
         )
-
-        return operation.apply(left, right, expression.operatorSpan)
     }
 }

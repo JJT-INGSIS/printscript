@@ -8,7 +8,7 @@ import printscript.model.source.SourceSpan
 
 internal class AddOperation : BinaryOperation {
 
-    override fun apply(
+    override fun applyToOperands(
         left: RuntimeValue,
         right: RuntimeValue,
         span: SourceSpan,

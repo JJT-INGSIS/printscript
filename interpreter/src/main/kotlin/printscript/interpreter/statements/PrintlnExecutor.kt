@@ -4,38 +4,35 @@ import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
+import printscript.interpreter.SemanticError
+import printscript.interpreter.environment.Environment
 import printscript.interpreter.orReturn
 import printscript.interpreter.value.RuntimeValue
 
 internal class PrintlnExecutor : StatementExecutor {
 
-    override fun supports(
+    override fun supportsStatement(
         statement: Statement,
     ): Boolean {
         return statement is PrintlnStatement
     }
 
-    override fun execute(
+    override fun executeStatement(
         statement: Statement,
         context: ExecutionContext,
-    ): ExecutionResult<Unit> {
-        val printlnStatement: PrintlnStatement =
-            statementOrFail(statement, PrintlnStatement::class)
-                .orReturn { return it }
+    ): ExecutionResult<Environment> {
+        if (statement !is PrintlnStatement) {
+            return ExecutionResult.Failure(
+                SemanticError.UnsupportedStatement(span = statement.span),
+            )
+        }
 
         val value: RuntimeValue =
-            context.evaluate(printlnStatement.argument)
+            context.evaluateExpression(statement.argument)
                 .orReturn { return it }
 
-        return emit(value, context)
-    }
+        context.writeLine(value.asText())
 
-    private fun emit(
-        value: RuntimeValue,
-        context: ExecutionContext,
-    ): ExecutionResult<Unit> {
-        context.emit(value.asText())
-
-        return ExecutionResult.Success(Unit)
+        return ExecutionResult.Success(context.environment)
     }
 }

@@ -12,7 +12,7 @@ internal abstract class ArithmeticOperation(
     private val operator: BinaryOperator,
 ) : BinaryOperation {
 
-    final override fun apply(
+    final override fun applyToOperands(
         left: RuntimeValue,
         right: RuntimeValue,
         span: SourceSpan,

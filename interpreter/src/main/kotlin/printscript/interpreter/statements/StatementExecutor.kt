@@ -3,13 +3,14 @@ package printscript.interpreter.statements
 import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionContext
 import printscript.interpreter.ExecutionResult
+import printscript.interpreter.environment.Environment
 
 internal interface StatementExecutor {
 
-    fun supports(statement: Statement): Boolean
+    fun supportsStatement(statement: Statement): Boolean
 
-    fun execute(
+    fun executeStatement(
         statement: Statement,
         context: ExecutionContext,
-    ): ExecutionResult<Unit>
+    ): ExecutionResult<Environment>
 }
