@@ -1,11 +1,12 @@
 package printscript.parser.internal
 
+import printscript.parser.internal.context.ParsingContext
 import printscript.statement.ParseError
 
 internal sealed interface ParsingResult<out T> {
-
-    data class Success<T>(
+    data class Success<out T>(
         val value: T,
+        val resultingContext: ParsingContext,
     ) : ParsingResult<T>
 
     data class Failure(
@@ -15,8 +16,8 @@ internal sealed interface ParsingResult<out T> {
 
 internal inline fun <T> ParsingResult<T>.orReturn(
     onFailure: (ParsingResult.Failure) -> Nothing,
-): T =
+): ParsingResult.Success<T> =
     when (this) {
-        is ParsingResult.Success -> value
+        is ParsingResult.Success -> this
         is ParsingResult.Failure -> onFailure(this)
     }
