@@ -5,7 +5,7 @@ import printscript.interpreter.PrintScriptInterpreterFactory
 import printscript.interpreter.output.ProgramOutput
 import printscript.lexer.PrintScriptLexerFactory
 import printscript.parser.PrintScriptParserFactory
-import java.io.StringReader
+import printscript.source.SourceReaderFactory
 
 internal data class ProgramExecution(
     val result: InterpretationResult,
@@ -24,24 +24,23 @@ internal fun runV1Script(
             output = output,
         )
 
-    return StringReader(sourceCode).use { reader ->
-        val tokens = lexer.tokenize(
-            inputSource = reader,
-        )
+    val tokens = lexer.tokenize(
+        sourceReader =
+            SourceReaderFactory.fromString(sourceCode),
+    )
 
-        val statements = parser.parse(
-            tokens = tokens,
-        )
+    val statements = parser.parse(
+        tokens = tokens,
+    )
 
-        val result = interpreter.interpret(
-            source = statements,
-        )
+    val result = interpreter.interpret(
+        source = statements,
+    )
 
-        ProgramExecution(
-            result = result,
-            outputLines = output.lines(),
-        )
-    }
+    return ProgramExecution(
+        result = result,
+        outputLines = output.lines(),
+    )
 }
 
 private class RecordingProgramOutput : ProgramOutput {

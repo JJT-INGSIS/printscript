@@ -1,6 +1,7 @@
 package printscript.lexer.internal.scanner
 
 import printscript.lexer.assertLexicalError
+import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.model.source.SourcePosition
@@ -37,10 +38,12 @@ class SymbolScannerTest {
                 message = "Scanner should accept '$symbolLexeme'",
             )
 
-            val token = scanner.scan(
+            val scanResult = scanner.scan(
                 cursor = cursor,
                 startingCharacter = startingCharacter,
-            ).assertSuccessToken()
+            )
+
+            val token = scanResult.assertSuccessToken()
 
             assertEquals(
                 expected = expectedTokenType,
@@ -60,10 +63,7 @@ class SymbolScannerTest {
                 actual = token.span,
             )
 
-            assertEquals(
-                expected = 'r',
-                actual = cursor.peek(),
-            )
+            scanResult.resultingCursor.assertNextCharacter('r')
         }
     }
 
@@ -89,10 +89,13 @@ class SymbolScannerTest {
         val unexpectedCharacter = '@'
         val cursor = cursorFor("@remaining")
 
-        val error = scanner.scan(
+        val scanResult = scanner.scan(
             cursor = cursor,
             startingCharacter = unexpectedCharacter,
-        ).assertLexicalError<LexicalError.UnexpectedCharacter>()
+        )
+
+        val error =
+            scanResult.assertLexicalError<LexicalError.UnexpectedCharacter>()
 
         assertEquals(
             expected = unexpectedCharacter,
@@ -107,9 +110,6 @@ class SymbolScannerTest {
             actual = error.span,
         )
 
-        assertEquals(
-            expected = 'r',
-            actual = cursor.peek(),
-        )
+        scanResult.resultingCursor.assertNextCharacter('r')
     }
 }

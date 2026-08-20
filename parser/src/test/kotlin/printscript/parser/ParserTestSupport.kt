@@ -19,6 +19,7 @@ import kotlin.test.assertIs
 private const val FIRST_LINE = 1
 private const val FIRST_COLUMN = 1
 private const val SEPARATOR_LENGTH = 1
+private const val RESULT_INDEX_INCREMENT = 1
 
 // --------------------------------------------------------------------
 // Construcción de tokens
@@ -33,7 +34,7 @@ private const val SEPARATOR_LENGTH = 1
  */
 internal class TokenListBuilder {
 
-    private val results = mutableListOf<TokenReadResult>()
+    private val results = mutableListOf<TokenReadFixture>()
 
     private var nextColumn = FIRST_COLUMN
     private var nextOffset = 0L
@@ -43,8 +44,8 @@ internal class TokenListBuilder {
         lexeme: String = "",
     ): TokenListBuilder {
         results.add(
-            TokenReadResult.Success(
-                Token(
+            TokenReadFixture.Success(
+                token = Token(
                     type = type,
                     lexeme = lexeme,
                     span = advanceSpan(lexeme),
@@ -59,8 +60,8 @@ internal class TokenListBuilder {
         character: Char = '@',
     ): TokenListBuilder {
         results.add(
-            TokenReadResult.Failure(
-                LexicalError.UnexpectedCharacter(
+            TokenReadFixture.Failure(
+                error = LexicalError.UnexpectedCharacter(
                     character = character,
                     span = advanceSpan(character.toString()),
                 ),
@@ -104,7 +105,7 @@ internal class TokenListBuilder {
 
     fun eof() = token(TokenType.EOF, "")
 
-    fun build(): List<TokenReadResult> {
+    fun build(): List<TokenReadFixture> {
         return results.toList()
     }
 
@@ -135,7 +136,7 @@ internal class TokenListBuilder {
 
 internal fun tokens(
     block: TokenListBuilder.() -> Unit,
-): List<TokenReadResult> {
+): List<TokenReadFixture> {
     val builder = TokenListBuilder()
     builder.block()
 
@@ -146,21 +147,43 @@ internal fun tokens(
 // Dobles de prueba
 // --------------------------------------------------------------------
 
-internal class FakeTokenSource(
-    private val results: List<TokenReadResult>,
-) : TokenSource {
+internal sealed interface TokenReadFixture {
 
-    private var nextResultIndex = 0
+    data class Success(
+        val token: Token,
+    ) : TokenReadFixture
+
+    data class Failure(
+        val error: LexicalError,
+    ) : TokenReadFixture
+}
+
+internal class FakeTokenSource(
+    private val results: List<TokenReadFixture>,
+    private var nextResultIndex: Int = 0,
+) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
         if (nextResultIndex >= results.size) {
-            return endOfInputToken()
+            return endOfInputToken(
+                remainingSource = this,
+            )
         }
 
-        return results[nextResultIndex++]
+        val resultIndex = nextResultIndex
+        nextResultIndex += RESULT_INDEX_INCREMENT
+
+        return results[resultIndex].toTokenReadResult(
+            remainingSource = FakeTokenSource(
+                results = results,
+                nextResultIndex = nextResultIndex,
+            ),
+        )
     }
 
-    private fun endOfInputToken(): TokenReadResult {
+    private fun endOfInputToken(
+        remainingSource: TokenSource,
+    ): TokenReadResult {
         val position = SourcePosition(
             line = FIRST_LINE,
             column = FIRST_COLUMN,
@@ -168,7 +191,7 @@ internal class FakeTokenSource(
         )
 
         return TokenReadResult.Success(
-            Token(
+            token = Token(
                 type = TokenType.EOF,
                 lexeme = "",
                 span = SourceSpan(
@@ -176,7 +199,28 @@ internal class FakeTokenSource(
                     end = position,
                 ),
             ),
+            remainingSource = remainingSource,
         )
+    }
+}
+
+private fun TokenReadFixture.toTokenReadResult(
+    remainingSource: TokenSource,
+): TokenReadResult {
+    return when (this) {
+        is TokenReadFixture.Success -> {
+            TokenReadResult.Success(
+                token = token,
+                remainingSource = remainingSource,
+            )
+        }
+
+        is TokenReadFixture.Failure -> {
+            TokenReadResult.Failure(
+                error = error,
+                remainingSource = remainingSource,
+            )
+        }
     }
 }
 
@@ -184,17 +228,60 @@ internal class FakeTokenSource(
  * Cuenta cuántos tokens se le pidieron a la fuente, para verificar que
  * el parser lea de a uno y solo cuando hace falta.
  */
-internal class CountingTokenSource(
+internal class CountingTokenSource private constructor(
     private val source: TokenSource,
+    private val readCounter: ReadCounter,
 ) : TokenSource {
 
-    var readCount: Int = 0
-        private set
+    internal constructor(
+        source: TokenSource,
+    ) : this(
+        source = source,
+        readCounter = ReadCounter(),
+    )
+
+    val readCount: Int
+        get() = readCounter.value
 
     override fun nextToken(): TokenReadResult {
-        readCount++
+        readCounter.recordRead()
 
-        return source.nextToken()
+        val result = source.nextToken()
+
+        return result.withRemainingSource(
+            remainingSource = CountingTokenSource(
+                source = result.remainingSource,
+                readCounter = readCounter,
+            ),
+        )
+    }
+}
+
+private class ReadCounter {
+
+    var value: Int = 0
+        private set
+
+    fun recordRead() {
+        value += RESULT_INDEX_INCREMENT
+    }
+}
+
+private fun TokenReadResult.withRemainingSource(
+    remainingSource: TokenSource,
+): TokenReadResult {
+    return when (this) {
+        is TokenReadResult.Success -> {
+            copy(
+                remainingSource = remainingSource,
+            )
+        }
+
+        is TokenReadResult.Failure -> {
+            copy(
+                remainingSource = remainingSource,
+            )
+        }
     }
 }
 
@@ -203,7 +290,7 @@ internal class CountingTokenSource(
 // --------------------------------------------------------------------
 
 internal fun sourceOf(
-    tokens: List<TokenReadResult>,
+    tokens: List<TokenReadFixture>,
 ): StatementSource {
     return PrintScriptParserFactory.createV1().parse(
         tokens = FakeTokenSource(tokens),
@@ -211,13 +298,13 @@ internal fun sourceOf(
 }
 
 internal fun parseFirst(
-    tokens: List<TokenReadResult>,
+    tokens: List<TokenReadFixture>,
 ): StatementReadResult {
     return sourceOf(tokens).nextStatement()
 }
 
 internal fun parseAll(
-    tokens: List<TokenReadResult>,
+    tokens: List<TokenReadFixture>,
 ): List<StatementReadResult> {
     val source = sourceOf(tokens)
     val results = mutableListOf<StatementReadResult>()
@@ -295,7 +382,7 @@ internal fun StatementSource.assertEndOfInput() {
 // --------------------------------------------------------------------
 
 internal inline fun <reified T : Statement> statementOf(
-    tokens: List<TokenReadResult>,
+    tokens: List<TokenReadFixture>,
 ): T {
     return parseFirst(tokens).assertStatement()
 }

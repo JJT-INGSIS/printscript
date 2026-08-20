@@ -1,6 +1,7 @@
 package printscript.lexer.internal.scanner
 
 import printscript.lexer.assertInitialSingleLineSpan
+import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.token.TokenType
@@ -100,10 +101,12 @@ class IdentifierOrKeywordScannerTest {
         val sourceText = "$lexeme$followingCharacter"
         val cursor = cursorFor(sourceText)
 
-        val scannedToken = scanner.scan(
+        val scanResult = scanner.scan(
             cursor = cursor,
             startingCharacter = lexeme.first(),
-        ).assertSuccessToken()
+        )
+
+        val scannedToken = scanResult.assertSuccessToken()
 
         assertEquals(
             expected = expectedTokenType,
@@ -120,9 +123,8 @@ class IdentifierOrKeywordScannerTest {
             consumedCharacterCount = lexeme.length,
         )
 
-        assertEquals(
-            expected = followingCharacter,
-            actual = cursor.peek(),
+        scanResult.resultingCursor.assertNextCharacter(
+            followingCharacter,
         )
     }
 }

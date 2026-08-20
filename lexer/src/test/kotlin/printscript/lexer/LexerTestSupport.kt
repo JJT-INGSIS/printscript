@@ -1,33 +1,63 @@
 package printscript.lexer
 
-import printscript.lexer.internal.ReaderCharacterCursor
+import printscript.lexer.internal.CharacterCursor
+import printscript.lexer.internal.CharacterReadResult
+import printscript.lexer.internal.scanner.TokenScanResult
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.source.SourceChunk
+import printscript.source.SourceChunkReadResult
+import printscript.source.SourceReader
+import printscript.source.SourceReaderFactory
 import printscript.token.LexicalError
 import printscript.token.Token
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource
 import printscript.token.TokenType
-import java.io.Reader
-import java.io.StringReader
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+
+private const val INITIAL_CHUNK_INDEX = 0
+private const val CHUNK_INDEX_INCREMENT = 1
+private const val TOKEN_INDEX_INCREMENT = 1
 
 internal data class ExpectedToken(
     val tokenType: TokenType,
     val lexeme: String,
 )
 
+internal fun sourceReaderFor(
+    sourceText: String,
+): SourceReader {
+    return SourceReaderFactory.fromString(sourceText)
+}
+
 internal fun cursorFor(
     sourceText: String,
-): ReaderCharacterCursor {
-    return ReaderCharacterCursor(
-        inputReader = StringReader(sourceText),
+): CharacterCursor {
+    return CharacterCursor.initial(
+        sourceReader = sourceReaderFor(sourceText),
     )
 }
 
-internal fun TokenReadResult.assertSuccessToken(): Token {
-    return assertIs<TokenReadResult.Success>(this).token
+internal fun cursorForChunks(
+    vararg chunks: String,
+): CharacterCursor {
+    return CharacterCursor.initial(
+        sourceReader = ChunkListSourceReader(
+            chunks = chunks.toList(),
+        ),
+    )
+}
+
+internal fun TokenScanResult.assertSuccessToken(): Token {
+    return assertIs<TokenScanResult.Success>(this).token
+}
+
+internal inline fun <reified T : LexicalError> TokenScanResult.assertLexicalError(): T {
+    val failure = assertIs<TokenScanResult.Failure>(this)
+
+    return assertIs<T>(failure.error)
 }
 
 internal inline fun <reified T : LexicalError> TokenReadResult.assertLexicalError(): T {
@@ -38,28 +68,55 @@ internal inline fun <reified T : LexicalError> TokenReadResult.assertLexicalErro
 
 internal fun TokenSource.assertNextToken(
     expectedToken: ExpectedToken,
-): Token {
-    val actualToken = nextToken().assertSuccessToken()
+): TokenReadResult.Success {
+    val result = assertIs<TokenReadResult.Success>(nextToken())
 
     assertEquals(
         expected = expectedToken.tokenType,
-        actual = actualToken.type,
+        actual = result.token.type,
     )
 
     assertEquals(
         expected = expectedToken.lexeme,
-        actual = actualToken.lexeme,
+        actual = result.token.lexeme,
     )
 
-    return actualToken
+    return result
 }
 
-internal fun TokenSource.assertProducesTokenSequence(
+internal tailrec fun TokenSource.assertProducesTokenSequence(
     expectedTokens: List<ExpectedToken>,
+    currentTokenIndex: Int = 0,
 ) {
-    for (expectedToken in expectedTokens) {
-        assertNextToken(expectedToken)
+    if (currentTokenIndex >= expectedTokens.size) {
+        return
     }
+
+    val result = assertNextToken(
+        expectedToken = expectedTokens[currentTokenIndex],
+    )
+
+    result.remainingSource.assertProducesTokenSequence(
+        expectedTokens = expectedTokens,
+        currentTokenIndex =
+            currentTokenIndex +
+                TOKEN_INDEX_INCREMENT,
+    )
+}
+
+internal fun CharacterCursor.assertNextCharacter(
+    expectedCharacter: Char,
+) {
+    val result = assertIs<CharacterReadResult.Success>(peek())
+
+    assertEquals(
+        expected = expectedCharacter,
+        actual = result.character,
+    )
+}
+
+internal fun CharacterCursor.assertEndOfInput() {
+    assertIs<CharacterReadResult.EndOfInput>(peek())
 }
 
 internal fun assertInitialSingleLineSpan(
@@ -85,34 +142,32 @@ internal fun assertInitialSingleLineSpan(
     )
 }
 
-internal class TrackingReader(
-    sourceText: String,
-) : Reader() {
+internal data object FailingSourceReader : SourceReader {
 
-    private val delegateReader = StringReader(sourceText)
-
-    var readCalls: Int = 0
-        private set
-
-    var wasClosed: Boolean = false
-        private set
-
-    override fun read(
-        destination: CharArray,
-        destinationOffset: Int,
-        requestedCharacterCount: Int,
-    ): Int {
-        readCalls++
-
-        return delegateReader.read(
-            destination,
-            destinationOffset,
-            requestedCharacterCount,
-        )
+    override fun readChunk(): SourceChunkReadResult {
+        error("Source must not be read")
     }
+}
 
-    override fun close() {
-        wasClosed = true
-        delegateReader.close()
+private data class ChunkListSourceReader(
+    private val chunks: List<String>,
+    private val currentChunkIndex: Int = INITIAL_CHUNK_INDEX,
+) : SourceReader {
+
+    override fun readChunk(): SourceChunkReadResult {
+        if (currentChunkIndex >= chunks.size) {
+            return SourceChunkReadResult.EndOfInput
+        }
+
+        return SourceChunkReadResult.Success(
+            chunk = SourceChunk(
+                content = chunks[currentChunkIndex],
+            ),
+            remainingReader = copy(
+                currentChunkIndex =
+                    currentChunkIndex +
+                        CHUNK_INDEX_INCREMENT,
+            ),
+        )
     }
 }

@@ -1,18 +1,17 @@
 package printscript.lexer.internal.scanner
 
-import printscript.lexer.internal.ReaderCharacterCursor
+import printscript.lexer.internal.CharacterCursor
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
-import printscript.token.TokenReadResult
 
 internal class TokenScannerDispatcher(
     private val scanners: List<TokenScanner>,
 ) {
 
     fun scan(
-        cursor: ReaderCharacterCursor,
+        cursor: CharacterCursor,
         currentCharacter: Char,
-    ): TokenReadResult {
+    ): TokenScanResult {
         for (scanner in scanners) {
             if (scanner.canStartWith(currentCharacter)) {
                 return scanner.scan(
@@ -29,21 +28,22 @@ internal class TokenScannerDispatcher(
     }
 
     private fun createUnexpectedCharacterFailure(
-        cursor: ReaderCharacterCursor,
+        cursor: CharacterCursor,
         character: Char,
-    ): TokenReadResult.Failure {
+    ): TokenScanResult.Failure {
         val startPosition = cursor.position
+        val resultingCursor =
+            cursor.advance().resultingCursor
 
-        cursor.advance()
-
-        return TokenReadResult.Failure(
-            LexicalError.UnexpectedCharacter(
+        return TokenScanResult.Failure(
+            error = LexicalError.UnexpectedCharacter(
                 character = character,
                 span = SourceSpan(
                     start = startPosition,
-                    end = cursor.position,
+                    end = resultingCursor.position,
                 ),
             ),
+            resultingCursor = resultingCursor,
         )
     }
 }

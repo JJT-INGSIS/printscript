@@ -17,6 +17,7 @@ rootProject.name = "printscript"
 
 include(
     "common",
+    "source-reader",
     "lexer",
     "parser",
     "token-source",

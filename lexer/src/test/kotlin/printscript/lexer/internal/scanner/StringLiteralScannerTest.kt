@@ -1,6 +1,8 @@
 package printscript.lexer.internal.scanner
 
+import printscript.lexer.assertEndOfInput
 import printscript.lexer.assertLexicalError
+import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.model.source.SourcePosition
@@ -10,7 +12,6 @@ import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class StringLiteralScannerTest {
@@ -63,10 +64,12 @@ class StringLiteralScannerTest {
         for (stringLiteral in validStringLiterals) {
             val cursor = cursorFor(stringLiteral)
 
-            val token = scanner.scan(
+            val scanResult = scanner.scan(
                 cursor = cursor,
                 startingCharacter = stringLiteral.first(),
-            ).assertSuccessToken()
+            )
+
+            val token = scanResult.assertSuccessToken()
 
             assertEquals(
                 expected = TokenType.STRING_LITERAL,
@@ -83,7 +86,7 @@ class StringLiteralScannerTest {
                 consumedCharacterCount = stringLiteral.length,
             )
 
-            assertNull(cursor.peek())
+            scanResult.resultingCursor.assertEndOfInput()
         }
     }
 
@@ -93,10 +96,12 @@ class StringLiteralScannerTest {
         val expectedStringLexeme = "\"hello\""
         val cursor = cursorFor(sourceText)
 
-        val token = scanner.scan(
+        val scanResult = scanner.scan(
             cursor = cursor,
             startingCharacter = sourceText.first(),
-        ).assertSuccessToken()
+        )
+
+        val token = scanResult.assertSuccessToken()
 
         assertEquals(
             expected = TokenType.STRING_LITERAL,
@@ -113,10 +118,7 @@ class StringLiteralScannerTest {
             consumedCharacterCount = expectedStringLexeme.length,
         )
 
-        assertEquals(
-            expected = 'r',
-            actual = cursor.peek(),
-        )
+        scanResult.resultingCursor.assertNextCharacter('r')
     }
 
     @Test
@@ -130,10 +132,13 @@ class StringLiteralScannerTest {
             val openingQuote = sourceText.first()
             val cursor = cursorFor(sourceText)
 
-            val error = scanner.scan(
+            val scanResult = scanner.scan(
                 cursor = cursor,
                 startingCharacter = openingQuote,
-            ).assertLexicalError<LexicalError.UnterminatedString>()
+            )
+
+            val error =
+                scanResult.assertLexicalError<LexicalError.UnterminatedString>()
 
             assertEquals(
                 expected = openingQuote,
@@ -145,7 +150,7 @@ class StringLiteralScannerTest {
                 consumedCharacterCount = sourceText.length,
             )
 
-            assertNull(cursor.peek())
+            scanResult.resultingCursor.assertEndOfInput()
         }
     }
 
@@ -166,10 +171,13 @@ class StringLiteralScannerTest {
             val openingQuote = case.sourceText.first()
             val cursor = cursorFor(case.sourceText)
 
-            val error = scanner.scan(
+            val scanResult = scanner.scan(
                 cursor = cursor,
                 startingCharacter = openingQuote,
-            ).assertLexicalError<LexicalError.UnterminatedString>()
+            )
+
+            val error =
+                scanResult.assertLexicalError<LexicalError.UnterminatedString>()
 
             assertEquals(
                 expected = openingQuote,
@@ -182,9 +190,8 @@ class StringLiteralScannerTest {
                     case.sourceText.indexOf(case.expectedLineBreak),
             )
 
-            assertEquals(
-                expected = case.expectedLineBreak,
-                actual = cursor.peek(),
+            scanResult.resultingCursor.assertNextCharacter(
+                case.expectedLineBreak,
             )
         }
     }
