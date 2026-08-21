@@ -2,30 +2,63 @@ package printscript.parser.internal.context
 
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource
-import printscript.token.TokenType
 
-internal class TokenCursor(
+internal data class TokenCursor(
     private val source: TokenSource,
+    private val lookahead: TokenReadResult?,
 ) {
-    private val buffer = ArrayDeque<TokenReadResult>()
 
-    fun peek(): TokenReadResult = peekAt(0)
+    fun peek(): TokenCursorRead {
+        val readResult = currentRead()
 
-    fun peekAt(offset: Int): TokenReadResult {
-        while (buffer.size <= offset && !reachedEnd()) {
-            buffer.addLast(source.nextToken())
+        return readResult.toCursorRead(
+            resultingCursor = withLookahead(readResult),
+        )
+    }
+
+    fun advance(): TokenCursorRead {
+        val readResult = currentRead()
+
+        return readResult.toCursorRead(
+            resultingCursor = initial(readResult.remainingSource),
+        )
+    }
+
+    private fun currentRead(): TokenReadResult {
+        return lookahead ?: source.nextToken()
+    }
+
+    private fun withLookahead(
+        readResult: TokenReadResult,
+    ): TokenCursor {
+        return copy(lookahead = readResult)
+    }
+
+    private fun TokenReadResult.toCursorRead(
+        resultingCursor: TokenCursor,
+    ): TokenCursorRead {
+        return when (this) {
+            is TokenReadResult.Success -> TokenCursorRead.Success(
+                token = token,
+                resultingCursor = resultingCursor,
+            )
+
+            is TokenReadResult.Failure -> TokenCursorRead.Failure(
+                error = error,
+                resultingCursor = resultingCursor,
+            )
         }
-        return buffer.getOrElse(offset) { buffer.last() }
     }
 
-    fun advance(): TokenReadResult {
-        val current = peek()
-        buffer.removeFirst()
-        return current
-    }
+    companion object {
 
-    private fun reachedEnd(): Boolean {
-        val last = buffer.lastOrNull() ?: return false
-        return last is TokenReadResult.Success && last.token.type == TokenType.EOF
+        fun initial(
+            source: TokenSource,
+        ): TokenCursor {
+            return TokenCursor(
+                source = source,
+                lookahead = null,
+            )
+        }
     }
 }

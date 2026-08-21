@@ -1,11 +1,11 @@
 package printscript.lexer.internal.scanner
 
-import printscript.lexer.internal.ReaderCharacterCursor
+import printscript.lexer.internal.CharacterCursor
+import printscript.lexer.internal.CharacterReadResult
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
 import printscript.token.Token
-import printscript.token.TokenReadResult
 import printscript.token.TokenType
 
 private const val SINGLE_QUOTE = '\''
@@ -15,126 +15,129 @@ private const val CARRIAGE_RETURN = '\r'
 
 internal class StringLiteralScanner : TokenScanner {
 
-    override fun canStartWith(character: Char): Boolean {
+    override fun canStartWith(
+        character: Char,
+    ): Boolean {
         return isStringQuote(character)
     }
 
     override fun scan(
-        cursor: ReaderCharacterCursor,
+        cursor: CharacterCursor,
         startingCharacter: Char,
-    ): TokenReadResult {
-        val startPosition = cursor.position
-        val stringLexemeBuilder = StringBuilder()
-
-        consumeOpeningQuote(
-            cursor = cursor,
-            openingQuote = startingCharacter,
-            stringLexemeBuilder = stringLexemeBuilder,
-        )
+    ): TokenScanResult {
+        val resultingCursor =
+            cursor.advance().resultingCursor
 
         return consumeStringContent(
-            cursor = cursor,
+            cursor = resultingCursor,
             openingQuote = startingCharacter,
-            startPosition = startPosition,
-            stringLexemeBuilder = stringLexemeBuilder,
+            lexeme = startingCharacter.toString(),
+            startPosition = cursor.position,
         )
     }
 
-    private fun consumeOpeningQuote(
-        cursor: ReaderCharacterCursor,
+    private tailrec fun consumeStringContent(
+        cursor: CharacterCursor,
         openingQuote: Char,
-        stringLexemeBuilder: StringBuilder,
-    ) {
-        stringLexemeBuilder.append(openingQuote)
-        cursor.advance()
-    }
-
-    private fun consumeStringContent(
-        cursor: ReaderCharacterCursor,
-        openingQuote: Char,
+        lexeme: String,
         startPosition: SourcePosition,
-        stringLexemeBuilder: StringBuilder,
-    ): TokenReadResult {
-        while (true) {
-            val currentCharacter = cursor.peek()
-                ?: return createUnterminatedStringFailure(
+    ): TokenScanResult {
+        return when (val result = cursor.peek()) {
+            is CharacterReadResult.EndOfInput -> {
+                createUnterminatedStringFailure(
                     openingQuote = openingQuote,
                     startPosition = startPosition,
-                    endPosition = cursor.position,
-                )
-
-            if (isLineBreak(currentCharacter)) {
-                return createUnterminatedStringFailure(
-                    openingQuote = openingQuote,
-                    startPosition = startPosition,
-                    endPosition = cursor.position,
+                    resultingCursor =
+                        result.resultingCursor,
                 )
             }
 
-            consumeStringCharacter(
-                cursor = cursor,
-                character = currentCharacter,
-                stringLexemeBuilder = stringLexemeBuilder,
-            )
+            is CharacterReadResult.Success -> {
+                if (isLineBreak(result.character)) {
+                    return createUnterminatedStringFailure(
+                        openingQuote = openingQuote,
+                        startPosition = startPosition,
+                        resultingCursor =
+                            result.resultingCursor,
+                    )
+                }
 
-            if (currentCharacter == openingQuote) {
-                return createStringTokenSuccess(
-                    stringLexeme = stringLexemeBuilder.toString(),
+                val resultingCursor =
+                    consumeCharacter(result)
+                val resultingLexeme =
+                    lexeme + result.character
+
+                if (result.character == openingQuote) {
+                    return createStringTokenSuccess(
+                        lexeme = resultingLexeme,
+                        startPosition = startPosition,
+                        resultingCursor = resultingCursor,
+                    )
+                }
+
+                consumeStringContent(
+                    cursor = resultingCursor,
+                    openingQuote = openingQuote,
+                    lexeme = resultingLexeme,
                     startPosition = startPosition,
-                    endPosition = cursor.position,
                 )
             }
         }
     }
 
-    private fun consumeStringCharacter(
-        cursor: ReaderCharacterCursor,
-        character: Char,
-        stringLexemeBuilder: StringBuilder,
-    ) {
-        stringLexemeBuilder.append(character)
-        cursor.advance()
+    private fun consumeCharacter(
+        result: CharacterReadResult.Success,
+    ): CharacterCursor {
+        return result.resultingCursor
+            .advance()
+            .resultingCursor
     }
 
     private fun createStringTokenSuccess(
-        stringLexeme: String,
+        lexeme: String,
         startPosition: SourcePosition,
-        endPosition: SourcePosition,
-    ): TokenReadResult {
-        return TokenReadResult.Success(
-            Token(
+        resultingCursor: CharacterCursor,
+    ): TokenScanResult.Success {
+        return TokenScanResult.Success(
+            token = Token(
                 type = TokenType.STRING_LITERAL,
-                lexeme = stringLexeme,
+                lexeme = lexeme,
                 span = SourceSpan(
                     start = startPosition,
-                    end = endPosition,
+                    end = resultingCursor.position,
                 ),
             ),
+            resultingCursor = resultingCursor,
         )
     }
 
     private fun createUnterminatedStringFailure(
         openingQuote: Char,
         startPosition: SourcePosition,
-        endPosition: SourcePosition,
-    ): TokenReadResult {
-        return TokenReadResult.Failure(
-            LexicalError.UnterminatedString(
+        resultingCursor: CharacterCursor,
+    ): TokenScanResult.Failure {
+        return TokenScanResult.Failure(
+            error = LexicalError.UnterminatedString(
                 openingQuote = openingQuote,
                 span = SourceSpan(
                     start = startPosition,
-                    end = endPosition,
+                    end = resultingCursor.position,
                 ),
             ),
+            resultingCursor = resultingCursor,
         )
     }
 
-    private fun isStringQuote(character: Char): Boolean {
+    private fun isStringQuote(
+        character: Char,
+    ): Boolean {
         return character == SINGLE_QUOTE ||
                 character == DOUBLE_QUOTE
     }
 
-    private fun isLineBreak(character: Char): Boolean {
+    private fun isLineBreak(
+        character: Char,
+    ): Boolean {
         return character == LINE_FEED ||
                 character == CARRIAGE_RETURN
     }

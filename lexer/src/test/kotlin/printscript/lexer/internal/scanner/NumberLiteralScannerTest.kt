@@ -2,6 +2,7 @@ package printscript.lexer.internal.scanner
 
 import printscript.lexer.assertInitialSingleLineSpan
 import printscript.lexer.assertLexicalError
+import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.token.LexicalError
@@ -84,10 +85,12 @@ class NumberLiteralScannerTest {
         val sourceText = "$numberLexeme$followingCharacter"
         val cursor = cursorFor(sourceText)
 
-        val scannedToken = scanner.scan(
+        val scanResult = scanner.scan(
             cursor = cursor,
             startingCharacter = numberLexeme.first(),
-        ).assertSuccessToken()
+        )
+
+        val scannedToken = scanResult.assertSuccessToken()
 
         assertEquals(
             expected = TokenType.NUMBER_LITERAL,
@@ -104,9 +107,8 @@ class NumberLiteralScannerTest {
             consumedCharacterCount = numberLexeme.length,
         )
 
-        assertEquals(
-            expected = followingCharacter,
-            actual = cursor.peek(),
+        scanResult.resultingCursor.assertNextCharacter(
+            followingCharacter,
         )
     }
 
@@ -117,10 +119,13 @@ class NumberLiteralScannerTest {
         val sourceText = "$malformedNumberLexeme$followingCharacter"
         val cursor = cursorFor(sourceText)
 
-        val lexicalError = scanner.scan(
+        val scanResult = scanner.scan(
             cursor = cursor,
             startingCharacter = malformedNumberLexeme.first(),
-        ).assertLexicalError<LexicalError.InvalidNumber>()
+        )
+
+        val lexicalError =
+            scanResult.assertLexicalError<LexicalError.InvalidNumber>()
 
         assertEquals(
             expected = malformedNumberLexeme,
@@ -132,9 +137,8 @@ class NumberLiteralScannerTest {
             consumedCharacterCount = malformedNumberLexeme.length,
         )
 
-        assertEquals(
-            expected = followingCharacter,
-            actual = cursor.peek(),
+        scanResult.resultingCursor.assertNextCharacter(
+            followingCharacter,
         )
     }
 }

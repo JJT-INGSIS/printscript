@@ -44,10 +44,13 @@ class ParserStreamingTest {
             },
         )
 
-        assertIs<VariableDeclarationStatement>(source.assertNextStatement())
-        assertIs<AssignmentStatement>(source.assertNextStatement())
+        val declaration = source.assertNextStatement()
+        assertIs<VariableDeclarationStatement>(declaration.statement)
 
-        source.assertEndOfInput()
+        val assignment = declaration.remainingSource.assertNextStatement()
+        assertIs<AssignmentStatement>(assignment.statement)
+
+        assignment.remainingSource.assertEndOfInput()
     }
 
     @Test
@@ -153,21 +156,21 @@ class ParserStreamingTest {
             tokens = countingTokenSource,
         )
 
-        statementSource.assertNextStatement()
+        val declaration = statementSource.assertNextStatement()
 
         assertEquals(
             expected = firstStatementTokens.size,
             actual = countingTokenSource.readCount,
         )
 
-        statementSource.assertNextStatement()
+        val assignment = declaration.remainingSource.assertNextStatement()
 
         assertEquals(
             expected = firstStatementTokens.size + secondStatementTokens.size,
             actual = countingTokenSource.readCount,
         )
 
-        statementSource.assertEndOfInput()
+        assignment.remainingSource.assertEndOfInput()
 
         assertEquals(
             expected = firstStatementTokens.size +

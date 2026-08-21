@@ -1,14 +1,13 @@
 package printscript.parser.internal.statement
 
 import printscript.ast.statement.Statement
-import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.context.TokenLookahead
+import printscript.parser.internal.context.ParsingContext
+import printscript.token.TokenType
 
 internal interface StatementParser {
-    fun matchInitialTokens(
-        lookahead: TokenLookahead,
-    ): StatementMatch
+
+    val startToken: TokenType
 
     fun parseStatement(
         context: ParsingContext,

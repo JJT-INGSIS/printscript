@@ -20,7 +20,7 @@ class ScanningTokenSourceTest {
     fun `empty input produces EOF at initial position`() {
         val tokenSource = createTokenSourceFor("")
 
-        val eofToken = tokenSource.assertNextToken(
+        val eofResult = tokenSource.assertNextToken(
             ExpectedToken(
                 tokenType = TokenType.EOF,
                 lexeme = "",
@@ -32,7 +32,7 @@ class ScanningTokenSourceTest {
                 start = SourcePosition(1, 1, 0),
                 end = SourcePosition(1, 1, 0),
             ),
-            actual = eofToken.span,
+            actual = eofResult.token.span,
         )
     }
 
@@ -45,17 +45,24 @@ class ScanningTokenSourceTest {
             lexeme = "",
         )
 
-        val firstEof = tokenSource.assertNextToken(expectedEof)
-        val secondEof = tokenSource.assertNextToken(expectedEof)
+        val firstEofResult =
+            tokenSource.assertNextToken(expectedEof)
 
-        assertEquals(firstEof, secondEof)
+        val secondEofResult =
+            firstEofResult.remainingSource
+                .assertNextToken(expectedEof)
+
+        assertEquals(
+            expected = firstEofResult.token,
+            actual = secondEofResult.token,
+        )
     }
 
     @Test
     fun `whitespace-only input produces EOF after consumed whitespace`() {
         val tokenSource = createTokenSourceFor(" \n")
 
-        val eofToken = tokenSource.assertNextToken(
+        val eofResult = tokenSource.assertNextToken(
             ExpectedToken(
                 tokenType = TokenType.EOF,
                 lexeme = "",
@@ -67,7 +74,7 @@ class ScanningTokenSourceTest {
                 start = SourcePosition(2, 1, 2),
                 end = SourcePosition(2, 1, 2),
             ),
-            actual = eofToken.span,
+            actual = eofResult.token.span,
         )
     }
 
@@ -77,7 +84,7 @@ class ScanningTokenSourceTest {
             " token \n next",
         )
 
-        val firstToken = tokenSource.assertNextToken(
+        val firstTokenResult = tokenSource.assertNextToken(
             ExpectedToken(
                 tokenType = TokenType.IDENTIFIER,
                 lexeme = "token",
@@ -89,22 +96,23 @@ class ScanningTokenSourceTest {
                 start = SourcePosition(1, 2, 1),
                 end = SourcePosition(1, 7, 6),
             ),
-            actual = firstToken.span,
+            actual = firstTokenResult.token.span,
         )
 
-        val secondToken = tokenSource.assertNextToken(
-            ExpectedToken(
-                tokenType = TokenType.IDENTIFIER,
-                lexeme = "next",
-            ),
-        )
+        val secondTokenResult =
+            firstTokenResult.remainingSource.assertNextToken(
+                ExpectedToken(
+                    tokenType = TokenType.IDENTIFIER,
+                    lexeme = "next",
+                ),
+            )
 
         assertEquals(
             expected = SourceSpan(
                 start = SourcePosition(2, 2, 9),
                 end = SourcePosition(2, 6, 13),
             ),
-            actual = secondToken.span,
+            actual = secondTokenResult.token.span,
         )
     }
 
@@ -112,8 +120,9 @@ class ScanningTokenSourceTest {
     fun `lexical failure does not prevent reading following token`() {
         val tokenSource = createTokenSourceFor("@token")
 
-        val lexicalError = tokenSource.nextToken()
-            .assertLexicalError<LexicalError.UnexpectedCharacter>()
+        val failureResult = tokenSource.nextToken()
+        val lexicalError =
+            failureResult.assertLexicalError<LexicalError.UnexpectedCharacter>()
 
         assertEquals('@', lexicalError.character)
 
@@ -125,19 +134,20 @@ class ScanningTokenSourceTest {
             actual = lexicalError.span,
         )
 
-        val followingToken = tokenSource.assertNextToken(
-            ExpectedToken(
-                tokenType = TokenType.IDENTIFIER,
-                lexeme = "token",
-            ),
-        )
+        val followingTokenResult =
+            failureResult.remainingSource.assertNextToken(
+                ExpectedToken(
+                    tokenType = TokenType.IDENTIFIER,
+                    lexeme = "token",
+                ),
+            )
 
         assertEquals(
             expected = SourceSpan(
                 start = SourcePosition(1, 2, 1),
                 end = SourcePosition(1, 7, 6),
             ),
-            actual = followingToken.span,
+            actual = followingTokenResult.token.span,
         )
     }
 

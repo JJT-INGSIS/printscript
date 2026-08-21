@@ -6,7 +6,6 @@ import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.StringLiteralExpression
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
-import printscript.token.TokenReadResult
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -142,7 +141,7 @@ class PrintlnParserTest {
 
     private data class MalformedPrintln(
         val description: String,
-        val tokens: List<TokenReadResult>,
+        val tokens: List<TokenReadFixture>,
         val expectedTokenTypes: Set<TokenType>,
         val actualTokenType: TokenType,
     )

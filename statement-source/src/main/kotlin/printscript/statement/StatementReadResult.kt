@@ -4,8 +4,13 @@ import printscript.ast.statement.Statement
 
 sealed interface StatementReadResult {
 
+    /**
+     * Trae la sentencia y la fuente para seguir leyendo: es el único
+     * caso que continúa.
+     */
     data class Success(
         val statement: Statement,
+        val remainingSource: StatementSource,
     ) : StatementReadResult
 
     /**

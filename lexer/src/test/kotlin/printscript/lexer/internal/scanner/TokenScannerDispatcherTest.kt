@@ -1,6 +1,8 @@
 package printscript.lexer.internal.scanner
 
+import printscript.lexer.assertEndOfInput
 import printscript.lexer.assertLexicalError
+import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.model.source.SourcePosition
@@ -27,10 +29,12 @@ class TokenScannerDispatcherTest {
 
         val cursor = cursorFor("alias")
 
-        val token = dispatcher.scan(
+        val scanResult = dispatcher.scan(
             cursor = cursor,
             currentCharacter = 'a',
-        ).assertSuccessToken()
+        )
+
+        val token = scanResult.assertSuccessToken()
 
         assertEquals(
             expected = TokenType.LET,
@@ -41,6 +45,8 @@ class TokenScannerDispatcherTest {
             expected = "alias",
             actual = token.lexeme,
         )
+
+        scanResult.resultingCursor.assertEndOfInput()
     }
 
     @Test
@@ -51,10 +57,13 @@ class TokenScannerDispatcherTest {
 
         val cursor = cursorFor("@remaining")
 
-        val lexicalError = dispatcher.scan(
+        val scanResult = dispatcher.scan(
             cursor = cursor,
             currentCharacter = '@',
-        ).assertLexicalError<LexicalError.UnexpectedCharacter>()
+        )
+
+        val lexicalError =
+            scanResult.assertLexicalError<LexicalError.UnexpectedCharacter>()
 
         assertEquals(
             expected = '@',
@@ -69,9 +78,6 @@ class TokenScannerDispatcherTest {
             actual = lexicalError.span,
         )
 
-        assertEquals(
-            expected = 'r',
-            actual = cursor.peek(),
-        )
+        scanResult.resultingCursor.assertNextCharacter('r')
     }
 }

@@ -5,7 +5,6 @@ import printscript.ast.expression.NumberLiteralExpression
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
-import printscript.token.TokenReadResult
 import printscript.token.TokenType
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -185,7 +184,7 @@ class DeclarationParserTest {
 
     private data class MalformedDeclaration(
         val description: String,
-        val tokens: List<TokenReadResult>,
+        val tokens: List<TokenReadFixture>,
         val expectedTokenTypes: Set<TokenType>,
         val actualTokenType: TokenType,
     )

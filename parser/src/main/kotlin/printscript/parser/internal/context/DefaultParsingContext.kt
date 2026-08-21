@@ -1,65 +1,80 @@
 package printscript.parser.internal.context
 
+import printscript.ast.statement.Statement
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.orReturn
 import printscript.parser.internal.statement.StatementParserDispatcher
-import printscript.ast.statement.Statement
 import printscript.statement.ParseError
 import printscript.token.Token
-import printscript.token.TokenReadResult
-import printscript.token.TokenSource
 import printscript.token.TokenType
 
-internal class DefaultParsingContext(
-    tokens: TokenSource,
+internal data class DefaultParsingContext(
+    private val cursor: TokenCursor,
     private val statementParserDispatcher: StatementParserDispatcher,
 ) : ParsingContext {
 
-    private val cursor = TokenCursor(tokens)
-
-    override fun peekAt(
-        offset: Int,
-    ): ParsingResult<Token> {
-        return cursor.peekAt(offset).toParsingResult()
+    override fun peek(): ParsingResult<Token> {
+        return toParsingResult(cursor.peek())
     }
 
     override fun consume(): ParsingResult<Token> {
-        return cursor.advance().toParsingResult()
+        return toParsingResult(cursor.advance())
     }
 
     override fun expect(
         expected: Set<TokenType>,
     ): ParsingResult<Token> {
-        val token = peek()
+        val peeked = peek()
             .orReturn { return it }
 
-        if (token.type !in expected) {
-            return ParsingResult.Failure(
-                ParseError.UnexpectedToken(
-                    expected = expected,
-                    actual = token,
-                ),
-            )
-        }
-
-        return consume()
+        return acceptExpected(expected = expected, peeked = peeked)
     }
 
     override fun parseStatement(): ParsingResult<Statement> {
         return statementParserDispatcher.parseStatement(this)
     }
 
-    private fun TokenReadResult.toParsingResult(): ParsingResult<Token> {
-        return when (this) {
-            is TokenReadResult.Success -> {
-                ParsingResult.Success(token)
-            }
-
-            is TokenReadResult.Failure -> {
-                ParsingResult.Failure(
-                    ParseError.Lexical(error),
-                )
-            }
+    private fun acceptExpected(
+        expected: Set<TokenType>,
+        peeked: ParsingResult.Success<Token>,
+    ): ParsingResult<Token> {
+        return if (peeked.value.type in expected) {
+            peeked.resultingContext.consume()
+        } else {
+            unexpectedToken(expected = expected, actual = peeked.value)
         }
+    }
+
+    private fun unexpectedToken(
+        expected: Set<TokenType>,
+        actual: Token,
+    ): ParsingResult.Failure {
+        return ParsingResult.Failure(
+            ParseError.UnexpectedToken(
+                expected = expected,
+                actual = actual,
+            ),
+        )
+    }
+
+    private fun toParsingResult(
+        read: TokenCursorRead,
+    ): ParsingResult<Token> {
+        return when (read) {
+            is TokenCursorRead.Success -> ParsingResult.Success(
+                value = read.token,
+                resultingContext = withCursor(read.resultingCursor),
+            )
+
+            is TokenCursorRead.Failure -> ParsingResult.Failure(
+                ParseError.Lexical(read.error),
+            )
+        }
+    }
+
+    private fun withCursor(
+        cursor: TokenCursor,
+    ): ParsingContext {
+        return copy(cursor = cursor)
     }
 }

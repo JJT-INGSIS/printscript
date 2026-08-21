@@ -1,10 +1,10 @@
 package printscript.lexer.internal.scanner
 
-import printscript.lexer.internal.ReaderCharacterCursor
+import printscript.lexer.internal.CharacterCursor
+import printscript.lexer.internal.CharacterReadResult
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.Token
-import printscript.token.TokenReadResult
 import printscript.token.TokenType
 
 private const val UNDERSCORE = '_'
@@ -20,99 +20,84 @@ internal class IdentifierOrKeywordScanner(
     }
 
     override fun scan(
-        cursor: ReaderCharacterCursor,
+        cursor: CharacterCursor,
         startingCharacter: Char,
-    ): TokenReadResult {
-        val startPosition = cursor.position
+    ): TokenScanResult {
+        val resultingCursor =
+            cursor.advance().resultingCursor
 
-        val identifierLexeme = consumeIdentifierLexeme(
-            cursor = cursor,
-            firstCharacter = startingCharacter,
-        )
-
-        val classifiedTokenType = classifyIdentifierLexeme(
-            identifierLexeme = identifierLexeme,
-        )
-
-        return createTokenSuccess(
-            tokenType = classifiedTokenType,
-            tokenLexeme = identifierLexeme,
-            startPosition = startPosition,
-            endPosition = cursor.position,
+        return consumeRemainingCharacters(
+            cursor = resultingCursor,
+            lexeme = startingCharacter.toString(),
+            startPosition = cursor.position,
         )
     }
 
-    private fun consumeIdentifierLexeme(
-        cursor: ReaderCharacterCursor,
-        firstCharacter: Char,
-    ): String {
-        val identifierLexemeBuilder = StringBuilder()
-
-        consumeIdentifierCharacter(
-            cursor = cursor,
-            character = firstCharacter,
-            identifierLexemeBuilder = identifierLexemeBuilder,
-        )
-
-        consumeRemainingIdentifierCharacters(
-            cursor = cursor,
-            identifierLexemeBuilder = identifierLexemeBuilder,
-        )
-
-        return identifierLexemeBuilder.toString()
-    }
-
-    private fun consumeRemainingIdentifierCharacters(
-        cursor: ReaderCharacterCursor,
-        identifierLexemeBuilder: StringBuilder,
-    ) {
-        while (true) {
-            val nextCharacter = cursor.peek() ?: return
-
-            if (!isIdentifierPart(nextCharacter)) {
-                return
+    private tailrec fun consumeRemainingCharacters(
+        cursor: CharacterCursor,
+        lexeme: String,
+        startPosition: SourcePosition,
+    ): TokenScanResult {
+        return when (val result = cursor.peek()) {
+            is CharacterReadResult.EndOfInput -> {
+                createTokenSuccess(
+                    lexeme = lexeme,
+                    startPosition = startPosition,
+                    resultingCursor =
+                        result.resultingCursor,
+                )
             }
 
-            consumeIdentifierCharacter(
-                cursor = cursor,
-                character = nextCharacter,
-                identifierLexemeBuilder = identifierLexemeBuilder,
-            )
+            is CharacterReadResult.Success -> {
+                if (!isIdentifierPart(result.character)) {
+                    return createTokenSuccess(
+                        lexeme = lexeme,
+                        startPosition = startPosition,
+                        resultingCursor =
+                            result.resultingCursor,
+                    )
+                }
+
+                consumeRemainingCharacters(
+                    cursor = consumeCharacter(result),
+                    lexeme = lexeme + result.character,
+                    startPosition = startPosition,
+                )
+            }
         }
     }
 
-    private fun consumeIdentifierCharacter(
-        cursor: ReaderCharacterCursor,
-        character: Char,
-        identifierLexemeBuilder: StringBuilder,
-    ) {
-        identifierLexemeBuilder.append(character)
-        cursor.advance()
-    }
-
-    private fun classifyIdentifierLexeme(
-        identifierLexeme: String,
-    ): TokenType {
-        return fixedTokenTypesByLexeme[identifierLexeme]
-            ?: TokenType.IDENTIFIER
+    private fun consumeCharacter(
+        result: CharacterReadResult.Success,
+    ): CharacterCursor {
+        return result.resultingCursor
+            .advance()
+            .resultingCursor
     }
 
     private fun createTokenSuccess(
-        tokenType: TokenType,
-        tokenLexeme: String,
+        lexeme: String,
         startPosition: SourcePosition,
-        endPosition: SourcePosition,
-    ): TokenReadResult.Success {
-        return TokenReadResult.Success(
-            Token(
-                type = tokenType,
-                lexeme = tokenLexeme,
+        resultingCursor: CharacterCursor,
+    ): TokenScanResult.Success {
+        return TokenScanResult.Success(
+            token = Token(
+                type = classifyIdentifier(lexeme),
+                lexeme = lexeme,
                 span = SourceSpan(
                     start = startPosition,
-                    end = endPosition,
+                    end = resultingCursor.position,
                 ),
             ),
+            resultingCursor = resultingCursor,
         )
+    }
+
+    private fun classifyIdentifier(
+        lexeme: String,
+    ): TokenType {
+        return fixedTokenTypesByLexeme[lexeme]
+            ?: TokenType.IDENTIFIER
     }
 
     private fun isIdentifierStart(
