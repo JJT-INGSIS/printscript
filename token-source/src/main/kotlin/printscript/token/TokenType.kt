@@ -1,6 +1,6 @@
 package printscript.token
 
-enum class TokenType {
+public enum class TokenType {
     LET,
     NUMBER_TYPE,
     STRING_TYPE,
@@ -21,5 +21,5 @@ enum class TokenType {
     LEFT_PAREN,
     RIGHT_PAREN,
 
-    EOF
+    EOF,
 }

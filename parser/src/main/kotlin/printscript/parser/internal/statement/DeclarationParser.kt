@@ -16,7 +16,7 @@ import printscript.token.TokenType
 
 internal class DeclarationParser(
     private val expressionParser: ExpressionParser,
-    override val startToken: TokenType = DEFAULT_START_TOKEN,
+    override val startTokenType: TokenType = DEFAULT_START_TOKEN,
     private val declaredTypeByToken: Map<TokenType, DeclaredType> = DEFAULT_DECLARED_TYPES,
 ) : StatementParser {
 
@@ -37,7 +37,7 @@ internal class DeclarationParser(
     private fun readComponents(
         context: ParsingContext,
     ): ParsingResult<DeclarationComponents> {
-        val keyword = context.expect(startToken)
+        val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
         val identifier = keyword.resultingContext.expect(TokenType.IDENTIFIER)

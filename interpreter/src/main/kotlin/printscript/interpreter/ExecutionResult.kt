@@ -1,6 +1,6 @@
 package printscript.interpreter
 
-sealed interface ExecutionResult<out T> {
+internal sealed interface ExecutionResult<out T> {
 
     data class Success<T>(
         val value: T,

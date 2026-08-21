@@ -2,10 +2,10 @@ package printscript.ast.expression
 
 import printscript.model.source.SourceSpan
 
-data class UnaryExpression(
-    val operator: UnaryOperator,
-    val operatorSpan: SourceSpan,
-    val operand: Expression,
+public data class UnaryExpression(
+    public val operator: UnaryOperator,
+    public val operatorSpan: SourceSpan,
+    public val operand: Expression,
 ) : Expression {
 
     override val span: SourceSpan = SourceSpan(

@@ -13,7 +13,7 @@ import printscript.token.TokenType
 
 internal class PrintlnParser(
     private val expressionParser: ExpressionParser,
-    override val startToken: TokenType = DEFAULT_START_TOKEN,
+    override val startTokenType: TokenType = DEFAULT_START_TOKEN,
 ) : StatementParser {
 
     override fun parseStatement(
@@ -31,7 +31,7 @@ internal class PrintlnParser(
     private fun readComponents(
         context: ParsingContext,
     ): ParsingResult<PrintlnComponents> {
-        val keyword = context.expect(startToken)
+        val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
         val leftParenthesis = keyword.resultingContext.expect(TokenType.LEFT_PAREN)

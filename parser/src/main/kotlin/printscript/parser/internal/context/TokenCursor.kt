@@ -8,7 +8,7 @@ internal data class TokenCursor(
     private val lookahead: TokenReadResult?,
 ) {
 
-    fun peek(): TokenCursorRead {
+    fun peek(): TokenCursorReadResult {
         val readResult = currentRead()
 
         return readResult.toCursorRead(
@@ -16,7 +16,7 @@ internal data class TokenCursor(
         )
     }
 
-    fun advance(): TokenCursorRead {
+    fun advance(): TokenCursorReadResult {
         val readResult = currentRead()
 
         return readResult.toCursorRead(
@@ -36,14 +36,14 @@ internal data class TokenCursor(
 
     private fun TokenReadResult.toCursorRead(
         resultingCursor: TokenCursor,
-    ): TokenCursorRead {
+    ): TokenCursorReadResult {
         return when (this) {
-            is TokenReadResult.Success -> TokenCursorRead.Success(
+            is TokenReadResult.Success -> TokenCursorReadResult.Success(
                 token = token,
                 resultingCursor = resultingCursor,
             )
 
-            is TokenReadResult.Failure -> TokenCursorRead.Failure(
+            is TokenReadResult.Failure -> TokenCursorReadResult.Failure(
                 error = error,
                 resultingCursor = resultingCursor,
             )

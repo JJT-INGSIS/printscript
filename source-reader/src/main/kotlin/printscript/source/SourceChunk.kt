@@ -1,5 +1,5 @@
 package printscript.source
 
-data class SourceChunk(
-    val content: String,
+public data class SourceChunk(
+    public val content: String,
 )

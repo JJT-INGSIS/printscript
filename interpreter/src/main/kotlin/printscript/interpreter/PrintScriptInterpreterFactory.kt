@@ -1,6 +1,5 @@
 package printscript.interpreter
 
-import printscript.interpreter.environment.Environment
 import printscript.interpreter.environment.MapEnvironment
 import printscript.interpreter.expressions.ExpressionEvaluator
 import printscript.interpreter.output.ProgramOutput
@@ -10,15 +9,14 @@ import printscript.interpreter.statements.PrintlnExecutor
 import printscript.interpreter.statements.StatementExecutor
 import printscript.interpreter.statements.StatementExecutorDispatcher
 
-object PrintScriptInterpreterFactory {
+public object PrintScriptInterpreterFactory {
 
-    fun createV1(
+    public fun createV1(
         output: ProgramOutput,
-        environment: Environment = MapEnvironment(),
     ): Interpreter {
         return PrintScriptInterpreter(
             output = output,
-            initialEnvironment = environment,
+            initialEnvironment = MapEnvironment(),
             expressionEvaluator = ExpressionEvaluator(),
             statementExecutorDispatcher = StatementExecutorDispatcher(
                 executors = v1StatementExecutors(),

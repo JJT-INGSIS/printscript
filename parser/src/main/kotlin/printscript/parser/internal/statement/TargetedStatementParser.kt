@@ -13,7 +13,7 @@ import printscript.token.TokenType
  */
 internal interface TargetedStatementParser {
 
-    val followingToken: TokenType
+    val followingTokenType: TokenType
 
     fun parseStatement(
         target: Identifier,

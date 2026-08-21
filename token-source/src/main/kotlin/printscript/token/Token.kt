@@ -2,8 +2,8 @@ package printscript.token
 
 import printscript.model.source.SourceSpan
 
-data class Token(
-    val type: TokenType,
-    val lexeme: String,
-    val span: SourceSpan
+public data class Token(
+    public val type: TokenType,
+    public val lexeme: String,
+    public val span: SourceSpan,
 )

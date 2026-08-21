@@ -14,7 +14,7 @@ import printscript.token.TokenType
 
 internal class AssignmentParser(
     private val expressionParser: ExpressionParser,
-    override val followingToken: TokenType = DEFAULT_FOLLOWING_TOKEN,
+    override val followingTokenType: TokenType = DEFAULT_FOLLOWING_TOKEN,
 ) : TargetedStatementParser {
 
     override fun parseStatement(
@@ -33,7 +33,7 @@ internal class AssignmentParser(
     private fun readComponents(
         context: ParsingContext,
     ): ParsingResult<AssignmentComponents> {
-        val assignment = context.expect(followingToken)
+        val assignment = context.expect(followingTokenType)
             .orReturn { return it }
 
         val expression = expressionParser.parseExpression(assignment.resultingContext)

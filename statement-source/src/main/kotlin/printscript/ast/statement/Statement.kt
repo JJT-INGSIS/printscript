@@ -2,4 +2,4 @@ package printscript.ast.statement
 
 import printscript.ast.Node
 
-sealed interface Statement : Node
+public sealed interface Statement : Node

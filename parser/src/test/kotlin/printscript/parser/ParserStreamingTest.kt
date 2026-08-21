@@ -1,6 +1,5 @@
 package printscript.parser
 
-
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.statement.ParseError
@@ -96,8 +95,6 @@ class ParserStreamingTest {
         assertIs<StatementReadResult.Failure>(results.single())
     }
 
-
-
     @Test
     fun `does not read tokens until the first statement is requested`() {
         val countingTokenSource = CountingTokenSource(
@@ -147,8 +144,8 @@ class ParserStreamingTest {
         val countingTokenSource = CountingTokenSource(
             source = FakeTokenSource(
                 results = firstStatementTokens +
-                        secondStatementTokens +
-                        endOfInputTokens,
+                    secondStatementTokens +
+                    endOfInputTokens,
             ),
         )
 
@@ -174,8 +171,8 @@ class ParserStreamingTest {
 
         assertEquals(
             expected = firstStatementTokens.size +
-                    secondStatementTokens.size +
-                    endOfInputTokens.size,
+                secondStatementTokens.size +
+                endOfInputTokens.size,
             actual = countingTokenSource.readCount,
         )
     }

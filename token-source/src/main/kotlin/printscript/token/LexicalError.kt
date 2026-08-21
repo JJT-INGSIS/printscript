@@ -2,21 +2,22 @@ package printscript.token
 
 import printscript.model.source.SourceSpan
 
-sealed interface LexicalError {
-    val span: SourceSpan
+public sealed interface LexicalError {
 
-    data class UnexpectedCharacter(
-        val character: Char,
-        override val span: SourceSpan
+    public val span: SourceSpan
+
+    public data class UnexpectedCharacter(
+        public val character: Char,
+        override val span: SourceSpan,
     ) : LexicalError
 
-    data class UnterminatedString(
-        val openingQuote: Char,
-        override val span: SourceSpan
+    public data class UnterminatedString(
+        public val openingQuote: Char,
+        override val span: SourceSpan,
     ) : LexicalError
 
-    data class InvalidNumber(
-        val lexeme: String,
-        override val span: SourceSpan
+    public data class InvalidNumber(
+        public val lexeme: String,
+        override val span: SourceSpan,
     ) : LexicalError
 }

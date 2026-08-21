@@ -7,7 +7,7 @@ import printscript.token.TokenType
 
 internal interface StatementParser {
 
-    val startToken: TokenType
+    val startTokenType: TokenType
 
     fun parseStatement(
         context: ParsingContext,

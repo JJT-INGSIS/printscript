@@ -1,7 +1,6 @@
 package printscript.token
 
+public interface TokenSource {
 
-
-interface TokenSource {
-    fun nextToken(): TokenReadResult
+    public fun nextToken(): TokenReadResult
 }

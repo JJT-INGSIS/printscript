@@ -2,7 +2,7 @@ package printscript.ast
 
 import printscript.model.source.SourceSpan
 
-data class Identifier(
-    val value: String,
+public data class Identifier(
+    public val value: String,
     override val span: SourceSpan,
 ) : Node

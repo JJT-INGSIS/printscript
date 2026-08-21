@@ -1,5 +1,6 @@
 package printscript.interpreter.output
 
-interface ProgramOutput {
-    fun writeLine(line: String)
+public interface ProgramOutput {
+
+    public fun writeLine(line: String)
 }

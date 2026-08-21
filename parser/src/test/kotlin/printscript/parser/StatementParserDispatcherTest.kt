@@ -77,10 +77,9 @@ class StatementParserDispatcherTest {
     }
 
     @Test
-    fun `reports the mismatch of the parser that got furthest`() {
-        // Un identificador sin "=" no es una asignación, pero el parser
-        // de asignaciones llegó más lejos que los otros dos, así que su
-        // desajuste es el que mejor describe el problema.
+    fun `reports valid continuations for identifier statements`() {
+        // Después de un identificador, V1 solamente admite
+        // una asignación como continuación de la sentencia.
         parseFirst(
             tokens {
                 id("a")

@@ -2,15 +2,15 @@ package printscript.interpreter
 
 import printscript.statement.ParseError
 
-sealed interface InterpretationResult {
+public sealed interface InterpretationResult {
 
-    data object Success : InterpretationResult
+    public data object Success : InterpretationResult
 
-    data class ParseFailure(
-        val error: ParseError,
+    public data class ParseFailure(
+        public val error: ParseError,
     ) : InterpretationResult
 
-    data class SemanticFailure(
-        val error: SemanticError,
+    public data class SemanticFailure(
+        public val error: SemanticError,
     ) : InterpretationResult
 }
