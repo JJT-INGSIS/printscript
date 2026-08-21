@@ -5,7 +5,9 @@ import printscript.parser.internal.ParsingResult
 import printscript.token.Token
 import printscript.token.TokenType
 
-internal interface ParsingContext : TokenLookahead {
+internal interface ParsingContext {
+
+    fun peek(): ParsingResult<Token>
 
     fun consume(): ParsingResult<Token>
 
@@ -18,5 +20,6 @@ internal interface ParsingContext : TokenLookahead {
     ): ParsingResult<Token> {
         return expect(setOf(expected))
     }
+
     fun parseStatement(): ParsingResult<Statement>
 }
