@@ -1,13 +1,13 @@
 package printscript.parser.internal.expression
 
 import printscript.ast.expression.BinaryExpression
-import printscript.ast.expression.Expression
 import printscript.ast.expression.BinaryOperator
-import printscript.parser.internal.context.ParsingContext
+import printscript.ast.expression.Expression
 import printscript.parser.internal.ParsingResult
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.orReturn
+import printscript.token.Token
 import printscript.token.TokenType
-
 
 internal class LeftAssociativeBinaryExpressionParser(
     private val operandParser: ExpressionParser,
@@ -17,30 +17,55 @@ internal class LeftAssociativeBinaryExpressionParser(
     override fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression> {
-        var left = operandParser.parseExpression(context)
+        val firstOperand = operandParser.parseExpression(context)
             .orReturn { return it }
 
-        while (true) {
-            val nextToken = context.peek()
-                .orReturn { return it }
+        return parseRemainingOperands(firstOperand)
+    }
 
-            val operator = operators[nextToken.type]
-                ?: break
+    /**
+     * Acumula hacia la izquierda: cada operando nuevo envuelve a lo ya
+     * parseado, que es lo que hace al operador asociativo a izquierda.
+     */
+    private fun parseRemainingOperands(
+        left: ParsingResult.Success<Expression>,
+    ): ParsingResult<Expression> {
+        val peeked = left.resultingContext.peek()
+            .orReturn { return it }
 
-            val operatorToken = context.consume()
-                .orReturn { return it }
+        val operator = operators[peeked.value.type]
+            ?: return left.copy(resultingContext = peeked.resultingContext)
 
-            val right = operandParser.parseExpression(context)
-                .orReturn { return it }
+        val operatorToken = peeked.resultingContext.consume()
+            .orReturn { return it }
 
-            left = BinaryExpression(
+        val right = operandParser.parseExpression(operatorToken.resultingContext)
+            .orReturn { return it }
+
+        return parseRemainingOperands(
+            left = combine(
                 left = left,
                 operator = operator,
-                operatorSpan = operatorToken.span,
+                operatorToken = operatorToken,
                 right = right,
-            )
-        }
+            ),
+        )
+    }
 
-        return ParsingResult.Success(left)
+    private fun combine(
+        left: ParsingResult.Success<Expression>,
+        operator: BinaryOperator,
+        operatorToken: ParsingResult.Success<Token>,
+        right: ParsingResult.Success<Expression>,
+    ): ParsingResult.Success<Expression> {
+        return ParsingResult.Success(
+            value = BinaryExpression(
+                left = left.value,
+                operator = operator,
+                operatorSpan = operatorToken.value.span,
+                right = right.value,
+            ),
+            resultingContext = right.resultingContext,
+        )
     }
 }

@@ -160,23 +160,17 @@ internal sealed interface TokenReadFixture {
 
 internal class FakeTokenSource(
     private val results: List<TokenReadFixture>,
-    private var nextResultIndex: Int = 0,
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
-        if (nextResultIndex >= results.size) {
-            return endOfInputToken(
+        val fixture = results.firstOrNull()
+            ?: return endOfInputToken(
                 remainingSource = this,
             )
-        }
 
-        val resultIndex = nextResultIndex
-        nextResultIndex += RESULT_INDEX_INCREMENT
-
-        return results[resultIndex].toTokenReadResult(
+        return fixture.toTokenReadResult(
             remainingSource = FakeTokenSource(
-                results = results,
-                nextResultIndex = nextResultIndex,
+                results = results.drop(RESULT_INDEX_INCREMENT),
             ),
         )
     }
@@ -306,24 +300,24 @@ internal fun parseFirst(
 internal fun parseAll(
     tokens: List<TokenReadFixture>,
 ): List<StatementReadResult> {
-    val source = sourceOf(tokens)
-    val results = mutableListOf<StatementReadResult>()
+    return generateSequence(
+        sourceOf(tokens).nextStatement(),
+    ) { previous ->
+        continuationOf(previous)
+    }
+        .takeWhile { it != StatementReadResult.EndOfInput }
+        .toList()
+}
 
-    while (true) {
-        when (val result = source.nextStatement()) {
-            is StatementReadResult.Success -> {
-                results.add(result)
-            }
+private fun continuationOf(
+    result: StatementReadResult,
+): StatementReadResult? {
+    return when (result) {
+        is StatementReadResult.Success -> result.remainingSource.nextStatement()
 
-            is StatementReadResult.Failure -> {
-                results.add(result)
-                return results.toList()
-            }
+        is StatementReadResult.Failure -> null
 
-            StatementReadResult.EndOfInput -> {
-                return results.toList()
-            }
-        }
+        StatementReadResult.EndOfInput -> null
     }
 }
 // --------------------------------------------------------------------
@@ -366,8 +360,12 @@ internal fun StatementReadResult.assertUnexpectedToken(
     )
 }
 
-internal fun StatementSource.assertNextStatement(): Statement {
-    return nextStatement().assertSuccessStatement()
+/**
+ * Devuelve la lectura completa, no solo la sentencia: quien encadena
+ * necesita la fuente restante para pedir la siguiente.
+ */
+internal fun StatementSource.assertNextStatement(): StatementReadResult.Success {
+    return assertIs<StatementReadResult.Success>(nextStatement())
 }
 
 internal fun StatementSource.assertEndOfInput() {

@@ -5,9 +5,8 @@ import printscript.ast.expression.Expression
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.Statement
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.context.TokenLookahead
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.token.Token
@@ -15,82 +14,63 @@ import printscript.token.TokenType
 
 internal class AssignmentParser(
     private val expressionParser: ExpressionParser,
-    private val targetTokens: Set<TokenType> = DEFAULT_TARGET_TOKENS,
-    private val assignmentTokens: Set<TokenType> = DEFAULT_ASSIGNMENT_TOKENS,
-) : StatementParser {
-
-    private val matcher = StatementMatcher(
-        listOf(targetTokens, assignmentTokens),
-    )
-
-    override fun matchInitialTokens(
-        lookahead: TokenLookahead,
-    ): StatementMatch {
-        return matcher.matchInitialTokens(lookahead)
-    }
+    override val followingToken: TokenType = DEFAULT_FOLLOWING_TOKEN,
+) : TargetedStatementParser {
 
     override fun parseStatement(
+        target: Identifier,
         context: ParsingContext,
     ): ParsingResult<Statement> {
         val components = readComponents(context)
             .orReturn { return it }
 
-        return ParsingResult.Success(buildStatement(components))
+        return ParsingResult.Success(
+            value = buildStatement(target, components.value),
+            resultingContext = components.resultingContext,
+        )
     }
 
     private fun readComponents(
         context: ParsingContext,
     ): ParsingResult<AssignmentComponents> {
-        val targetToken = context.expect(targetTokens)
+        val assignment = context.expect(followingToken)
             .orReturn { return it }
 
-        context.expect(assignmentTokens)
+        val expression = expressionParser.parseExpression(assignment.resultingContext)
             .orReturn { return it }
 
-        val expression = expressionParser.parseExpression(context)
-            .orReturn { return it }
-
-        val semicolonToken = context.expect(TokenType.SEMICOLON)
+        val semicolon = expression.resultingContext.expect(TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(
-            AssignmentComponents(
-                targetToken = targetToken,
-                expression = expression,
-                semicolonToken = semicolonToken,
+            value = AssignmentComponents(
+                expression = expression.value,
+                semicolonToken = semicolon.value,
             ),
+            resultingContext = semicolon.resultingContext,
         )
     }
 
     private fun buildStatement(
+        target: Identifier,
         components: AssignmentComponents,
     ): Statement {
         return AssignmentStatement(
-            target = Identifier(
-                value = components.targetToken.lexeme,
-                span = components.targetToken.span,
-            ),
+            target = target,
             expression = components.expression,
             span = SourceSpan(
-                start = components.targetToken.span.start,
+                start = target.span.start,
                 end = components.semicolonToken.span.end,
             ),
         )
     }
 
     private data class AssignmentComponents(
-        val targetToken: Token,
         val expression: Expression,
         val semicolonToken: Token,
     )
 
     private companion object {
-        val DEFAULT_TARGET_TOKENS = setOf(
-            TokenType.IDENTIFIER,
-        )
-
-        val DEFAULT_ASSIGNMENT_TOKENS = setOf(
-            TokenType.ASSIGN,
-        )
+        val DEFAULT_FOLLOWING_TOKEN = TokenType.ASSIGN
     }
 }

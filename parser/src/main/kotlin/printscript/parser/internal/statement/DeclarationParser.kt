@@ -6,9 +6,8 @@ import printscript.ast.expression.Expression
 import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.context.TokenLookahead
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
@@ -17,21 +16,11 @@ import printscript.token.TokenType
 
 internal class DeclarationParser(
     private val expressionParser: ExpressionParser,
-    private val keywordTokens: Set<TokenType> = DEFAULT_KEYWORD_TOKENS,
+    override val startToken: TokenType = DEFAULT_START_TOKEN,
     private val declaredTypeByToken: Map<TokenType, DeclaredType> = DEFAULT_DECLARED_TYPES,
 ) : StatementParser {
 
     private val typeTokens: Set<TokenType> = declaredTypeByToken.keys
-
-    private val matcher = StatementMatcher(
-        listOf(keywordTokens),
-    )
-
-    override fun matchInitialTokens(
-        lookahead: TokenLookahead,
-    ): StatementMatch {
-        return matcher.matchInitialTokens(lookahead)
-    }
 
     override fun parseStatement(
         context: ParsingContext,
@@ -39,38 +28,42 @@ internal class DeclarationParser(
         val components = readComponents(context)
             .orReturn { return it }
 
-        return ParsingResult.Success(buildStatement(components))
+        return ParsingResult.Success(
+            value = buildStatement(components.value),
+            resultingContext = components.resultingContext,
+        )
     }
 
     private fun readComponents(
         context: ParsingContext,
     ): ParsingResult<DeclarationComponents> {
-        val keywordToken = context.expect(keywordTokens)
+        val keyword = context.expect(startToken)
             .orReturn { return it }
 
-        val identifierToken = context.expect(TokenType.IDENTIFIER)
+        val identifier = keyword.resultingContext.expect(TokenType.IDENTIFIER)
             .orReturn { return it }
 
-        context.expect(TokenType.COLON)
+        val colon = identifier.resultingContext.expect(TokenType.COLON)
             .orReturn { return it }
 
-        val declaredType = readDeclaredType(context)
+        val declaredType = readDeclaredType(colon.resultingContext)
             .orReturn { return it }
 
-        val initializer = readOptionalInitializer(context)
+        val initializer = readOptionalInitializer(declaredType.resultingContext)
             .orReturn { return it }
 
-        val semicolonToken = context.expect(TokenType.SEMICOLON)
+        val semicolon = initializer.resultingContext.expect(TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(
-            DeclarationComponents(
-                keywordToken = keywordToken,
-                identifierToken = identifierToken,
-                declaredType = declaredType,
-                initializer = initializer,
-                semicolonToken = semicolonToken,
+            value = DeclarationComponents(
+                keywordToken = keyword.value,
+                identifierToken = identifier.value,
+                declaredType = declaredType.value,
+                initializer = initializer.value,
+                semicolonToken = semicolon.value,
             ),
+            resultingContext = semicolon.resultingContext,
         )
     }
 
@@ -80,34 +73,49 @@ internal class DeclarationParser(
         val typeToken = context.expect(typeTokens)
             .orReturn { return it }
 
-        val declaredType = declaredTypeByToken[typeToken.type]
-            ?: return ParsingResult.Failure(
-                ParseError.UnexpectedToken(
-                    expected = typeTokens,
-                    actual = typeToken,
-                ),
-            )
+        val declaredType = declaredTypeByToken[typeToken.value.type]
+            ?: return unexpectedTypeToken(typeToken.value)
 
-        return ParsingResult.Success(declaredType)
+        return ParsingResult.Success(
+            value = declaredType,
+            resultingContext = typeToken.resultingContext,
+        )
+    }
+
+    private fun unexpectedTypeToken(
+        token: Token,
+    ): ParsingResult.Failure {
+        return ParsingResult.Failure(
+            ParseError.UnexpectedToken(
+                expected = typeTokens,
+                actual = token,
+            ),
+        )
     }
 
     private fun readOptionalInitializer(
         context: ParsingContext,
     ): ParsingResult<Expression?> {
-        val nextToken = context.peek()
+        val peeked = context.peek()
             .orReturn { return it }
 
-        if (nextToken.type != TokenType.ASSIGN) {
-            return ParsingResult.Success(null)
+        if (peeked.value.type != INITIALIZER_TOKEN) {
+            return ParsingResult.Success(
+                value = null,
+                resultingContext = peeked.resultingContext,
+            )
         }
 
-        context.expect(TokenType.ASSIGN)
+        return readInitializer(peeked.resultingContext)
+    }
+
+    private fun readInitializer(
+        context: ParsingContext,
+    ): ParsingResult<Expression?> {
+        val assignment = context.expect(INITIALIZER_TOKEN)
             .orReturn { return it }
 
-        val expression = expressionParser.parseExpression(context)
-            .orReturn { return it }
-
-        return ParsingResult.Success(expression)
+        return expressionParser.parseExpression(assignment.resultingContext)
     }
 
     private fun buildStatement(
@@ -136,9 +144,9 @@ internal class DeclarationParser(
     )
 
     private companion object {
-        val DEFAULT_KEYWORD_TOKENS = setOf(
-            TokenType.LET,
-        )
+        val DEFAULT_START_TOKEN = TokenType.LET
+
+        val INITIALIZER_TOKEN = TokenType.ASSIGN
 
         val DEFAULT_DECLARED_TYPES = mapOf(
             TokenType.NUMBER_TYPE to DeclaredType.NUMBER,

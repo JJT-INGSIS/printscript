@@ -1,5 +1,6 @@
 package printscript.interpreter
 
+import printscript.ast.statement.Statement
 import printscript.interpreter.environment.Environment
 import printscript.interpreter.expressions.ExpressionEvaluator
 import printscript.interpreter.output.ProgramOutput
@@ -17,40 +18,87 @@ internal class PrintScriptInterpreter(
     override fun interpret(
         source: StatementSource,
     ): InterpretationResult {
-        var environment: Environment = initialEnvironment
+        return interpretationSteps(source)
+            .filterIsInstance<InterpretationStep.Finished>()
+            .first()
+            .result
+    }
 
-        while (true) {
-            when (val readResult = source.nextStatement()) {
-                StatementReadResult.EndOfInput ->
-                    return InterpretationResult.Success
+    /**
+     * Cada paso lleva la fuente y el entorno con los que sigue el
+     * siguiente. La secuencia es perezosa, así que un programa largo no
+     * consume ni memoria ni stack de más.
+     */
+    private fun interpretationSteps(
+        source: StatementSource,
+    ): Sequence<InterpretationStep> {
+        return generateSequence<InterpretationStep>(
+            InterpretationStep.Pending(
+                source = source,
+                environment = initialEnvironment,
+            ),
+        ) { step ->
+            advance(step)
+        }
+    }
 
-                is StatementReadResult.Failure ->
-                    return InterpretationResult.ParseFailure(
+    private fun advance(
+        step: InterpretationStep,
+    ): InterpretationStep? {
+        return when (step) {
+            is InterpretationStep.Finished -> null
+
+            is InterpretationStep.Pending -> readAndExecute(step)
+        }
+    }
+
+    private fun readAndExecute(
+        step: InterpretationStep.Pending,
+    ): InterpretationStep {
+        return when (val readResult = step.source.nextStatement()) {
+            StatementReadResult.EndOfInput ->
+                InterpretationStep.Finished(InterpretationResult.Success)
+
+            is StatementReadResult.Failure ->
+                InterpretationStep.Finished(
+                    InterpretationResult.ParseFailure(
                         error = readResult.error,
-                    )
+                    ),
+                )
 
-                is StatementReadResult.Success -> {
-                    val executionResult = executeStatement(
-                        statement = readResult.statement,
-                        environment = environment,
-                    )
+            is StatementReadResult.Success ->
+                continueAfter(
+                    readResult = readResult,
+                    environment = step.environment,
+                )
+        }
+    }
 
-                    when (executionResult) {
-                        is ExecutionResult.Failure ->
-                            return InterpretationResult.SemanticFailure(
-                                error = executionResult.error,
-                            )
+    private fun continueAfter(
+        readResult: StatementReadResult.Success,
+        environment: Environment,
+    ): InterpretationStep {
+        return when (
+            val execution = executeStatement(
+                statement = readResult.statement,
+                environment = environment,
+            )
+        ) {
+            is ExecutionResult.Failure -> InterpretationStep.Finished(
+                InterpretationResult.SemanticFailure(
+                    error = execution.error,
+                ),
+            )
 
-                        is ExecutionResult.Success ->
-                            environment = executionResult.value
-                    }
-                }
-            }
+            is ExecutionResult.Success -> InterpretationStep.Pending(
+                source = readResult.remainingSource,
+                environment = execution.value,
+            )
         }
     }
 
     private fun executeStatement(
-        statement: printscript.ast.statement.Statement,
+        statement: Statement,
         environment: Environment,
     ): ExecutionResult<Environment> {
         return statementExecutorDispatcher.dispatchToExecutor(
@@ -61,5 +109,17 @@ internal class PrintScriptInterpreter(
                 output = output,
             ),
         )
+    }
+
+    private sealed interface InterpretationStep {
+
+        data class Pending(
+            val source: StatementSource,
+            val environment: Environment,
+        ) : InterpretationStep
+
+        data class Finished(
+            val result: InterpretationResult,
+        ) : InterpretationStep
     }
 }

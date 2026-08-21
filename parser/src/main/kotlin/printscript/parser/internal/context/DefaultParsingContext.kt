@@ -50,7 +50,10 @@ internal data class DefaultParsingContext(
         actual: Token,
     ): ParsingResult.Failure {
         return ParsingResult.Failure(
-            ParseError.UnexpectedToken(expected = expected, actual = actual),
+            ParseError.UnexpectedToken(
+                expected = expected,
+                actual = actual,
+            ),
         )
     }
 

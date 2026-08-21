@@ -8,8 +8,8 @@ import printscript.ast.expression.NumberLiteralExpression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.StringQuoteStyle
 import printscript.model.source.SourceSpan
-import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
+import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
 import printscript.token.Token
@@ -23,53 +23,56 @@ internal class PrimaryExpressionParser(
     override fun parseExpression(
         context: ParsingContext,
     ): ParsingResult<Expression> {
-        val token = context.peek()
+        val peeked = context.peek()
             .orReturn { return it }
 
-        return when (token.type) {
+        return when (peeked.value.type) {
             TokenType.NUMBER_LITERAL ->
-                consumeAndBuild(context, ::numberLiteral)
+                consumeAndBuild(peeked.resultingContext, ::numberLiteral)
 
             TokenType.STRING_LITERAL ->
-                consumeAndBuild(context, ::stringLiteral)
+                consumeAndBuild(peeked.resultingContext, ::stringLiteral)
 
             TokenType.IDENTIFIER ->
-                consumeAndBuild(context, ::identifier)
+                consumeAndBuild(peeked.resultingContext, ::identifier)
 
             TokenType.LEFT_PAREN ->
-                parseGrouping(context)
+                parseGrouping(peeked.resultingContext)
 
             else ->
-                unexpectedToken(token)
+                unexpectedToken(peeked.value)
         }
     }
 
     private fun consumeAndBuild(
         context: ParsingContext,
-        build: (Token) -> ParsingResult<Expression>,
+        build: (Token, ParsingContext) -> ParsingResult<Expression>,
     ): ParsingResult<Expression> {
         val token = context.consume()
             .orReturn { return it }
 
-        return build(token)
+        return build(token.value, token.resultingContext)
     }
 
     private fun numberLiteral(
         token: Token,
+        context: ParsingContext,
     ): ParsingResult<Expression> {
         val value = token.lexeme.toBigDecimalOrNull()
             ?: return invalidLiteral(token)
 
         return ParsingResult.Success(
-            NumberLiteralExpression(
+            value = NumberLiteralExpression(
                 value = value,
                 span = token.span,
             ),
+            resultingContext = context,
         )
     }
 
     private fun stringLiteral(
         token: Token,
+        context: ParsingContext,
     ): ParsingResult<Expression> {
         if (token.lexeme.length < MINIMUM_QUOTED_LITERAL_LENGTH) {
             return invalidLiteral(token)
@@ -86,24 +89,27 @@ internal class PrimaryExpressionParser(
         }
 
         return ParsingResult.Success(
-            StringLiteralExpression(
+            value = StringLiteralExpression(
                 value = unquote(token.lexeme),
                 quoteStyle = quoteStyle,
                 span = token.span,
             ),
+            resultingContext = context,
         )
     }
 
     private fun identifier(
         token: Token,
+        context: ParsingContext,
     ): ParsingResult<Expression> {
         return ParsingResult.Success(
-            IdentifierExpression(
+            value = IdentifierExpression(
                 Identifier(
                     value = token.lexeme,
                     span = token.span,
                 ),
             ),
+            resultingContext = context,
         )
     }
 
@@ -113,20 +119,21 @@ internal class PrimaryExpressionParser(
         val openParenthesis = context.expect(TokenType.LEFT_PAREN)
             .orReturn { return it }
 
-        val expression = parseNestedExpression(context)
+        val expression = parseNestedExpression(openParenthesis.resultingContext)
             .orReturn { return it }
 
-        val closeParenthesis = context.expect(TokenType.RIGHT_PAREN)
+        val closeParenthesis = expression.resultingContext.expect(TokenType.RIGHT_PAREN)
             .orReturn { return it }
 
         return ParsingResult.Success(
-            GroupingExpression(
-                expression = expression,
+            value = GroupingExpression(
+                expression = expression.value,
                 span = SourceSpan(
-                    start = openParenthesis.span.start,
-                    end = closeParenthesis.span.end,
+                    start = openParenthesis.value.span.start,
+                    end = closeParenthesis.value.span.end,
                 ),
             ),
+            resultingContext = closeParenthesis.resultingContext,
         )
     }
 
