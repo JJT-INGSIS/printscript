@@ -1,6 +1,6 @@
 package printscript.interpreter.environment
 
-interface Environment {
+internal interface Environment {
 
     fun lookupBinding(name: String): VariableBinding?
 

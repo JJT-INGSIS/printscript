@@ -7,12 +7,13 @@ import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
 import printscript.token.Token
 import printscript.token.TokenType
+
 internal class StatementParserDispatcher(
     parsers: List<StatementParser>,
 ) {
 
     private val parserByStartToken: Map<TokenType, StatementParser> =
-        parsers.associateBy { it.startToken }
+        parsers.associateBy { it.startTokenType }
 
     fun parseStatement(
         context: ParsingContext,

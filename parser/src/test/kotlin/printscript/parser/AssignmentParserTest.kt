@@ -118,6 +118,7 @@ class AssignmentParserTest {
         parseFirst(malformedAssignment.tokens).assertUnexpectedToken(
             expectedTokenTypes = malformedAssignment.expectedTokenTypes,
             actualTokenType = malformedAssignment.actualTokenType,
+            message = malformedAssignment.description,
         )
     }
 

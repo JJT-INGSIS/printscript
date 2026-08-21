@@ -5,26 +5,27 @@ import printscript.token.LexicalError
 import printscript.token.Token
 import printscript.token.TokenType
 
-sealed interface ParseError {
-    val span: SourceSpan
+public sealed interface ParseError {
 
-    data class Lexical(
-        val error: LexicalError,
+    public val span: SourceSpan
+
+    public data class Lexical(
+        public val error: LexicalError,
     ) : ParseError {
 
         override val span: SourceSpan = error.span
     }
 
-    data class UnexpectedToken(
-        val expected: Set<TokenType>,
-        val actual: Token,
+    public data class UnexpectedToken(
+        public val expected: Set<TokenType>,
+        public val actual: Token,
     ) : ParseError {
 
         override val span: SourceSpan = actual.span
     }
 
-    data class InvalidLiteral(
-        val token: Token,
+    public data class InvalidLiteral(
+        public val token: Token,
     ) : ParseError {
 
         override val span: SourceSpan = token.span

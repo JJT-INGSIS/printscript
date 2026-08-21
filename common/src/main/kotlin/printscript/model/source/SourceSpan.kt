@@ -1,7 +1,7 @@
 package printscript.model.source
 
-data class SourceSpan(
-    val start: SourcePosition,
-    val end: SourcePosition
+public data class SourceSpan(
+    public val start: SourcePosition,
+    public val end: SourcePosition,
 )
 

@@ -1,9 +1,9 @@
 package printscript.interpreter.environment
 
-import printscript.interpreter.value.RuntimeValue
 import printscript.ast.DeclaredType
+import printscript.interpreter.value.RuntimeValue
 
-data class VariableBinding(
+internal data class VariableBinding(
     val type: DeclaredType,
-    val value: RuntimeValue?
+    val value: RuntimeValue?,
 )

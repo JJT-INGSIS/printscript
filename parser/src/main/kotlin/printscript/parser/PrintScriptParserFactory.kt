@@ -9,9 +9,9 @@ import printscript.parser.internal.statement.PrintlnParser
 import printscript.parser.internal.statement.StatementParser
 import printscript.parser.internal.statement.TargetedStatementParser
 
-object PrintScriptParserFactory {
+public object PrintScriptParserFactory {
 
-    fun createV1(): Parser {
+    public fun createV1(): Parser {
         val expressionParser =
             RecursiveDescentExpressionParser()
 

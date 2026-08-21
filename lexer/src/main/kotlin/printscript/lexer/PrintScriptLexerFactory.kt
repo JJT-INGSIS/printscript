@@ -7,9 +7,9 @@ import printscript.lexer.internal.scanner.NumberLiteralScanner
 import printscript.lexer.internal.scanner.StringLiteralScanner
 import printscript.lexer.internal.scanner.SymbolScanner
 
-object PrintScriptLexerFactory {
+public object PrintScriptLexerFactory {
 
-    fun createV1(): Lexer {
+    public fun createV1(): Lexer {
         return PrintScriptLexer(
             tokenScanners = listOf(
                 StringLiteralScanner(),

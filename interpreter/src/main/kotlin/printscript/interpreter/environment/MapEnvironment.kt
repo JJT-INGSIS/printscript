@@ -1,6 +1,6 @@
 package printscript.interpreter.environment
 
-class MapEnvironment private constructor(
+internal class MapEnvironment private constructor(
     private val bindings: Map<String, VariableBinding>,
 ) : Environment {
 

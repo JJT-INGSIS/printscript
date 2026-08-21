@@ -1,6 +1,6 @@
 package printscript.interpreter
 
-inline fun <T> ExecutionResult<T>.orReturn(
+internal inline fun <T> ExecutionResult<T>.orReturn(
     onFailure: (ExecutionResult.Failure) -> Nothing,
 ): T =
     when (this) {

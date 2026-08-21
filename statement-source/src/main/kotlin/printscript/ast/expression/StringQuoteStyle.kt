@@ -1,6 +1,6 @@
 package printscript.ast.expression
 
-enum class StringQuoteStyle {
+public enum class StringQuoteStyle {
     SINGLE,
     DOUBLE,
 }

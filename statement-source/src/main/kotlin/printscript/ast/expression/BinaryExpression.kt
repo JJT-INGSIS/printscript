@@ -2,11 +2,11 @@ package printscript.ast.expression
 
 import printscript.model.source.SourceSpan
 
-data class BinaryExpression(
-    val left: Expression,
-    val operator: BinaryOperator,
-    val operatorSpan: SourceSpan,
-    val right: Expression,
+public data class BinaryExpression(
+    public val left: Expression,
+    public val operator: BinaryOperator,
+    public val operatorSpan: SourceSpan,
+    public val right: Expression,
 ) : Expression {
 
     override val span: SourceSpan = SourceSpan(

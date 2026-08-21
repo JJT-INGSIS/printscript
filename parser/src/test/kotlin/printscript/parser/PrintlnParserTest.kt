@@ -1,9 +1,9 @@
 package printscript.parser
 
-import printscript.ast.statement.PrintlnStatement
 import printscript.ast.expression.BinaryExpression
 import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.StringLiteralExpression
+import printscript.ast.statement.PrintlnStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.TokenType
@@ -136,6 +136,7 @@ class PrintlnParserTest {
         parseFirst(malformedPrintln.tokens).assertUnexpectedToken(
             expectedTokenTypes = malformedPrintln.expectedTokenTypes,
             actualTokenType = malformedPrintln.actualTokenType,
+            message = malformedPrintln.description,
         )
     }
 

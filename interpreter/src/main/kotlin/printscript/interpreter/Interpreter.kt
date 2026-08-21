@@ -2,9 +2,9 @@ package printscript.interpreter
 
 import printscript.statement.StatementSource
 
-interface Interpreter {
+public interface Interpreter {
 
-    fun interpret(
+    public fun interpret(
         source: StatementSource,
     ): InterpretationResult
 }

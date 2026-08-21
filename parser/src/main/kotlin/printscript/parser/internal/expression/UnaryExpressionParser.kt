@@ -22,13 +22,13 @@ internal class UnaryExpressionParser(
         val operator = operators[peeked.value.type]
             ?: return operandParser.parseExpression(peeked.resultingContext)
 
-        return parseOperated(
+        return parseUnaryExpression(
             operator = operator,
             context = peeked.resultingContext,
         )
     }
 
-    private fun parseOperated(
+    private fun parseUnaryExpression(
         operator: UnaryOperator,
         context: ParsingContext,
     ): ParsingResult<Expression> {

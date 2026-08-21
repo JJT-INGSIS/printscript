@@ -1,11 +1,11 @@
 package printscript.source
 
-sealed interface SourceChunkReadResult {
+public sealed interface SourceChunkReadResult {
 
-    data class Success(
-        val chunk: SourceChunk,
-        val remainingReader: SourceReader,
+    public data class Success(
+        public val chunk: SourceChunk,
+        public val remainingReader: SourceReader,
     ) : SourceChunkReadResult
 
-    data object EndOfInput : SourceChunkReadResult
+    public data object EndOfInput : SourceChunkReadResult
 }

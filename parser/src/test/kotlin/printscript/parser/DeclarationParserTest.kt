@@ -179,6 +179,7 @@ class DeclarationParserTest {
         parseFirst(malformedDeclaration.tokens).assertUnexpectedToken(
             expectedTokenTypes = malformedDeclaration.expectedTokenTypes,
             actualTokenType = malformedDeclaration.actualTokenType,
+            message = malformedDeclaration.description,
         )
     }
 

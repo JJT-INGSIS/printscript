@@ -1,56 +1,59 @@
 package printscript.interpreter
 
+import printscript.ast.DeclaredType
+import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.UnaryOperator
 import printscript.model.source.SourceSpan
 
-sealed interface SemanticError {
-    val span: SourceSpan
+public sealed interface SemanticError {
 
-    data class UndeclaredVariable(
-        val name: String,
+    public val span: SourceSpan
+
+    public data class UndeclaredVariable(
+        public val name: String,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class UninitializedVariable(
-        val name: String,
+    public data class UninitializedVariable(
+        public val name: String,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class AlreadyDeclaredVariable(
-        val name: String,
+    public data class AlreadyDeclaredVariable(
+        public val name: String,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class TypeMismatch(
-        val name: String,
-        val expected: printscript.ast.DeclaredType,
-        val actual: printscript.ast.DeclaredType,
+    public data class TypeMismatch(
+        public val name: String,
+        public val expected: DeclaredType,
+        public val actual: DeclaredType,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class InvalidBinaryOperands(
-        val operator: printscript.ast.expression.BinaryOperator,
-        val left: printscript.ast.DeclaredType,
-        val right: printscript.ast.DeclaredType,
+    public data class InvalidBinaryOperands(
+        public val operator: BinaryOperator,
+        public val left: DeclaredType,
+        public val right: DeclaredType,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class InvalidUnaryOperand(
-        val operator: UnaryOperator,
-        val operand: printscript.ast.DeclaredType,
+    public data class InvalidUnaryOperand(
+        public val operator: UnaryOperator,
+        public val operand: DeclaredType,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class DivisionByZero(
+    public data class DivisionByZero(
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class UnsupportedBinaryOperator(
-        val operator: printscript.ast.expression.BinaryOperator,
+    public data class UnsupportedBinaryOperator(
+        public val operator: BinaryOperator,
         override val span: SourceSpan,
     ) : SemanticError
 
-    data class UnsupportedStatement(
+    public data class UnsupportedStatement(
         override val span: SourceSpan,
     ) : SemanticError
 }

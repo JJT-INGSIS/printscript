@@ -1,6 +1,6 @@
 package printscript.ast.expression
 
-enum class UnaryOperator {
+public enum class UnaryOperator {
     PLUS,
     MINUS,
 }

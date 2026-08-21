@@ -3,12 +3,12 @@ package printscript.interpreter.value
 import printscript.ast.DeclaredType
 import java.math.BigDecimal
 
-sealed interface RuntimeValue {
+internal sealed interface RuntimeValue {
     val type: DeclaredType
     fun asText(): String
 }
 
-data class NumberValue(val value: BigDecimal) : RuntimeValue {
+internal data class NumberValue(val value: BigDecimal) : RuntimeValue {
 
     override val type: DeclaredType = DeclaredType.NUMBER
 
@@ -19,7 +19,7 @@ data class NumberValue(val value: BigDecimal) : RuntimeValue {
     }
 }
 
-data class StringValue(val value: String) : RuntimeValue {
+internal data class StringValue(val value: String) : RuntimeValue {
 
     override val type: DeclaredType = DeclaredType.STRING
 

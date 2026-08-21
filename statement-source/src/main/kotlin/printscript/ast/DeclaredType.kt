@@ -1,6 +1,6 @@
 package printscript.ast
 
-enum class DeclaredType {
+public enum class DeclaredType {
     NUMBER,
     STRING,
 }

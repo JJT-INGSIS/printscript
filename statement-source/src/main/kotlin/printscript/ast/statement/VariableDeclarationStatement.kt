@@ -5,9 +5,9 @@ import printscript.ast.Identifier
 import printscript.ast.expression.Expression
 import printscript.model.source.SourceSpan
 
-data class VariableDeclarationStatement(
-    val identifier: Identifier,
-    val declaredType: DeclaredType,
-    val initializer: Expression?,
+public data class VariableDeclarationStatement(
+    public val identifier: Identifier,
+    public val declaredType: DeclaredType,
+    public val initializer: Expression?,
     override val span: SourceSpan,
 ) : Statement

@@ -3,9 +3,9 @@ package printscript.lexer
 import printscript.source.SourceReader
 import printscript.token.TokenSource
 
-interface Lexer {
+public interface Lexer {
 
-    fun tokenize(
+    public fun tokenize(
         sourceReader: SourceReader,
     ): TokenSource
 }

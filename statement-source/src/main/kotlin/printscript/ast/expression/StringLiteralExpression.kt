@@ -2,8 +2,8 @@ package printscript.ast.expression
 
 import printscript.model.source.SourceSpan
 
-data class StringLiteralExpression(
-    val value: String,
-    val quoteStyle: StringQuoteStyle,
+public data class StringLiteralExpression(
+    public val value: String,
+    public val quoteStyle: StringQuoteStyle,
     override val span: SourceSpan,
 ) : Expression

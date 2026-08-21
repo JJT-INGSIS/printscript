@@ -1,6 +1,6 @@
 package printscript.ast.expression
 
-enum class BinaryOperator {
+public enum class BinaryOperator {
     ADD,
     SUBTRACT,
     MULTIPLY,

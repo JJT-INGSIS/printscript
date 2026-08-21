@@ -58,15 +58,15 @@ internal data class DefaultParsingContext(
     }
 
     private fun toParsingResult(
-        read: TokenCursorRead,
+        read: TokenCursorReadResult,
     ): ParsingResult<Token> {
         return when (read) {
-            is TokenCursorRead.Success -> ParsingResult.Success(
+            is TokenCursorReadResult.Success -> ParsingResult.Success(
                 value = read.token,
                 resultingContext = withCursor(read.resultingCursor),
             )
 
-            is TokenCursorRead.Failure -> ParsingResult.Failure(
+            is TokenCursorReadResult.Failure -> ParsingResult.Failure(
                 ParseError.Lexical(read.error),
             )
         }

@@ -4,7 +4,7 @@ import printscript.ast.expression.Expression
 import printscript.interpreter.environment.Environment
 import printscript.interpreter.value.RuntimeValue
 
-interface ExecutionContext {
+internal interface ExecutionContext {
 
     val environment: Environment
 

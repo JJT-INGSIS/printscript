@@ -2,15 +2,15 @@ package printscript.statement
 
 import printscript.ast.statement.Statement
 
-sealed interface StatementReadResult {
+public sealed interface StatementReadResult {
 
     /**
      * Trae la sentencia y la fuente para seguir leyendo: es el único
      * caso que continúa.
      */
-    data class Success(
-        val statement: Statement,
-        val remainingSource: StatementSource,
+    public data class Success(
+        public val statement: Statement,
+        public val remainingSource: StatementSource,
     ) : StatementReadResult
 
     /**
@@ -18,9 +18,9 @@ sealed interface StatementReadResult {
      *
      * This is a terminal result. Consumers must stop reading.
      */
-    data class Failure(
-        val error: ParseError,
+    public data class Failure(
+        public val error: ParseError,
     ) : StatementReadResult
 
-    data object EndOfInput : StatementReadResult
+    public data object EndOfInput : StatementReadResult
 }

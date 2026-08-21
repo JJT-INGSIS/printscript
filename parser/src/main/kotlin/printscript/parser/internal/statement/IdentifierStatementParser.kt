@@ -16,11 +16,11 @@ import printscript.token.TokenType
  */
 internal class IdentifierStatementParser(
     parsers: List<TargetedStatementParser>,
-    override val startToken: TokenType = DEFAULT_START_TOKEN,
+    override val startTokenType: TokenType = DEFAULT_START_TOKEN,
 ) : StatementParser {
 
     private val parserByFollowingToken: Map<TokenType, TargetedStatementParser> =
-        parsers.associateBy { it.followingToken }
+        parsers.associateBy { it.followingTokenType }
 
     override fun parseStatement(
         context: ParsingContext,
@@ -43,7 +43,7 @@ internal class IdentifierStatementParser(
     private fun readTarget(
         context: ParsingContext,
     ): ParsingResult<Identifier> {
-        val targetToken = context.expect(startToken)
+        val targetToken = context.expect(startTokenType)
             .orReturn { return it }
 
         return ParsingResult.Success(

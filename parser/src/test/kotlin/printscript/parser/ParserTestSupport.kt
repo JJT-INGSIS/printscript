@@ -332,10 +332,12 @@ internal inline fun <reified T : Statement> StatementReadResult.assertStatement(
     return assertIs<T>(assertSuccessStatement())
 }
 
-internal inline fun <reified T : ParseError> StatementReadResult.assertParseError(): T {
-    val failure = assertIs<StatementReadResult.Failure>(this)
+internal inline fun <reified T : ParseError> StatementReadResult.assertParseError(
+    message: String? = null,
+): T {
+    val failure = assertIs<StatementReadResult.Failure>(this, message)
 
-    return assertIs<T>(failure.error)
+    return assertIs<T>(failure.error, message)
 }
 
 /**
@@ -346,17 +348,22 @@ internal inline fun <reified T : ParseError> StatementReadResult.assertParseErro
 internal fun StatementReadResult.assertUnexpectedToken(
     expectedTokenTypes: Set<TokenType>,
     actualTokenType: TokenType,
+    message: String? = null,
 ) {
-    val error = assertParseError<ParseError.UnexpectedToken>()
+    val error = assertParseError<ParseError.UnexpectedToken>(
+        message = message,
+    )
 
     assertEquals(
         expected = expectedTokenTypes,
         actual = error.expected,
+        message = message,
     )
 
     assertEquals(
         expected = actualTokenType,
         actual = error.actual.type,
+        message = message,
     )
 }
 
