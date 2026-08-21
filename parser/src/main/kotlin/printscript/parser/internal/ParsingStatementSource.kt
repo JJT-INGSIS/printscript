@@ -6,43 +6,48 @@ import printscript.statement.StatementSource
 import printscript.token.Token
 import printscript.token.TokenType
 
-internal class ParsingStatementSource(
+internal data class ParsingStatementSource(
     private val context: ParsingContext,
 ) : StatementSource {
 
     override fun nextStatement(): StatementReadResult {
         return when (val lookahead = context.peek()) {
-            is ParsingResult.Success ->
-                readFromToken(lookahead.value)
+            is ParsingResult.Success -> readFromToken(lookahead)
 
-            is ParsingResult.Failure ->
-                StatementReadResult.Failure(
-                    error = lookahead.error,
-                )
+            is ParsingResult.Failure -> StatementReadResult.Failure(
+                error = lookahead.error,
+            )
         }
     }
 
     private fun readFromToken(
-        token: Token,
+        lookahead: ParsingResult.Success<Token>,
     ): StatementReadResult {
-        if (token.type == TokenType.EOF) {
-            return StatementReadResult.EndOfInput
+        return if (lookahead.value.type == TokenType.EOF) {
+            StatementReadResult.EndOfInput
+        } else {
+            parseNextStatement(lookahead.resultingContext)
         }
-
-        return parseNextStatement()
     }
 
-    private fun parseNextStatement(): StatementReadResult {
+    private fun parseNextStatement(
+        context: ParsingContext,
+    ): StatementReadResult {
         return when (val result = context.parseStatement()) {
-            is ParsingResult.Success ->
-                StatementReadResult.Success(
-                    statement = result.value,
-                )
+            is ParsingResult.Success -> StatementReadResult.Success(
+                statement = result.value,
+                remainingSource = withContext(result.resultingContext),
+            )
 
-            is ParsingResult.Failure ->
-                StatementReadResult.Failure(
-                    error = result.error,
-                )
+            is ParsingResult.Failure -> StatementReadResult.Failure(
+                error = result.error,
+            )
         }
+    }
+
+    private fun withContext(
+        context: ParsingContext,
+    ): StatementSource {
+        return copy(context = context)
     }
 }

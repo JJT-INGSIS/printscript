@@ -2,6 +2,7 @@ package printscript.parser
 
 import printscript.parser.internal.ParsingStatementSource
 import printscript.parser.internal.context.DefaultParsingContext
+import printscript.parser.internal.context.TokenCursor
 import printscript.parser.internal.statement.StatementParser
 import printscript.parser.internal.statement.StatementParserDispatcher
 import printscript.statement.StatementSource
@@ -19,13 +20,11 @@ internal class PrintScriptParser(
     override fun parse(
         tokens: TokenSource,
     ): StatementSource {
-        val parsingContext = DefaultParsingContext(
-            tokens = tokens,
-            statementParserDispatcher = statementParserDispatcher,
-        )
-
         return ParsingStatementSource(
-            context = parsingContext,
+            context = DefaultParsingContext(
+                cursor = TokenCursor.initial(tokens),
+                statementParserDispatcher = statementParserDispatcher,
+            ),
         )
     }
 }
