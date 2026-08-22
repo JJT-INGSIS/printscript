@@ -22,6 +22,7 @@ include(
     "parser",
     "token-source",
     "interpreter",
+    "linter",
     "statement-source",
     "integration-tests",
 )
