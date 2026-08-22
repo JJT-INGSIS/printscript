@@ -24,4 +24,5 @@ include(
     "interpreter",
     "statement-source",
     "integration-tests",
+    "formatter",
 )
