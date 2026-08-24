@@ -4,13 +4,13 @@ import printscript.ast.DeclaredType
 import printscript.ast.expression.Expression
 import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
-import printscript.formatter.FormattingError
 import printscript.formatter.internal.expression.ExpressionFormatter
 
 internal class DeclarationFormatter(
     private val expressionFormatter: ExpressionFormatter,
-    private val spaceBeforeColon: Boolean,
-    private val spaceAfterColon: Boolean,
+    private val insertSpaceBeforeColon: Boolean,
+    private val insertSpaceAfterColon: Boolean,
+    private val insertSpaceAroundEqualsOperator: Boolean,
 ) : StatementFormatter {
 
     override fun supportsStatement(
@@ -23,7 +23,7 @@ internal class DeclarationFormatter(
         statement: Statement,
     ): StatementFormattingResult {
         if (statement !is VariableDeclarationStatement) {
-            return unsupportedStatement(statement)
+            return createUnsupportedStatementFailure(statement)
         }
 
         return StatementFormattingResult.Success(
@@ -34,9 +34,11 @@ internal class DeclarationFormatter(
     private fun formatDeclaration(
         statement: VariableDeclarationStatement,
     ): String {
-        val spacingBeforeColon = spaceIfEnabled(spaceBeforeColon)
-        val spacingAfterColon = spaceIfEnabled(spaceAfterColon)
-        val declaredType = formatDeclaredType(
+        val spacingBeforeColon =
+            spaceIfEnabled(insertSpaceBeforeColon)
+        val spacingAfterColon =
+            spaceIfEnabled(insertSpaceAfterColon)
+        val formattedDeclaredType = formatDeclaredType(
             statement.declaredType,
         )
         val formattedInitializer = formatInitializerClause(
@@ -44,7 +46,7 @@ internal class DeclarationFormatter(
         )
 
         return "let ${statement.identifier.value}" +
-                "$spacingBeforeColon:$spacingAfterColon$declaredType" +
+                "$spacingBeforeColon:$spacingAfterColon$formattedDeclaredType" +
                 "$formattedInitializer;"
     }
 
@@ -58,16 +60,21 @@ internal class DeclarationFormatter(
     }
 
     private fun formatInitializerClause(
-        initializer: Expression?,
+        initializerExpression: Expression?,
     ): String {
-        if (initializer == null) {
+        if (initializerExpression == null) {
             return ""
         }
 
         val formattedExpression =
-            expressionFormatter.formatExpression(initializer)
+            expressionFormatter.formatExpression(
+                initializerExpression,
+            )
+        val equalsOperatorSpacing =
+            spaceIfEnabled(insertSpaceAroundEqualsOperator)
 
-        return " = $formattedExpression"
+        return "$equalsOperatorSpacing=" +
+            "$equalsOperatorSpacing$formattedExpression"
     }
 
     private fun spaceIfEnabled(
@@ -78,15 +85,5 @@ internal class DeclarationFormatter(
         } else {
             ""
         }
-    }
-
-    private fun unsupportedStatement(
-        statement: Statement,
-    ): StatementFormattingResult.Failure {
-        return StatementFormattingResult.Failure(
-            error = FormattingError.UnsupportedStatement(
-                span = statement.span,
-            ),
-        )
     }
 }

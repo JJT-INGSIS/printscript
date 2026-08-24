@@ -14,7 +14,10 @@ public object PrintScriptFormatterFactory {
         configuration: FormatterConfiguration,
     ): Formatter {
         val expressionFormatter =
-            ExpressionFormatter()
+            ExpressionFormatter(
+                insertSpaceAroundBinaryOperators =
+                    configuration.insertSpaceAroundBinaryOperators,
+            )
 
         return PrintScriptFormatter(
             statementFormatterDispatcher =
@@ -22,10 +25,12 @@ public object PrintScriptFormatterFactory {
                     configuration = configuration,
                     expressionFormatter = expressionFormatter,
                 ),
-            separationPolicy =
+            statementSeparationPolicy =
                 PrintScriptV1StatementSeparationPolicy(
-                    lineBreaksBeforePrintln =
-                        configuration.lineBreaksBeforePrintln,
+                    defaultLineBreakCountBetweenStatements =
+                        configuration.lineBreakCountBetweenStatements,
+                    lineBreakCountBeforeOutputStatements =
+                        configuration.lineBreakCountBeforeOutputStatements,
                 ),
         )
     }
@@ -35,17 +40,21 @@ public object PrintScriptFormatterFactory {
         expressionFormatter: ExpressionFormatter,
     ): StatementFormatterDispatcher {
         return StatementFormatterDispatcher(
-            formatters =
+            statementFormatters =
                 listOf(
                     DeclarationFormatter(
                         expressionFormatter = expressionFormatter,
-                        spaceBeforeColon =
-                            configuration.spaceBeforeColon,
-                        spaceAfterColon =
-                            configuration.spaceAfterColon,
+                        insertSpaceBeforeColon =
+                            configuration.insertSpaceBeforeColon,
+                        insertSpaceAfterColon =
+                            configuration.insertSpaceAfterColon,
+                        insertSpaceAroundEqualsOperator =
+                            configuration.insertSpaceAroundEqualsOperator,
                     ),
                     AssignmentFormatter(
                         expressionFormatter = expressionFormatter,
+                        insertSpaceAroundEqualsOperator =
+                            configuration.insertSpaceAroundEqualsOperator,
                     ),
                     PrintlnFormatter(
                         expressionFormatter = expressionFormatter,

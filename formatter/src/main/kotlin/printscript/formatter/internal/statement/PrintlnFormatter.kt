@@ -2,7 +2,6 @@ package printscript.formatter.internal.statement
 
 import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
-import printscript.formatter.FormattingError
 import printscript.formatter.internal.expression.ExpressionFormatter
 
 internal class PrintlnFormatter(
@@ -19,26 +18,22 @@ internal class PrintlnFormatter(
         statement: Statement,
     ): StatementFormattingResult {
         if (statement !is PrintlnStatement) {
-            return unsupportedStatement(statement)
+            return createUnsupportedStatementFailure(statement)
         }
 
+        return StatementFormattingResult.Success(
+            formattedText = formatPrintln(statement),
+        )
+    }
+
+    private fun formatPrintln(
+        statement: PrintlnStatement,
+    ): String {
         val formattedArgument =
             expressionFormatter.formatExpression(
                 statement.argument,
             )
 
-        return StatementFormattingResult.Success(
-            formattedText = "println($formattedArgument);",
-        )
-    }
-
-    private fun unsupportedStatement(
-        statement: Statement,
-    ): StatementFormattingResult.Failure {
-        return StatementFormattingResult.Failure(
-            error = FormattingError.UnsupportedStatement(
-                span = statement.span,
-            ),
-        )
+        return "println($formattedArgument);"
     }
 }

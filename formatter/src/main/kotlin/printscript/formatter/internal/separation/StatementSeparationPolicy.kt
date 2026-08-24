@@ -4,7 +4,7 @@ import printscript.ast.statement.Statement
 
 internal interface StatementSeparationPolicy {
 
-    fun separatorBefore(
+    fun separatorBeforeStatement(
         statement: Statement,
         hasPreviousStatement: Boolean,
     ): String
