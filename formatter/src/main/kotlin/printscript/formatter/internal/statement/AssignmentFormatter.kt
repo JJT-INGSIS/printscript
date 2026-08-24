@@ -9,15 +9,11 @@ internal class AssignmentFormatter(
     private val insertSpaceAroundEqualsOperator: Boolean,
 ) : StatementFormatter {
 
-    override fun supportsStatement(
-        statement: Statement,
-    ): Boolean {
+    override fun supportsStatement(statement: Statement): Boolean {
         return statement is AssignmentStatement
     }
 
-    override fun formatStatement(
-        statement: Statement,
-    ): StatementFormattingResult {
+    override fun formatStatement(statement: Statement): StatementFormattingResult {
         if (statement !is AssignmentStatement) {
             return createUnsupportedStatementFailure(statement)
         }
@@ -27,9 +23,7 @@ internal class AssignmentFormatter(
         )
     }
 
-    private fun formatAssignment(
-        statement: AssignmentStatement,
-    ): String {
+    private fun formatAssignment(statement: AssignmentStatement): String {
         val formattedExpression =
             expressionFormatter.formatExpression(
                 statement.expression,
@@ -42,9 +36,7 @@ internal class AssignmentFormatter(
             "$equalsOperatorSpacing$formattedExpression;"
     }
 
-    private fun spaceIfEnabled(
-        enabled: Boolean,
-    ): String {
+    private fun spaceIfEnabled(enabled: Boolean): String {
         return if (enabled) {
             " "
         } else {

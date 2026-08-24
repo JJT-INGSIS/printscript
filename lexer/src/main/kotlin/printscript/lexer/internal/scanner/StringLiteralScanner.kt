@@ -15,16 +15,11 @@ private const val CARRIAGE_RETURN = '\r'
 
 internal class StringLiteralScanner : TokenScanner {
 
-    override fun canStartWith(
-        character: Char,
-    ): Boolean {
+    override fun canStartWith(character: Char): Boolean {
         return isStringQuote(character)
     }
 
-    override fun scan(
-        cursor: CharacterCursor,
-        startingCharacter: Char,
-    ): TokenScanResult {
+    override fun scan(cursor: CharacterCursor, startingCharacter: Char): TokenScanResult {
         val resultingCursor =
             cursor.advance().resultingCursor
 
@@ -48,7 +43,7 @@ internal class StringLiteralScanner : TokenScanner {
                     openingQuote = openingQuote,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
 
@@ -58,7 +53,7 @@ internal class StringLiteralScanner : TokenScanner {
                         openingQuote = openingQuote,
                         startPosition = startPosition,
                         resultingCursor =
-                            result.resultingCursor,
+                        result.resultingCursor,
                     )
                 }
 
@@ -85,9 +80,7 @@ internal class StringLiteralScanner : TokenScanner {
         }
     }
 
-    private fun consumeCharacter(
-        result: CharacterReadResult.Success,
-    ): CharacterCursor {
+    private fun consumeCharacter(result: CharacterReadResult.Success): CharacterCursor {
         return result.resultingCursor
             .advance()
             .resultingCursor
@@ -128,17 +121,13 @@ internal class StringLiteralScanner : TokenScanner {
         )
     }
 
-    private fun isStringQuote(
-        character: Char,
-    ): Boolean {
+    private fun isStringQuote(character: Char): Boolean {
         return character == SINGLE_QUOTE ||
-                character == DOUBLE_QUOTE
+            character == DOUBLE_QUOTE
     }
 
-    private fun isLineBreak(
-        character: Char,
-    ): Boolean {
+    private fun isLineBreak(character: Char): Boolean {
         return character == LINE_FEED ||
-                character == CARRIAGE_RETURN
+            character == CARRIAGE_RETURN
     }
 }

@@ -15,9 +15,7 @@ internal class PrintScriptInterpreter(
     private val statementExecutorDispatcher: StatementExecutorDispatcher,
 ) : Interpreter {
 
-    override fun interpret(
-        source: StatementSource,
-    ): InterpretationResult {
+    override fun interpret(source: StatementSource): InterpretationResult {
         return interpretationSteps(source)
             .filterIsInstance<InterpretationStep.Finished>()
             .first()
@@ -29,9 +27,7 @@ internal class PrintScriptInterpreter(
      * siguiente. La secuencia es perezosa, así que un programa largo no
      * consume ni memoria ni stack de más.
      */
-    private fun interpretationSteps(
-        source: StatementSource,
-    ): Sequence<InterpretationStep> {
+    private fun interpretationSteps(source: StatementSource): Sequence<InterpretationStep> {
         return generateSequence<InterpretationStep>(
             InterpretationStep.Pending(
                 source = source,
@@ -42,9 +38,7 @@ internal class PrintScriptInterpreter(
         }
     }
 
-    private fun advance(
-        step: InterpretationStep,
-    ): InterpretationStep? {
+    private fun advance(step: InterpretationStep): InterpretationStep? {
         return when (step) {
             is InterpretationStep.Finished -> null
 
@@ -52,9 +46,7 @@ internal class PrintScriptInterpreter(
         }
     }
 
-    private fun readAndExecute(
-        step: InterpretationStep.Pending,
-    ): InterpretationStep {
+    private fun readAndExecute(step: InterpretationStep.Pending): InterpretationStep {
         return when (val readResult = step.source.nextStatement()) {
             StatementReadResult.EndOfInput ->
                 InterpretationStep.Finished(InterpretationResult.Success)
@@ -74,10 +66,7 @@ internal class PrintScriptInterpreter(
         }
     }
 
-    private fun continueAfter(
-        readResult: StatementReadResult.Success,
-        environment: Environment,
-    ): InterpretationStep {
+    private fun continueAfter(readResult: StatementReadResult.Success, environment: Environment): InterpretationStep {
         return when (
             val execution = executeStatement(
                 statement = readResult.statement,
@@ -97,10 +86,7 @@ internal class PrintScriptInterpreter(
         }
     }
 
-    private fun executeStatement(
-        statement: Statement,
-        environment: Environment,
-    ): ExecutionResult<Environment> {
+    private fun executeStatement(statement: Statement, environment: Environment): ExecutionResult<Environment> {
         return statementExecutorDispatcher.dispatchToExecutor(
             statement = statement,
             context = InterpreterExecutionContext(

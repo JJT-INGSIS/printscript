@@ -130,9 +130,7 @@ class PrintlnParserTest {
         }
     }
 
-    private fun assertRejects(
-        malformedPrintln: MalformedPrintln,
-    ) {
+    private fun assertRejects(malformedPrintln: MalformedPrintln) {
         parseFirst(malformedPrintln.tokens).assertUnexpectedToken(
             expectedTokenTypes = malformedPrintln.expectedTokenTypes,
             actualTokenType = malformedPrintln.actualTokenType,

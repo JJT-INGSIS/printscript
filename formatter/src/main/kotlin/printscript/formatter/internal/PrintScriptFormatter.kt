@@ -11,15 +11,13 @@ internal class PrintScriptFormatter(
     private val statementSeparationPolicy: StatementSeparationPolicy,
 ) : Formatter {
 
-    override fun format(
-        statementSource: StatementSource,
-    ): FormattedSource {
+    override fun format(statementSource: StatementSource): FormattedSource {
         return LazyFormattedSource(
             statementSource = statementSource,
             statementFormatterDispatcher =
-                statementFormatterDispatcher,
+            statementFormatterDispatcher,
             statementSeparationPolicy =
-                statementSeparationPolicy,
+            statementSeparationPolicy,
             hasPreviousStatement = false,
         )
     }

@@ -22,9 +22,7 @@ internal class IdentifierStatementParser(
     private val parserByFollowingToken: Map<TokenType, TargetedStatementParser> =
         parsers.associateBy { it.followingTokenType }
 
-    override fun parseStatement(
-        context: ParsingContext,
-    ): ParsingResult<Statement> {
+    override fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
         val target = readTarget(context)
             .orReturn { return it }
 
@@ -40,9 +38,7 @@ internal class IdentifierStatementParser(
         )
     }
 
-    private fun readTarget(
-        context: ParsingContext,
-    ): ParsingResult<Identifier> {
+    private fun readTarget(context: ParsingContext): ParsingResult<Identifier> {
         val targetToken = context.expect(startTokenType)
             .orReturn { return it }
 
@@ -55,9 +51,7 @@ internal class IdentifierStatementParser(
         )
     }
 
-    private fun unrecognizedStatement(
-        token: Token,
-    ): ParsingResult.Failure {
+    private fun unrecognizedStatement(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
                 expected = parserByFollowingToken.keys,

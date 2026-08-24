@@ -39,10 +39,7 @@ internal class TokenListBuilder {
     private var nextColumn = FIRST_COLUMN
     private var nextOffset = 0L
 
-    fun token(
-        type: TokenType,
-        lexeme: String = "",
-    ): TokenListBuilder {
+    fun token(type: TokenType, lexeme: String = ""): TokenListBuilder {
         results.add(
             TokenReadFixture.Success(
                 token = Token(
@@ -56,9 +53,7 @@ internal class TokenListBuilder {
         return this
     }
 
-    fun lexicalError(
-        character: Char = '@',
-    ): TokenListBuilder {
+    fun lexicalError(character: Char = '@'): TokenListBuilder {
         results.add(
             TokenReadFixture.Failure(
                 error = LexicalError.UnexpectedCharacter(
@@ -109,9 +104,7 @@ internal class TokenListBuilder {
         return results.toList()
     }
 
-    private fun advanceSpan(
-        lexeme: String,
-    ): SourceSpan {
+    private fun advanceSpan(lexeme: String): SourceSpan {
         val start = SourcePosition(
             line = FIRST_LINE,
             column = nextColumn,
@@ -134,9 +127,7 @@ internal class TokenListBuilder {
     }
 }
 
-internal fun tokens(
-    block: TokenListBuilder.() -> Unit,
-): List<TokenReadFixture> {
+internal fun tokens(block: TokenListBuilder.() -> Unit): List<TokenReadFixture> {
     val builder = TokenListBuilder()
     builder.block()
 
@@ -175,9 +166,7 @@ internal class FakeTokenSource(
         )
     }
 
-    private fun endOfInputToken(
-        remainingSource: TokenSource,
-    ): TokenReadResult {
+    private fun endOfInputToken(remainingSource: TokenSource): TokenReadResult {
         val position = SourcePosition(
             line = FIRST_LINE,
             column = FIRST_COLUMN,
@@ -198,9 +187,7 @@ internal class FakeTokenSource(
     }
 }
 
-private fun TokenReadFixture.toTokenReadResult(
-    remainingSource: TokenSource,
-): TokenReadResult {
+private fun TokenReadFixture.toTokenReadResult(remainingSource: TokenSource): TokenReadResult {
     return when (this) {
         is TokenReadFixture.Success -> {
             TokenReadResult.Success(
@@ -261,9 +248,7 @@ private class ReadCounter {
     }
 }
 
-private fun TokenReadResult.withRemainingSource(
-    remainingSource: TokenSource,
-): TokenReadResult {
+private fun TokenReadResult.withRemainingSource(remainingSource: TokenSource): TokenReadResult {
     return when (this) {
         is TokenReadResult.Success -> {
             copy(
@@ -283,23 +268,17 @@ private fun TokenReadResult.withRemainingSource(
 // Construcción del sujeto bajo prueba
 // --------------------------------------------------------------------
 
-internal fun sourceOf(
-    tokens: List<TokenReadFixture>,
-): StatementSource {
+internal fun sourceOf(tokens: List<TokenReadFixture>): StatementSource {
     return PrintScriptParserFactory.createV1().parse(
         tokens = FakeTokenSource(tokens),
     )
 }
 
-internal fun parseFirst(
-    tokens: List<TokenReadFixture>,
-): StatementReadResult {
+internal fun parseFirst(tokens: List<TokenReadFixture>): StatementReadResult {
     return sourceOf(tokens).nextStatement()
 }
 
-internal fun parseAll(
-    tokens: List<TokenReadFixture>,
-): List<StatementReadResult> {
+internal fun parseAll(tokens: List<TokenReadFixture>): List<StatementReadResult> {
     return generateSequence(
         sourceOf(tokens).nextStatement(),
     ) { previous ->
@@ -309,9 +288,7 @@ internal fun parseAll(
         .toList()
 }
 
-private fun continuationOf(
-    result: StatementReadResult,
-): StatementReadResult? {
+private fun continuationOf(result: StatementReadResult): StatementReadResult? {
     return when (result) {
         is StatementReadResult.Success -> result.remainingSource.nextStatement()
 
@@ -332,9 +309,7 @@ internal inline fun <reified T : Statement> StatementReadResult.assertStatement(
     return assertIs<T>(assertSuccessStatement())
 }
 
-internal inline fun <reified T : ParseError> StatementReadResult.assertParseError(
-    message: String? = null,
-): T {
+internal inline fun <reified T : ParseError> StatementReadResult.assertParseError(message: String? = null): T {
     val failure = assertIs<StatementReadResult.Failure>(this, message)
 
     return assertIs<T>(failure.error, message)
@@ -386,9 +361,7 @@ internal fun StatementSource.assertEndOfInput() {
 // Atajos de alto nivel
 // --------------------------------------------------------------------
 
-internal inline fun <reified T : Statement> statementOf(
-    tokens: List<TokenReadFixture>,
-): T {
+internal inline fun <reified T : Statement> statementOf(tokens: List<TokenReadFixture>): T {
     return parseFirst(tokens).assertStatement()
 }
 
@@ -396,9 +369,7 @@ internal inline fun <reified T : Statement> statementOf(
  * Parsea una expresión suelta envolviéndola en una asignación, que es
  * la sentencia más corta que la contiene.
  */
-internal fun expressionOf(
-    expression: TokenListBuilder.() -> Unit,
-): Expression {
+internal fun expressionOf(expression: TokenListBuilder.() -> Unit): Expression {
     val statement = statementOf<AssignmentStatement>(
         tokens {
             id("x")

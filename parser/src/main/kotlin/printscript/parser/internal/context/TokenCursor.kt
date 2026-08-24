@@ -28,15 +28,11 @@ internal data class TokenCursor(
         return lookahead ?: source.nextToken()
     }
 
-    private fun withLookahead(
-        readResult: TokenReadResult,
-    ): TokenCursor {
+    private fun withLookahead(readResult: TokenReadResult): TokenCursor {
         return copy(lookahead = readResult)
     }
 
-    private fun TokenReadResult.toCursorRead(
-        resultingCursor: TokenCursor,
-    ): TokenCursorReadResult {
+    private fun TokenReadResult.toCursorRead(resultingCursor: TokenCursor): TokenCursorReadResult {
         return when (this) {
             is TokenReadResult.Success -> TokenCursorReadResult.Success(
                 token = token,
@@ -52,9 +48,7 @@ internal data class TokenCursor(
 
     companion object {
 
-        fun initial(
-            source: TokenSource,
-        ): TokenCursor {
+        fun initial(source: TokenSource): TokenCursor {
             return TokenCursor(
                 source = source,
                 lookahead = null,

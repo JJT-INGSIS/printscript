@@ -11,16 +11,11 @@ import printscript.interpreter.value.RuntimeValue
 
 internal class PrintlnExecutor : StatementExecutor {
 
-    override fun supportsStatement(
-        statement: Statement,
-    ): Boolean {
+    override fun supportsStatement(statement: Statement): Boolean {
         return statement is PrintlnStatement
     }
 
-    override fun executeStatement(
-        statement: Statement,
-        context: ExecutionContext,
-    ): ExecutionResult<Environment> {
+    override fun executeStatement(statement: Statement, context: ExecutionContext): ExecutionResult<Environment> {
         if (statement !is PrintlnStatement) {
             return ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(span = statement.span),

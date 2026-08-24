@@ -11,9 +11,7 @@ import printscript.interpreter.statements.StatementExecutorDispatcher
 
 public object PrintScriptInterpreterFactory {
 
-    public fun createV1(
-        output: ProgramOutput,
-    ): Interpreter {
+    public fun createV1(output: ProgramOutput): Interpreter {
         return PrintScriptInterpreter(
             output = output,
             initialEnvironment = MapEnvironment(),

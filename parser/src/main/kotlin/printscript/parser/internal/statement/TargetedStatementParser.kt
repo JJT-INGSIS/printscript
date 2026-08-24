@@ -15,8 +15,5 @@ internal interface TargetedStatementParser {
 
     val followingTokenType: TokenType
 
-    fun parseStatement(
-        target: Identifier,
-        context: ParsingContext,
-    ): ParsingResult<Statement>
+    fun parseStatement(target: Identifier, context: ParsingContext): ParsingResult<Statement>
 }

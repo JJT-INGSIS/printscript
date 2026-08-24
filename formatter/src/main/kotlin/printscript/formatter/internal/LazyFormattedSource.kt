@@ -46,9 +46,9 @@ internal data class LazyFormattedSource(
                 createFormattedStatementReadSuccess(
                     statement = statementReadResult.statement,
                     formattedText =
-                        statementFormattingResult.formattedText,
+                    statementFormattingResult.formattedText,
                     remainingStatementSource =
-                        statementReadResult.remainingSource,
+                    statementReadResult.remainingSource,
                 )
 
             is StatementFormattingResult.Failure ->
@@ -67,16 +67,16 @@ internal data class LazyFormattedSource(
             statementSeparationPolicy.separatorBeforeStatement(
                 statement = statement,
                 hasPreviousStatement =
-                    hasPreviousStatement,
+                hasPreviousStatement,
             )
 
         return FormattedStatementReadResult.Success(
             formattedText = "$separatorBeforeStatement$formattedText",
             remainingSource =
-                copy(
-                    statementSource = remainingStatementSource,
-                    hasPreviousStatement = true,
-                ),
+            copy(
+                statementSource = remainingStatementSource,
+                hasPreviousStatement = true,
+            ),
         )
     }
 

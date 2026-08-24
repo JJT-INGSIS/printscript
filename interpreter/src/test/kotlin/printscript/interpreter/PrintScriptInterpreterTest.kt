@@ -32,27 +32,21 @@ class PrintScriptInterpreterTest {
         end = SourcePosition(1, 1, 0),
     )
 
-    private fun name(
-        value: String,
-    ): Identifier {
+    private fun name(value: String): Identifier {
         return Identifier(
             value = value,
             span = anySpan,
         )
     }
 
-    private fun number(
-        value: String,
-    ): Expression {
+    private fun number(value: String): Expression {
         return NumberLiteralExpression(
             value = BigDecimal(value),
             span = anySpan,
         )
     }
 
-    private fun text(
-        value: String,
-    ): Expression {
+    private fun text(value: String): Expression {
         return StringLiteralExpression(
             value = value,
             quoteStyle = StringQuoteStyle.DOUBLE,
@@ -60,19 +54,13 @@ class PrintScriptInterpreterTest {
         )
     }
 
-    private fun variable(
-        value: String,
-    ): Expression {
+    private fun variable(value: String): Expression {
         return IdentifierExpression(
             identifier = name(value),
         )
     }
 
-    private fun binary(
-        left: Expression,
-        operator: BinaryOperator,
-        right: Expression,
-    ): Expression {
+    private fun binary(left: Expression, operator: BinaryOperator, right: Expression): Expression {
         return BinaryExpression(
             left = left,
             operator = operator,
@@ -81,11 +69,7 @@ class PrintScriptInterpreterTest {
         )
     }
 
-    private fun declare(
-        variableName: String,
-        type: DeclaredType,
-        initializer: Expression?,
-    ): Statement {
+    private fun declare(variableName: String, type: DeclaredType, initializer: Expression?): Statement {
         return VariableDeclarationStatement(
             identifier = name(variableName),
             declaredType = type,
@@ -94,17 +78,13 @@ class PrintScriptInterpreterTest {
         )
     }
 
-    private fun createInterpreter(
-        output: InMemoryOutput,
-    ): Interpreter {
+    private fun createInterpreter(output: InMemoryOutput): Interpreter {
         return PrintScriptInterpreterFactory.createV1(
             output = output,
         )
     }
 
-    private fun run(
-        vararg statements: Statement,
-    ): List<String> {
+    private fun run(vararg statements: Statement): List<String> {
         val output = InMemoryOutput()
 
         val result = createInterpreter(output).interpret(
@@ -121,9 +101,7 @@ class PrintScriptInterpreterTest {
         return output.lines()
     }
 
-    private fun runExpectingFailure(
-        vararg statements: Statement,
-    ): SemanticError {
+    private fun runExpectingFailure(vararg statements: Statement): SemanticError {
         val output = InMemoryOutput()
 
         val result = createInterpreter(output).interpret(

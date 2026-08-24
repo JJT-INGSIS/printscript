@@ -11,11 +11,7 @@ import java.math.MathContext
 
 internal class DivideOperation : ArithmeticOperation(BinaryOperator.DIVIDE) {
 
-    override fun calculate(
-        left: BigDecimal,
-        right: BigDecimal,
-        span: SourceSpan,
-    ): ExecutionResult<RuntimeValue> {
+    override fun calculate(left: BigDecimal, right: BigDecimal, span: SourceSpan): ExecutionResult<RuntimeValue> {
         if (isZero(right)) {
             return ExecutionResult.Failure(SemanticError.DivisionByZero(span))
         }
@@ -25,5 +21,4 @@ internal class DivideOperation : ArithmeticOperation(BinaryOperator.DIVIDE) {
     private fun isZero(value: BigDecimal): Boolean {
         return value.signum() == 0
     }
-
 }

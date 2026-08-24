@@ -173,9 +173,7 @@ class DeclarationParserTest {
         }
     }
 
-    private fun assertRejects(
-        malformedDeclaration: MalformedDeclaration,
-    ) {
+    private fun assertRejects(malformedDeclaration: MalformedDeclaration) {
         parseFirst(malformedDeclaration.tokens).assertUnexpectedToken(
             expectedTokenTypes = malformedDeclaration.expectedTokenTypes,
             actualTokenType = malformedDeclaration.actualTokenType,

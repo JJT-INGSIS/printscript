@@ -21,9 +21,7 @@ internal data class DefaultParsingContext(
         return toParsingResult(cursor.advance())
     }
 
-    override fun expect(
-        expected: Set<TokenType>,
-    ): ParsingResult<Token> {
+    override fun expect(expected: Set<TokenType>): ParsingResult<Token> {
         val peeked = peek()
             .orReturn { return it }
 
@@ -34,10 +32,7 @@ internal data class DefaultParsingContext(
         return statementParserDispatcher.parseStatement(this)
     }
 
-    private fun acceptExpected(
-        expected: Set<TokenType>,
-        peeked: ParsingResult.Success<Token>,
-    ): ParsingResult<Token> {
+    private fun acceptExpected(expected: Set<TokenType>, peeked: ParsingResult.Success<Token>): ParsingResult<Token> {
         return if (peeked.value.type in expected) {
             peeked.resultingContext.consume()
         } else {
@@ -45,10 +40,7 @@ internal data class DefaultParsingContext(
         }
     }
 
-    private fun unexpectedToken(
-        expected: Set<TokenType>,
-        actual: Token,
-    ): ParsingResult.Failure {
+    private fun unexpectedToken(expected: Set<TokenType>, actual: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
                 expected = expected,
@@ -57,9 +49,7 @@ internal data class DefaultParsingContext(
         )
     }
 
-    private fun toParsingResult(
-        read: TokenCursorReadResult,
-    ): ParsingResult<Token> {
+    private fun toParsingResult(read: TokenCursorReadResult): ParsingResult<Token> {
         return when (read) {
             is TokenCursorReadResult.Success -> ParsingResult.Success(
                 value = read.token,
@@ -72,9 +62,7 @@ internal data class DefaultParsingContext(
         }
     }
 
-    private fun withCursor(
-        cursor: TokenCursor,
-    ): ParsingContext {
+    private fun withCursor(cursor: TokenCursor): ParsingContext {
         return copy(cursor = cursor)
     }
 }

@@ -23,10 +23,7 @@ internal class AddOperation : BinaryOperation {
         return ExecutionResult.Success(NumberValue(left.value + right.value))
     }
 
-    private fun concatenate(
-        left: RuntimeValue,
-        right: RuntimeValue,
-    ): ExecutionResult<RuntimeValue> {
+    private fun concatenate(left: RuntimeValue, right: RuntimeValue): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(StringValue(left.asText() + right.asText()))
     }
 }

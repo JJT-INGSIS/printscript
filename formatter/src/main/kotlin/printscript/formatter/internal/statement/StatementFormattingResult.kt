@@ -14,9 +14,7 @@ internal sealed interface StatementFormattingResult {
     ) : StatementFormattingResult
 }
 
-internal fun createUnsupportedStatementFailure(
-    statement: Statement,
-): StatementFormattingResult.Failure {
+internal fun createUnsupportedStatementFailure(statement: Statement): StatementFormattingResult.Failure {
     return StatementFormattingResult.Failure(
         error = FormattingError.UnsupportedStatement(
             span = statement.span,

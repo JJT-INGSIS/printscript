@@ -16,13 +16,10 @@ import printscript.token.Token
 import printscript.token.TokenType
 
 internal class PrimaryExpressionParser(
-    private val parseNestedExpression:
-        (ParsingContext) -> ParsingResult<Expression>,
+    private val parseNestedExpression: (ParsingContext) -> ParsingResult<Expression>,
 ) : ExpressionParser {
 
-    override fun parseExpression(
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
         val peeked = context.peek()
             .orReturn { return it }
 
@@ -54,10 +51,7 @@ internal class PrimaryExpressionParser(
         return build(token.value, token.resultingContext)
     }
 
-    private fun numberLiteral(
-        token: Token,
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    private fun numberLiteral(token: Token, context: ParsingContext): ParsingResult<Expression> {
         val value = token.lexeme.toBigDecimalOrNull()
             ?: return invalidLiteral(token)
 
@@ -70,10 +64,7 @@ internal class PrimaryExpressionParser(
         )
     }
 
-    private fun stringLiteral(
-        token: Token,
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    private fun stringLiteral(token: Token, context: ParsingContext): ParsingResult<Expression> {
         if (token.lexeme.length < MINIMUM_QUOTED_LITERAL_LENGTH) {
             return invalidLiteral(token)
         }
@@ -98,10 +89,7 @@ internal class PrimaryExpressionParser(
         )
     }
 
-    private fun identifier(
-        token: Token,
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    private fun identifier(token: Token, context: ParsingContext): ParsingResult<Expression> {
         return ParsingResult.Success(
             value = IdentifierExpression(
                 Identifier(
@@ -113,9 +101,7 @@ internal class PrimaryExpressionParser(
         )
     }
 
-    private fun parseGrouping(
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    private fun parseGrouping(context: ParsingContext): ParsingResult<Expression> {
         val openParenthesis = context.expect(TokenType.LEFT_PAREN)
             .orReturn { return it }
 
@@ -137,18 +123,14 @@ internal class PrimaryExpressionParser(
         )
     }
 
-    private fun unquote(
-        lexeme: String,
-    ): String {
+    private fun unquote(lexeme: String): String {
         return lexeme.substring(
             startIndex = QUOTE_LENGTH,
             endIndex = lexeme.length - QUOTE_LENGTH,
         )
     }
 
-    private fun unexpectedToken(
-        token: Token,
-    ): ParsingResult.Failure {
+    private fun unexpectedToken(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
                 expected = PRIMARY_START_TOKENS,
@@ -157,9 +139,7 @@ internal class PrimaryExpressionParser(
         )
     }
 
-    private fun invalidLiteral(
-        token: Token,
-    ): ParsingResult.Failure {
+    private fun invalidLiteral(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.InvalidLiteral(token),
         )

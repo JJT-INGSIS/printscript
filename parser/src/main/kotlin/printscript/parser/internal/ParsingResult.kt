@@ -16,8 +16,7 @@ internal sealed interface ParsingResult<out T> {
 
 internal inline fun <T> ParsingResult<T>.orReturn(
     onFailure: (ParsingResult.Failure) -> Nothing,
-): ParsingResult.Success<T> =
-    when (this) {
-        is ParsingResult.Success -> this
-        is ParsingResult.Failure -> onFailure(this)
-    }
+): ParsingResult.Success<T> = when (this) {
+    is ParsingResult.Success -> this
+    is ParsingResult.Failure -> onFailure(this)
+}

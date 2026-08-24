@@ -16,9 +16,7 @@ internal class PrintlnParser(
     override val startTokenType: TokenType = DEFAULT_START_TOKEN,
 ) : StatementParser {
 
-    override fun parseStatement(
-        context: ParsingContext,
-    ): ParsingResult<Statement> {
+    override fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
         val components = readComponents(context)
             .orReturn { return it }
 
@@ -28,9 +26,7 @@ internal class PrintlnParser(
         )
     }
 
-    private fun readComponents(
-        context: ParsingContext,
-    ): ParsingResult<PrintlnComponents> {
+    private fun readComponents(context: ParsingContext): ParsingResult<PrintlnComponents> {
         val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
@@ -56,9 +52,7 @@ internal class PrintlnParser(
         )
     }
 
-    private fun buildStatement(
-        components: PrintlnComponents,
-    ): Statement {
+    private fun buildStatement(components: PrintlnComponents): Statement {
         return PrintlnStatement(
             argument = components.argument,
             span = SourceSpan(

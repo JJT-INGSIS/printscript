@@ -10,28 +10,26 @@ import printscript.formatter.internal.statement.StatementFormatterDispatcher
 
 public object PrintScriptFormatterFactory {
 
-    public fun createV1(
-        configuration: FormatterConfiguration,
-    ): Formatter {
+    public fun createV1(configuration: FormatterConfiguration): Formatter {
         val expressionFormatter =
             ExpressionFormatter(
                 insertSpaceAroundBinaryOperators =
-                    configuration.insertSpaceAroundBinaryOperators,
+                configuration.insertSpaceAroundBinaryOperators,
             )
 
         return PrintScriptFormatter(
             statementFormatterDispatcher =
-                createV1StatementFormatterDispatcher(
-                    configuration = configuration,
-                    expressionFormatter = expressionFormatter,
-                ),
+            createV1StatementFormatterDispatcher(
+                configuration = configuration,
+                expressionFormatter = expressionFormatter,
+            ),
             statementSeparationPolicy =
-                PrintScriptV1StatementSeparationPolicy(
-                    defaultLineBreakCountBetweenStatements =
-                        configuration.lineBreakCountBetweenStatements,
-                    lineBreakCountBeforeOutputStatements =
-                        configuration.lineBreakCountBeforeOutputStatements,
-                ),
+            PrintScriptV1StatementSeparationPolicy(
+                defaultLineBreakCountBetweenStatements =
+                configuration.lineBreakCountBetweenStatements,
+                lineBreakCountBeforeOutputStatements =
+                configuration.lineBreakCountBeforeOutputStatements,
+            ),
         )
     }
 
@@ -41,25 +39,25 @@ public object PrintScriptFormatterFactory {
     ): StatementFormatterDispatcher {
         return StatementFormatterDispatcher(
             statementFormatters =
-                listOf(
-                    DeclarationFormatter(
-                        expressionFormatter = expressionFormatter,
-                        insertSpaceBeforeColon =
-                            configuration.insertSpaceBeforeColon,
-                        insertSpaceAfterColon =
-                            configuration.insertSpaceAfterColon,
-                        insertSpaceAroundEqualsOperator =
-                            configuration.insertSpaceAroundEqualsOperator,
-                    ),
-                    AssignmentFormatter(
-                        expressionFormatter = expressionFormatter,
-                        insertSpaceAroundEqualsOperator =
-                            configuration.insertSpaceAroundEqualsOperator,
-                    ),
-                    PrintlnFormatter(
-                        expressionFormatter = expressionFormatter,
-                    ),
+            listOf(
+                DeclarationFormatter(
+                    expressionFormatter = expressionFormatter,
+                    insertSpaceBeforeColon =
+                    configuration.insertSpaceBeforeColon,
+                    insertSpaceAfterColon =
+                    configuration.insertSpaceAfterColon,
+                    insertSpaceAroundEqualsOperator =
+                    configuration.insertSpaceAroundEqualsOperator,
                 ),
+                AssignmentFormatter(
+                    expressionFormatter = expressionFormatter,
+                    insertSpaceAroundEqualsOperator =
+                    configuration.insertSpaceAroundEqualsOperator,
+                ),
+                PrintlnFormatter(
+                    expressionFormatter = expressionFormatter,
+                ),
+            ),
         )
     }
 }

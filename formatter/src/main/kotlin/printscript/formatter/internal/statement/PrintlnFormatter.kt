@@ -8,15 +8,11 @@ internal class PrintlnFormatter(
     private val expressionFormatter: ExpressionFormatter,
 ) : StatementFormatter {
 
-    override fun supportsStatement(
-        statement: Statement,
-    ): Boolean {
+    override fun supportsStatement(statement: Statement): Boolean {
         return statement is PrintlnStatement
     }
 
-    override fun formatStatement(
-        statement: Statement,
-    ): StatementFormattingResult {
+    override fun formatStatement(statement: Statement): StatementFormattingResult {
         if (statement !is PrintlnStatement) {
             return createUnsupportedStatementFailure(statement)
         }
@@ -26,9 +22,7 @@ internal class PrintlnFormatter(
         )
     }
 
-    private fun formatPrintln(
-        statement: PrintlnStatement,
-    ): String {
+    private fun formatPrintln(statement: PrintlnStatement): String {
         val formattedArgument =
             expressionFormatter.formatExpression(
                 statement.argument,

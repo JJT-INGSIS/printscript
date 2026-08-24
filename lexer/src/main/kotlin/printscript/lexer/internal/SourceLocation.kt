@@ -46,14 +46,11 @@ internal data class SourceLocation(
         )
     }
 
-    private fun nextLocation(
-        position: SourcePosition,
-        previousCharacterWasCarriageReturn: Boolean,
-    ): SourceLocation {
+    private fun nextLocation(position: SourcePosition, previousCharacterWasCarriageReturn: Boolean): SourceLocation {
         return SourceLocation(
             position = position,
             previousCharacterWasCarriageReturn =
-                previousCharacterWasCarriageReturn,
+            previousCharacterWasCarriageReturn,
         )
     }
 

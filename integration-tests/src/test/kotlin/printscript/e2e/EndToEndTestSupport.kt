@@ -1,16 +1,10 @@
 package printscript.e2e
 
-import printscript.interpreter.InterpretationResult
 import printscript.interpreter.PrintScriptInterpreterFactory
 import printscript.interpreter.output.ProgramOutput
 import printscript.lexer.PrintScriptLexerFactory
 import printscript.parser.PrintScriptParserFactory
 import printscript.source.SourceReaderFactory
-
-internal data class ProgramExecution(
-    val result: InterpretationResult,
-    val outputLines: List<String>,
-)
 
 internal fun runV1Script(
     sourceCode: String,
