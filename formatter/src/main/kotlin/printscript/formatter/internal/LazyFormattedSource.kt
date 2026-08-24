@@ -12,20 +12,18 @@ import printscript.statement.StatementSource
 
 internal data class LazyFormattedSource(
     private val statementSource: StatementSource,
-    private val statementFormatterDispatcher:
-    StatementFormatterDispatcher,
-    private val separationPolicy: StatementSeparationPolicy,
+    private val statementFormatterDispatcher: StatementFormatterDispatcher,
+    private val statementSeparationPolicy: StatementSeparationPolicy,
     private val hasPreviousStatement: Boolean,
 ) : FormattedSource {
 
-    override fun nextFormattedStatement():
-        FormattedStatementReadResult {
+    override fun nextFormattedStatement(): FormattedStatementReadResult {
         return when (
             val statementReadResult =
                 statementSource.nextStatement()
         ) {
             is StatementReadResult.Success ->
-                formatReadStatement(statementReadResult)
+                formatStatementReadSuccess(statementReadResult)
 
             is StatementReadResult.Failure ->
                 createParseFailure(statementReadResult)
@@ -35,48 +33,48 @@ internal data class LazyFormattedSource(
         }
     }
 
-    private fun formatReadStatement(
+    private fun formatStatementReadSuccess(
         statementReadResult: StatementReadResult.Success,
     ): FormattedStatementReadResult {
         return when (
-            val formattingResult =
+            val statementFormattingResult =
                 statementFormatterDispatcher.formatStatement(
                     statementReadResult.statement,
                 )
         ) {
             is StatementFormattingResult.Success ->
-                createFormattedStatementSuccess(
+                createFormattedStatementReadSuccess(
                     statement = statementReadResult.statement,
                     formattedText =
-                        formattingResult.formattedText,
-                    remainingSource =
+                        statementFormattingResult.formattedText,
+                    remainingStatementSource =
                         statementReadResult.remainingSource,
                 )
 
             is StatementFormattingResult.Failure ->
                 FormattedStatementReadResult.Failure(
-                    error = formattingResult.error,
+                    error = statementFormattingResult.error,
                 )
         }
     }
 
-    private fun createFormattedStatementSuccess(
+    private fun createFormattedStatementReadSuccess(
         statement: Statement,
         formattedText: String,
-        remainingSource: StatementSource,
+        remainingStatementSource: StatementSource,
     ): FormattedStatementReadResult.Success {
-        val statementSeparator =
-            separationPolicy.separatorBefore(
+        val separatorBeforeStatement =
+            statementSeparationPolicy.separatorBeforeStatement(
                 statement = statement,
                 hasPreviousStatement =
                     hasPreviousStatement,
             )
 
         return FormattedStatementReadResult.Success(
-            formattedText = "$statementSeparator$formattedText",
+            formattedText = "$separatorBeforeStatement$formattedText",
             remainingSource =
                 copy(
-                    statementSource = remainingSource,
+                    statementSource = remainingStatementSource,
                     hasPreviousStatement = true,
                 ),
         )
@@ -87,7 +85,7 @@ internal data class LazyFormattedSource(
     ): FormattedStatementReadResult.Failure {
         return FormattedStatementReadResult.Failure(
             error = FormattingError.ParseFailure(
-                error = statementReadResult.error,
+                parseError = statementReadResult.error,
             ),
         )
     }

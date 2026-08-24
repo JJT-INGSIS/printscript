@@ -7,9 +7,8 @@ import printscript.formatter.internal.statement.StatementFormatterDispatcher
 import printscript.statement.StatementSource
 
 internal class PrintScriptFormatter(
-    private val statementFormatterDispatcher:
-    StatementFormatterDispatcher,
-    private val separationPolicy: StatementSeparationPolicy,
+    private val statementFormatterDispatcher: StatementFormatterDispatcher,
+    private val statementSeparationPolicy: StatementSeparationPolicy,
 ) : Formatter {
 
     override fun format(
@@ -19,7 +18,8 @@ internal class PrintScriptFormatter(
             statementSource = statementSource,
             statementFormatterDispatcher =
                 statementFormatterDispatcher,
-            separationPolicy = separationPolicy,
+            statementSeparationPolicy =
+                statementSeparationPolicy,
             hasPreviousStatement = false,
         )
     }

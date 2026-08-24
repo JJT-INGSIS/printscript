@@ -11,7 +11,9 @@ import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 
-internal class ExpressionFormatter {
+internal class ExpressionFormatter(
+    private val insertSpaceAroundBinaryOperators: Boolean,
+) {
 
     fun formatExpression(
         expression: Expression,
@@ -46,12 +48,13 @@ internal class ExpressionFormatter {
     private fun formatStringLiteral(
         expression: StringLiteralExpression,
     ): String {
-        val delimiter = delimiterFor(expression.quoteStyle)
+        val quoteDelimiter =
+            quoteDelimiterFor(expression.quoteStyle)
 
-        return "$delimiter${expression.value}$delimiter"
+        return "$quoteDelimiter${expression.value}$quoteDelimiter"
     }
 
-    private fun delimiterFor(
+    private fun quoteDelimiterFor(
         quoteStyle: StringQuoteStyle,
     ): Char {
         return when (quoteStyle) {
@@ -66,8 +69,12 @@ internal class ExpressionFormatter {
         val formattedLeftOperand = formatExpression(expression.left)
         val operatorSymbol = symbolForBinaryOperator(expression.operator)
         val formattedRightOperand = formatExpression(expression.right)
+        val binaryOperatorSpacing =
+            binaryOperatorSpacing()
 
-        return "$formattedLeftOperand $operatorSymbol $formattedRightOperand"
+        return formattedLeftOperand +
+            "$binaryOperatorSpacing$operatorSymbol" +
+            "$binaryOperatorSpacing$formattedRightOperand"
     }
 
     private fun symbolForBinaryOperator(
@@ -108,5 +115,13 @@ internal class ExpressionFormatter {
             formatExpression(expression.expression)
 
         return "($formattedInnerExpression)"
+    }
+
+    private fun binaryOperatorSpacing(): String {
+        return if (insertSpaceAroundBinaryOperators) {
+            " "
+        } else {
+            ""
+        }
     }
 }

@@ -8,10 +8,10 @@ public sealed interface FormattingError {
     public val span: SourceSpan
 
     public data class ParseFailure(
-        public val error: ParseError,
+        public val parseError: ParseError,
     ) : FormattingError {
 
-        override val span: SourceSpan = error.span
+        override val span: SourceSpan = parseError.span
     }
 
     public data class UnsupportedStatement(

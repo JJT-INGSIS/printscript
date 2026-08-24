@@ -2,11 +2,11 @@ package printscript.formatter.internal.statement
 
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.Statement
-import printscript.formatter.FormattingError
 import printscript.formatter.internal.expression.ExpressionFormatter
 
 internal class AssignmentFormatter(
     private val expressionFormatter: ExpressionFormatter,
+    private val insertSpaceAroundEqualsOperator: Boolean,
 ) : StatementFormatter {
 
     override fun supportsStatement(
@@ -19,27 +19,36 @@ internal class AssignmentFormatter(
         statement: Statement,
     ): StatementFormattingResult {
         if (statement !is AssignmentStatement) {
-            return unsupportedStatement(statement)
+            return createUnsupportedStatementFailure(statement)
         }
 
+        return StatementFormattingResult.Success(
+            formattedText = formatAssignment(statement),
+        )
+    }
+
+    private fun formatAssignment(
+        statement: AssignmentStatement,
+    ): String {
         val formattedExpression =
             expressionFormatter.formatExpression(
                 statement.expression,
             )
+        val equalsOperatorSpacing =
+            spaceIfEnabled(insertSpaceAroundEqualsOperator)
 
-        return StatementFormattingResult.Success(
-            formattedText =
-                "${statement.target.value} = $formattedExpression;",
-        )
+        return statement.target.value +
+            "$equalsOperatorSpacing=" +
+            "$equalsOperatorSpacing$formattedExpression;"
     }
 
-    private fun unsupportedStatement(
-        statement: Statement,
-    ): StatementFormattingResult.Failure {
-        return StatementFormattingResult.Failure(
-            error = FormattingError.UnsupportedStatement(
-                span = statement.span,
-            ),
-        )
+    private fun spaceIfEnabled(
+        enabled: Boolean,
+    ): String {
+        return if (enabled) {
+            " "
+        } else {
+            ""
+        }
     }
 }
