@@ -22,9 +22,7 @@ internal class DeclarationParser(
 
     private val typeTokens: Set<TokenType> = declaredTypeByToken.keys
 
-    override fun parseStatement(
-        context: ParsingContext,
-    ): ParsingResult<Statement> {
+    override fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
         val components = readComponents(context)
             .orReturn { return it }
 
@@ -34,9 +32,7 @@ internal class DeclarationParser(
         )
     }
 
-    private fun readComponents(
-        context: ParsingContext,
-    ): ParsingResult<DeclarationComponents> {
+    private fun readComponents(context: ParsingContext): ParsingResult<DeclarationComponents> {
         val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
@@ -67,9 +63,7 @@ internal class DeclarationParser(
         )
     }
 
-    private fun readDeclaredType(
-        context: ParsingContext,
-    ): ParsingResult<DeclaredType> {
+    private fun readDeclaredType(context: ParsingContext): ParsingResult<DeclaredType> {
         val typeToken = context.expect(typeTokens)
             .orReturn { return it }
 
@@ -82,9 +76,7 @@ internal class DeclarationParser(
         )
     }
 
-    private fun unexpectedTypeToken(
-        token: Token,
-    ): ParsingResult.Failure {
+    private fun unexpectedTypeToken(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
                 expected = typeTokens,
@@ -93,9 +85,7 @@ internal class DeclarationParser(
         )
     }
 
-    private fun readOptionalInitializer(
-        context: ParsingContext,
-    ): ParsingResult<Expression?> {
+    private fun readOptionalInitializer(context: ParsingContext): ParsingResult<Expression?> {
         val peeked = context.peek()
             .orReturn { return it }
 
@@ -109,18 +99,14 @@ internal class DeclarationParser(
         return readInitializer(peeked.resultingContext)
     }
 
-    private fun readInitializer(
-        context: ParsingContext,
-    ): ParsingResult<Expression?> {
+    private fun readInitializer(context: ParsingContext): ParsingResult<Expression?> {
         val assignment = context.expect(INITIALIZER_TOKEN)
             .orReturn { return it }
 
         return expressionParser.parseExpression(assignment.resultingContext)
     }
 
-    private fun buildStatement(
-        components: DeclarationComponents,
-    ): Statement {
+    private fun buildStatement(components: DeclarationComponents): Statement {
         return VariableDeclarationStatement(
             identifier = Identifier(
                 value = components.identifierToken.lexeme,

@@ -10,10 +10,7 @@ internal class PrintScriptV1StatementSeparationPolicy(
     private val lineBreakCountBeforeOutputStatements: UInt,
 ) : StatementSeparationPolicy {
 
-    override fun separatorBeforeStatement(
-        statement: Statement,
-        hasPreviousStatement: Boolean,
-    ): String {
+    override fun separatorBeforeStatement(statement: Statement, hasPreviousStatement: Boolean): String {
         if (!hasPreviousStatement) {
             return ""
         }
@@ -24,9 +21,7 @@ internal class PrintScriptV1StatementSeparationPolicy(
         return LINE_BREAK.repeat(lineBreakCount.toInt())
     }
 
-    private fun lineBreakCountBeforeStatement(
-        statement: Statement,
-    ): UInt {
+    private fun lineBreakCountBeforeStatement(statement: Statement): UInt {
         return if (statement is PrintlnStatement) {
             lineBreakCountBeforeOutputStatements
         } else {

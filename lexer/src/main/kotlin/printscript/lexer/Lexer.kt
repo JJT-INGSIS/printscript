@@ -5,7 +5,5 @@ import printscript.token.TokenSource
 
 public interface Lexer {
 
-    public fun tokenize(
-        sourceReader: SourceReader,
-    ): TokenSource
+    public fun tokenize(sourceReader: SourceReader): TokenSource
 }

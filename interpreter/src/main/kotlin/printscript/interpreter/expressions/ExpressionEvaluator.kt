@@ -19,15 +19,11 @@ import printscript.interpreter.value.NumberValue
 import printscript.interpreter.value.RuntimeValue
 import printscript.interpreter.value.StringValue
 
-
 internal class ExpressionEvaluator(
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
 ) {
 
-    fun evaluateExpression(
-        expression: Expression,
-        environment: Environment,
-    ): ExecutionResult<RuntimeValue> {
+    fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
         return when (expression) {
             is NumberLiteralExpression -> evaluateNumberLiteral(expression)
             is StringLiteralExpression -> evaluateStringLiteral(expression)
@@ -38,15 +34,11 @@ internal class ExpressionEvaluator(
         }
     }
 
-    private fun evaluateNumberLiteral(
-        expression: NumberLiteralExpression,
-    ): ExecutionResult<RuntimeValue> {
+    private fun evaluateNumberLiteral(expression: NumberLiteralExpression): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(NumberValue(expression.value))
     }
 
-    private fun evaluateStringLiteral(
-        expression: StringLiteralExpression,
-    ): ExecutionResult<RuntimeValue> {
+    private fun evaluateStringLiteral(expression: StringLiteralExpression): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(StringValue(expression.value))
     }
 
@@ -79,10 +71,7 @@ internal class ExpressionEvaluator(
         return ExecutionResult.Success(value)
     }
 
-    private fun evaluateUnary(
-        expression: UnaryExpression,
-        environment: Environment,
-    ): ExecutionResult<RuntimeValue> {
+    private fun evaluateUnary(expression: UnaryExpression, environment: Environment): ExecutionResult<RuntimeValue> {
         val operand: RuntimeValue = evaluateExpression(expression.operand, environment)
             .orReturn { return it }
 
@@ -104,10 +93,7 @@ internal class ExpressionEvaluator(
         return ExecutionResult.Success(result)
     }
 
-    private fun evaluateBinary(
-        expression: BinaryExpression,
-        environment: Environment,
-    ): ExecutionResult<RuntimeValue> {
+    private fun evaluateBinary(expression: BinaryExpression, environment: Environment): ExecutionResult<RuntimeValue> {
         val left: RuntimeValue = evaluateExpression(expression.left, environment)
             .orReturn { return it }
 

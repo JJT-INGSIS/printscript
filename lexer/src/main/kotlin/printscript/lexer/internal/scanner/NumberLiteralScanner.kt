@@ -12,16 +12,11 @@ private const val DECIMAL_SEPARATOR = '.'
 
 internal class NumberLiteralScanner : TokenScanner {
 
-    override fun canStartWith(
-        character: Char,
-    ): Boolean {
+    override fun canStartWith(character: Char): Boolean {
         return character.isDigit()
     }
 
-    override fun scan(
-        cursor: CharacterCursor,
-        startingCharacter: Char,
-    ): TokenScanResult {
+    override fun scan(cursor: CharacterCursor, startingCharacter: Char): TokenScanResult {
         val resultingCursor =
             cursor.advance().resultingCursor
 
@@ -43,7 +38,7 @@ internal class NumberLiteralScanner : TokenScanner {
                     lexeme = lexeme,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
 
@@ -58,11 +53,11 @@ internal class NumberLiteralScanner : TokenScanner {
                     }
 
                     result.character ==
-                            DECIMAL_SEPARATOR -> {
+                        DECIMAL_SEPARATOR -> {
                         consumeFirstDecimalDigit(
                             cursor = consumeCharacter(result),
                             lexeme =
-                                lexeme + result.character,
+                            lexeme + result.character,
                             startPosition = startPosition,
                         )
                     }
@@ -72,7 +67,7 @@ internal class NumberLiteralScanner : TokenScanner {
                             lexeme = lexeme,
                             startPosition = startPosition,
                             resultingCursor =
-                                result.resultingCursor,
+                            result.resultingCursor,
                         )
                     }
                 }
@@ -91,7 +86,7 @@ internal class NumberLiteralScanner : TokenScanner {
                     lexeme = lexeme,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
 
@@ -124,7 +119,7 @@ internal class NumberLiteralScanner : TokenScanner {
                     lexeme = lexeme,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
 
@@ -139,11 +134,11 @@ internal class NumberLiteralScanner : TokenScanner {
                     }
 
                     result.character ==
-                            DECIMAL_SEPARATOR -> {
+                        DECIMAL_SEPARATOR -> {
                         consumeInvalidTail(
                             cursor = consumeCharacter(result),
                             lexeme =
-                                lexeme + result.character,
+                            lexeme + result.character,
                             startPosition = startPosition,
                         )
                     }
@@ -153,7 +148,7 @@ internal class NumberLiteralScanner : TokenScanner {
                             lexeme = lexeme,
                             startPosition = startPosition,
                             resultingCursor =
-                                result.resultingCursor,
+                            result.resultingCursor,
                         )
                     }
                 }
@@ -172,7 +167,7 @@ internal class NumberLiteralScanner : TokenScanner {
                     lexeme = lexeme,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
 
@@ -192,25 +187,21 @@ internal class NumberLiteralScanner : TokenScanner {
                     lexeme = lexeme,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
         }
     }
 
-    private fun consumeCharacter(
-        result: CharacterReadResult.Success,
-    ): CharacterCursor {
+    private fun consumeCharacter(result: CharacterReadResult.Success): CharacterCursor {
         return result.resultingCursor
             .advance()
             .resultingCursor
     }
 
-    private fun isNumericTailCharacter(
-        character: Char,
-    ): Boolean {
+    private fun isNumericTailCharacter(character: Char): Boolean {
         return character.isDigit() ||
-                character == DECIMAL_SEPARATOR
+            character == DECIMAL_SEPARATOR
     }
 
     private fun createNumberSuccess(

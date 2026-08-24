@@ -9,9 +9,7 @@ internal class StatementFormatterDispatcher(
     private val statementFormatters: List<StatementFormatter> =
         statementFormatters.toList()
 
-    fun formatStatement(
-        statement: Statement,
-    ): StatementFormattingResult {
+    fun formatStatement(statement: Statement): StatementFormattingResult {
         for (statementFormatter in statementFormatters) {
             if (statementFormatter.supportsStatement(statement)) {
                 return statementFormatter.formatStatement(statement)

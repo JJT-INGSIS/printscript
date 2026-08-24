@@ -5,7 +5,7 @@ import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
 class FailingStatementSource(
-    private val error: ParseError
+    private val error: ParseError,
 ) : StatementSource {
 
     override fun nextStatement(): StatementReadResult {

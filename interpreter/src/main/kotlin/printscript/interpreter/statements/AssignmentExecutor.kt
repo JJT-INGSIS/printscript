@@ -13,16 +13,11 @@ import printscript.interpreter.value.verifyAccepts
 
 internal class AssignmentExecutor : StatementExecutor {
 
-    override fun supportsStatement(
-        statement: Statement,
-    ): Boolean {
+    override fun supportsStatement(statement: Statement): Boolean {
         return statement is AssignmentStatement
     }
 
-    override fun executeStatement(
-        statement: Statement,
-        context: ExecutionContext,
-    ): ExecutionResult<Environment> {
+    override fun executeStatement(statement: Statement, context: ExecutionContext): ExecutionResult<Environment> {
         if (statement !is AssignmentStatement) {
             return ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(span = statement.span),

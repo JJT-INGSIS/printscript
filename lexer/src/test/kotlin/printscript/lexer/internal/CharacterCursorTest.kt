@@ -274,10 +274,7 @@ class CharacterCursorTest {
         afterSecondCharacter.assertEndOfInput()
     }
 
-    private fun advance(
-        cursor: CharacterCursor,
-        expectedCharacter: Char,
-    ): CharacterCursor {
+    private fun advance(cursor: CharacterCursor, expectedCharacter: Char): CharacterCursor {
         val result = assertIs<CharacterReadResult.Success>(
             cursor.advance(),
         )

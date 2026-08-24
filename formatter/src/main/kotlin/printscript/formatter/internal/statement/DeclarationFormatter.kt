@@ -13,15 +13,11 @@ internal class DeclarationFormatter(
     private val insertSpaceAroundEqualsOperator: Boolean,
 ) : StatementFormatter {
 
-    override fun supportsStatement(
-        statement: Statement,
-    ): Boolean {
+    override fun supportsStatement(statement: Statement): Boolean {
         return statement is VariableDeclarationStatement
     }
 
-    override fun formatStatement(
-        statement: Statement,
-    ): StatementFormattingResult {
+    override fun formatStatement(statement: Statement): StatementFormattingResult {
         if (statement !is VariableDeclarationStatement) {
             return createUnsupportedStatementFailure(statement)
         }
@@ -31,9 +27,7 @@ internal class DeclarationFormatter(
         )
     }
 
-    private fun formatDeclaration(
-        statement: VariableDeclarationStatement,
-    ): String {
+    private fun formatDeclaration(statement: VariableDeclarationStatement): String {
         val spacingBeforeColon =
             spaceIfEnabled(insertSpaceBeforeColon)
         val spacingAfterColon =
@@ -46,22 +40,18 @@ internal class DeclarationFormatter(
         )
 
         return "let ${statement.identifier.value}" +
-                "$spacingBeforeColon:$spacingAfterColon$formattedDeclaredType" +
-                "$formattedInitializer;"
+            "$spacingBeforeColon:$spacingAfterColon$formattedDeclaredType" +
+            "$formattedInitializer;"
     }
 
-    private fun formatDeclaredType(
-        declaredType: DeclaredType,
-    ): String {
+    private fun formatDeclaredType(declaredType: DeclaredType): String {
         return when (declaredType) {
             DeclaredType.NUMBER -> "number"
             DeclaredType.STRING -> "string"
         }
     }
 
-    private fun formatInitializerClause(
-        initializerExpression: Expression?,
-    ): String {
+    private fun formatInitializerClause(initializerExpression: Expression?): String {
         if (initializerExpression == null) {
             return ""
         }
@@ -77,9 +67,7 @@ internal class DeclarationFormatter(
             "$equalsOperatorSpacing$formattedExpression"
     }
 
-    private fun spaceIfEnabled(
-        enabled: Boolean,
-    ): String {
+    private fun spaceIfEnabled(enabled: Boolean): String {
         return if (enabled) {
             " "
         } else {

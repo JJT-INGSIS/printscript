@@ -13,9 +13,7 @@ internal class UnaryExpressionParser(
     private val operators: Map<TokenType, UnaryOperator>,
 ) : ExpressionParser {
 
-    override fun parseExpression(
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
         val peeked = context.peek()
             .orReturn { return it }
 
@@ -28,10 +26,7 @@ internal class UnaryExpressionParser(
         )
     }
 
-    private fun parseUnaryExpression(
-        operator: UnaryOperator,
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    private fun parseUnaryExpression(operator: UnaryOperator, context: ParsingContext): ParsingResult<Expression> {
         val operatorToken = context.consume()
             .orReturn { return it }
 

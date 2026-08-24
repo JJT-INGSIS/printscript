@@ -1,12 +1,11 @@
 package printscript.parser.internal.expression
 
-import printscript.ast.expression.Expression
 import printscript.ast.expression.BinaryOperator
+import printscript.ast.expression.Expression
 import printscript.ast.expression.UnaryOperator
-import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.ParsingResult
+import printscript.parser.internal.context.ParsingContext
 import printscript.token.TokenType
-
 
 private val ADDITIVE_OPERATORS: Map<TokenType, BinaryOperator> = mapOf(
     TokenType.PLUS to BinaryOperator.ADD,
@@ -27,9 +26,7 @@ internal class RecursiveDescentExpressionParser : ExpressionParser {
 
     private val topLevelParser: ExpressionParser = buildPrecedenceChain()
 
-    override fun parseExpression(
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
         return topLevelParser.parseExpression(context)
     }
 

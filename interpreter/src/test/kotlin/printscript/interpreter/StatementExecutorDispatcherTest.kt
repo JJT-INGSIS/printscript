@@ -228,16 +228,11 @@ class StatementExecutorDispatcherTest {
         var executionCount: Int = 0
             private set
 
-        override fun supportsStatement(
-            statement: Statement,
-        ): Boolean {
+        override fun supportsStatement(statement: Statement): Boolean {
             return supportsStatement
         }
 
-        override fun executeStatement(
-            statement: Statement,
-            context: ExecutionContext,
-        ): ExecutionResult<Environment> {
+        override fun executeStatement(statement: Statement, context: ExecutionContext): ExecutionResult<Environment> {
             executionCount++
 
             return result
@@ -251,17 +246,13 @@ class StatementExecutorDispatcherTest {
                 "Dispatcher test must not access the environment",
             )
 
-        override fun evaluateExpression(
-            expression: Expression,
-        ): ExecutionResult<RuntimeValue> {
+        override fun evaluateExpression(expression: Expression): ExecutionResult<RuntimeValue> {
             fail(
                 "Dispatcher test must not evaluate expressions",
             )
         }
 
-        override fun writeLine(
-            line: String,
-        ) {
+        override fun writeLine(line: String) {
             fail(
                 "Dispatcher test must not write output",
             )

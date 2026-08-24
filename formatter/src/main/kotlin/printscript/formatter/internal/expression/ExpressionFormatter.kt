@@ -15,9 +15,7 @@ internal class ExpressionFormatter(
     private val insertSpaceAroundBinaryOperators: Boolean,
 ) {
 
-    fun formatExpression(
-        expression: Expression,
-    ): String {
+    fun formatExpression(expression: Expression): String {
         return when (expression) {
             is NumberLiteralExpression ->
                 formatNumberLiteral(expression)
@@ -39,33 +37,25 @@ internal class ExpressionFormatter(
         }
     }
 
-    private fun formatNumberLiteral(
-        expression: NumberLiteralExpression,
-    ): String {
+    private fun formatNumberLiteral(expression: NumberLiteralExpression): String {
         return expression.value.toPlainString()
     }
 
-    private fun formatStringLiteral(
-        expression: StringLiteralExpression,
-    ): String {
+    private fun formatStringLiteral(expression: StringLiteralExpression): String {
         val quoteDelimiter =
             quoteDelimiterFor(expression.quoteStyle)
 
         return "$quoteDelimiter${expression.value}$quoteDelimiter"
     }
 
-    private fun quoteDelimiterFor(
-        quoteStyle: StringQuoteStyle,
-    ): Char {
+    private fun quoteDelimiterFor(quoteStyle: StringQuoteStyle): Char {
         return when (quoteStyle) {
             StringQuoteStyle.SINGLE -> '\''
             StringQuoteStyle.DOUBLE -> '"'
         }
     }
 
-    private fun formatBinaryExpression(
-        expression: BinaryExpression,
-    ): String {
+    private fun formatBinaryExpression(expression: BinaryExpression): String {
         val formattedLeftOperand = formatExpression(expression.left)
         val operatorSymbol = symbolForBinaryOperator(expression.operator)
         val formattedRightOperand = formatExpression(expression.right)
@@ -77,9 +67,7 @@ internal class ExpressionFormatter(
             "$binaryOperatorSpacing$formattedRightOperand"
     }
 
-    private fun symbolForBinaryOperator(
-        operator: BinaryOperator,
-    ): String {
+    private fun symbolForBinaryOperator(operator: BinaryOperator): String {
         return when (operator) {
             BinaryOperator.ADD -> "+"
             BinaryOperator.SUBTRACT -> "-"
@@ -88,9 +76,7 @@ internal class ExpressionFormatter(
         }
     }
 
-    private fun formatUnaryExpression(
-        expression: UnaryExpression,
-    ): String {
+    private fun formatUnaryExpression(expression: UnaryExpression): String {
         val operatorSymbol =
             symbolForUnaryOperator(expression.operator)
         val formattedOperand =
@@ -99,18 +85,14 @@ internal class ExpressionFormatter(
         return "$operatorSymbol$formattedOperand"
     }
 
-    private fun symbolForUnaryOperator(
-        operator: UnaryOperator,
-    ): String {
+    private fun symbolForUnaryOperator(operator: UnaryOperator): String {
         return when (operator) {
             UnaryOperator.PLUS -> "+"
             UnaryOperator.MINUS -> "-"
         }
     }
 
-    private fun formatGroupingExpression(
-        expression: GroupingExpression,
-    ): String {
+    private fun formatGroupingExpression(expression: GroupingExpression): String {
         val formattedInnerExpression =
             formatExpression(expression.expression)
 

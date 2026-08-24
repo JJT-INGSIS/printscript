@@ -112,9 +112,7 @@ class AssignmentParserTest {
         }
     }
 
-    private fun assertRejects(
-        malformedAssignment: MalformedAssignment,
-    ) {
+    private fun assertRejects(malformedAssignment: MalformedAssignment) {
         parseFirst(malformedAssignment.tokens).assertUnexpectedToken(
             expectedTokenTypes = malformedAssignment.expectedTokenTypes,
             actualTokenType = malformedAssignment.actualTokenType,

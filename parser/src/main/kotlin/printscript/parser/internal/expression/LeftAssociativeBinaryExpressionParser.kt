@@ -14,9 +14,7 @@ internal class LeftAssociativeBinaryExpressionParser(
     private val operators: Map<TokenType, BinaryOperator>,
 ) : ExpressionParser {
 
-    override fun parseExpression(
-        context: ParsingContext,
-    ): ParsingResult<Expression> {
+    override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
         val firstOperand = operandParser.parseExpression(context)
             .orReturn { return it }
 
@@ -27,9 +25,7 @@ internal class LeftAssociativeBinaryExpressionParser(
      * Acumula hacia la izquierda: cada operando nuevo envuelve a lo ya
      * parseado, que es lo que hace al operador asociativo a izquierda.
      */
-    private tailrec fun parseRemainingOperands(
-        left: ParsingResult.Success<Expression>,
-    ): ParsingResult<Expression> {
+    private tailrec fun parseRemainingOperands(left: ParsingResult.Success<Expression>): ParsingResult<Expression> {
         val peeked = left.resultingContext.peek()
             .orReturn { return it }
 

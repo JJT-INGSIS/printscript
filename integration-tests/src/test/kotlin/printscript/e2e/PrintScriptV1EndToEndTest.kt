@@ -219,7 +219,7 @@ class PrintScriptV1EndToEndTest {
             """
         let result: number = 20 / 2 - 3;
         println(result);
-        """.trimIndent(),
+            """.trimIndent(),
         )
 
         assertSuccessfulExecution(
@@ -236,7 +236,7 @@ class PrintScriptV1EndToEndTest {
         value = 20;
         value = value + 5;
         println(value);
-        """.trimIndent(),
+            """.trimIndent(),
         )
 
         assertSuccessfulExecution(
@@ -245,10 +245,7 @@ class PrintScriptV1EndToEndTest {
         )
     }
 
-    private fun assertSuccessfulExecution(
-        execution: ProgramExecution,
-        expectedOutputLines: List<String>,
-    ) {
+    private fun assertSuccessfulExecution(execution: ProgramExecution, expectedOutputLines: List<String>) {
         assertEquals(
             expected = InterpretationResult.Success,
             actual = execution.result,
@@ -260,9 +257,7 @@ class PrintScriptV1EndToEndTest {
         )
     }
 
-    private fun assertNoOutputWasProduced(
-        execution: ProgramExecution,
-    ) {
+    private fun assertNoOutputWasProduced(execution: ProgramExecution) {
         assertEquals(
             expected = emptyList<String>(),
             actual = execution.outputLines,

@@ -30,10 +30,10 @@ internal data class CharacterCursor(
                 CharacterReadResult.Success(
                     character = peekResult.character,
                     resultingCursor =
-                        peekResult.resultingCursor
-                            .afterConsuming(
-                                peekResult.character,
-                            ),
+                    peekResult.resultingCursor
+                        .afterConsuming(
+                            peekResult.character,
+                        ),
                 )
             }
 
@@ -43,19 +43,15 @@ internal data class CharacterCursor(
         }
     }
 
-    private fun afterConsuming(
-        character: Char,
-    ): CharacterCursor {
+    private fun afterConsuming(character: Char): CharacterCursor {
         return copy(
             indexInChunk =
-                indexInChunk + CHUNK_INDEX_INCREMENT,
+            indexInChunk + CHUNK_INDEX_INCREMENT,
             location = location.after(character),
         )
     }
 
-    private tailrec fun prepareNextCharacter(
-        cursor: CharacterCursor,
-    ): CharacterReadResult {
+    private tailrec fun prepareNextCharacter(cursor: CharacterCursor): CharacterReadResult {
         val currentCharacter =
             cursor.currentCharacterOrNull()
 
@@ -79,7 +75,7 @@ internal data class CharacterCursor(
             SourceChunkReadResult.EndOfInput -> {
                 CharacterReadResult.EndOfInput(
                     resultingCursor =
-                        cursor.withoutCurrentChunk(),
+                    cursor.withoutCurrentChunk(),
                 )
             }
         }
@@ -96,9 +92,7 @@ internal data class CharacterCursor(
         return chunk.content[indexInChunk]
     }
 
-    private fun withChunk(
-        readResult: SourceChunkReadResult.Success,
-    ): CharacterCursor {
+    private fun withChunk(readResult: SourceChunkReadResult.Success): CharacterCursor {
         return copy(
             currentChunk = readResult.chunk,
             indexInChunk = INITIAL_CHUNK_INDEX,
@@ -115,9 +109,7 @@ internal data class CharacterCursor(
 
     companion object {
 
-        fun initial(
-            sourceReader: SourceReader,
-        ): CharacterCursor {
+        fun initial(sourceReader: SourceReader): CharacterCursor {
             return CharacterCursor(
                 currentChunk = null,
                 indexInChunk = INITIAL_CHUNK_INDEX,

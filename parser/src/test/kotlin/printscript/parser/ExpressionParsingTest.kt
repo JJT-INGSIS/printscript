@@ -166,10 +166,7 @@ class ExpressionParsingTest {
         assertNumberLiteral(multiplication.right, "3")
     }
 
-    private fun assertBinary(
-        expression: Expression,
-        expectedOperator: BinaryOperator,
-    ): BinaryExpression {
+    private fun assertBinary(expression: Expression, expectedOperator: BinaryOperator): BinaryExpression {
         val binary = assertIs<BinaryExpression>(expression)
 
         assertEquals(
@@ -180,10 +177,7 @@ class ExpressionParsingTest {
         return binary
     }
 
-    private fun assertNumberLiteral(
-        expression: Expression,
-        expectedValue: String,
-    ) {
+    private fun assertNumberLiteral(expression: Expression, expectedValue: String) {
         val literal = assertIs<NumberLiteralExpression>(expression)
 
         assertEquals(

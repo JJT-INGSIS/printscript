@@ -17,10 +17,7 @@ internal class AssignmentParser(
     override val followingTokenType: TokenType = DEFAULT_FOLLOWING_TOKEN,
 ) : TargetedStatementParser {
 
-    override fun parseStatement(
-        target: Identifier,
-        context: ParsingContext,
-    ): ParsingResult<Statement> {
+    override fun parseStatement(target: Identifier, context: ParsingContext): ParsingResult<Statement> {
         val components = readComponents(context)
             .orReturn { return it }
 
@@ -30,9 +27,7 @@ internal class AssignmentParser(
         )
     }
 
-    private fun readComponents(
-        context: ParsingContext,
-    ): ParsingResult<AssignmentComponents> {
+    private fun readComponents(context: ParsingContext): ParsingResult<AssignmentComponents> {
         val assignment = context.expect(followingTokenType)
             .orReturn { return it }
 
@@ -51,10 +46,7 @@ internal class AssignmentParser(
         )
     }
 
-    private fun buildStatement(
-        target: Identifier,
-        components: AssignmentComponents,
-    ): Statement {
+    private fun buildStatement(target: Identifier, components: AssignmentComponents): Statement {
         return AssignmentStatement(
             target = target,
             expression = components.expression,

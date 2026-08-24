@@ -9,8 +9,5 @@ internal interface StatementExecutor {
 
     fun supportsStatement(statement: Statement): Boolean
 
-    fun executeStatement(
-        statement: Statement,
-        context: ExecutionContext,
-    ): ExecutionResult<Environment>
+    fun executeStatement(statement: Statement, context: ExecutionContext): ExecutionResult<Environment>
 }

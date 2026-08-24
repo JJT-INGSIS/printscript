@@ -8,10 +8,7 @@ internal class TokenScannerDispatcher(
     private val scanners: List<TokenScanner>,
 ) {
 
-    fun scan(
-        cursor: CharacterCursor,
-        currentCharacter: Char,
-    ): TokenScanResult {
+    fun scan(cursor: CharacterCursor, currentCharacter: Char): TokenScanResult {
         for (scanner in scanners) {
             if (scanner.canStartWith(currentCharacter)) {
                 return scanner.scan(
@@ -27,10 +24,7 @@ internal class TokenScannerDispatcher(
         )
     }
 
-    private fun createUnexpectedCharacterFailure(
-        cursor: CharacterCursor,
-        character: Char,
-    ): TokenScanResult.Failure {
+    private fun createUnexpectedCharacterFailure(cursor: CharacterCursor, character: Char): TokenScanResult.Failure {
         val startPosition = cursor.position
         val resultingCursor =
             cursor.advance().resultingCursor

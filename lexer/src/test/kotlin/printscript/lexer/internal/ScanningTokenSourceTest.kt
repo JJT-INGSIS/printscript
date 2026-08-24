@@ -151,9 +151,7 @@ class ScanningTokenSourceTest {
         )
     }
 
-    private fun createTokenSourceFor(
-        sourceText: String,
-    ): TokenSource {
+    private fun createTokenSourceFor(sourceText: String): TokenSource {
         val tokenScannerDispatcher = TokenScannerDispatcher(
             scanners = listOf(
                 IdentifierOrKeywordScanner(emptyMap()),

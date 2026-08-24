@@ -12,10 +12,7 @@ internal class StatementExecutorDispatcher(
 
     private val executors: List<StatementExecutor> = executors.toList()
 
-    fun dispatchToExecutor(
-        statement: Statement,
-        context: ExecutionContext,
-    ): ExecutionResult<Environment> {
+    fun dispatchToExecutor(statement: Statement, context: ExecutionContext): ExecutionResult<Environment> {
         for (executor in executors) {
             if (executor.supportsStatement(statement)) {
                 return executor.executeStatement(

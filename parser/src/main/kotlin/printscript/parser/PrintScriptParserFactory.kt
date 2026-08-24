@@ -22,9 +22,7 @@ public object PrintScriptParserFactory {
         )
     }
 
-    private fun v1StatementParsers(
-        expressionParser: ExpressionParser,
-    ): List<StatementParser> {
+    private fun v1StatementParsers(expressionParser: ExpressionParser): List<StatementParser> {
         return listOf(
             DeclarationParser(expressionParser),
             PrintlnParser(expressionParser),
@@ -36,9 +34,7 @@ public object PrintScriptParserFactory {
         )
     }
 
-    private fun v1TargetedStatementParsers(
-        expressionParser: ExpressionParser,
-    ): List<TargetedStatementParser> {
+    private fun v1TargetedStatementParsers(expressionParser: ExpressionParser): List<TargetedStatementParser> {
         return listOf(
             AssignmentParser(expressionParser),
         )

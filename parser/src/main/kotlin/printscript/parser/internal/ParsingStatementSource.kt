@@ -20,9 +20,7 @@ internal data class ParsingStatementSource(
         }
     }
 
-    private fun readFromToken(
-        lookahead: ParsingResult.Success<Token>,
-    ): StatementReadResult {
+    private fun readFromToken(lookahead: ParsingResult.Success<Token>): StatementReadResult {
         return if (lookahead.value.type == TokenType.EOF) {
             StatementReadResult.EndOfInput
         } else {
@@ -30,9 +28,7 @@ internal data class ParsingStatementSource(
         }
     }
 
-    private fun parseNextStatement(
-        context: ParsingContext,
-    ): StatementReadResult {
+    private fun parseNextStatement(context: ParsingContext): StatementReadResult {
         return when (val result = context.parseStatement()) {
             is ParsingResult.Success -> StatementReadResult.Success(
                 statement = result.value,
@@ -45,9 +41,7 @@ internal data class ParsingStatementSource(
         }
     }
 
-    private fun withContext(
-        context: ParsingContext,
-    ): StatementSource {
+    private fun withContext(context: ParsingContext): StatementSource {
         return copy(context = context)
     }
 }

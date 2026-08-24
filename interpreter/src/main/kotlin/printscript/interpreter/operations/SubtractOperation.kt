@@ -9,11 +9,7 @@ import java.math.BigDecimal
 
 internal class SubtractOperation : ArithmeticOperation(BinaryOperator.SUBTRACT) {
 
-    override fun calculate(
-        left: BigDecimal,
-        right: BigDecimal,
-        span: SourceSpan,
-    ): ExecutionResult<RuntimeValue> {
+    override fun calculate(left: BigDecimal, right: BigDecimal, span: SourceSpan): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(NumberValue(left - right))
     }
 }

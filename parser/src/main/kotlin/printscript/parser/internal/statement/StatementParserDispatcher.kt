@@ -15,9 +15,7 @@ internal class StatementParserDispatcher(
     private val parserByStartToken: Map<TokenType, StatementParser> =
         parsers.associateBy { it.startTokenType }
 
-    fun parseStatement(
-        context: ParsingContext,
-    ): ParsingResult<Statement> {
+    fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
         val peeked = context.peek()
             .orReturn { return it }
 
@@ -27,9 +25,7 @@ internal class StatementParserDispatcher(
         return parser.parseStatement(peeked.resultingContext)
     }
 
-    private fun unrecognizedStatement(
-        token: Token,
-    ): ParsingResult.Failure {
+    private fun unrecognizedStatement(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
                 expected = parserByStartToken.keys,
