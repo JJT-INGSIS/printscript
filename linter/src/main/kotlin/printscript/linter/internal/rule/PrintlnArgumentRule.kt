@@ -1,19 +1,28 @@
 package printscript.linter.internal.rule
 
-import printscript.ast.expression.BinaryExpression
 import printscript.ast.expression.Expression
-import printscript.ast.expression.GroupingExpression
-import printscript.ast.expression.IdentifierExpression
-import printscript.ast.expression.NumberLiteralExpression
-import printscript.ast.expression.StringLiteralExpression
-import printscript.ast.expression.UnaryExpression
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
+import printscript.linter.ArgumentAcceptance
 import printscript.linter.Diagnostic
+import printscript.linter.ExpressionKind
 
-internal class PrintlnArgumentRule : LintRule {
+internal class PrintlnArgumentRule(
+    acceptanceByKind: Map<ExpressionKind, ArgumentAcceptance>,
+) : LintRule {
+
+    private val acceptanceByKind: Map<ExpressionKind, ArgumentAcceptance> =
+        acceptanceByKind.toMap()
+
+    init {
+        val uncoveredKinds = ExpressionKind.entries - acceptanceByKind.keys
+
+        require(uncoveredKinds.isEmpty()) {
+            "La configuración de println no cubre: $uncoveredKinds"
+        }
+    }
 
     override fun inspect(
         statement: Statement,
@@ -30,32 +39,23 @@ internal class PrintlnArgumentRule : LintRule {
     private fun inspectArgument(
         argument: Expression,
     ): List<Diagnostic> {
-        return when (acceptsArgument(argument)) {
-            true -> emptyList()
+        return when (acceptanceOf(argument)) {
+            ArgumentAcceptance.ACCEPTED -> emptyList()
 
-            false -> listOf(Diagnostic.UnsupportedPrintlnArgument(argument))
+            ArgumentAcceptance.REJECTED -> listOf(
+                Diagnostic.UnsupportedPrintlnArgument(argument),
+            )
         }
     }
 
     /**
-     * `println` solo acepta una variable o un literal: nada de
-     * expresiones armadas dentro de la llamada.
+     * Total: el constructor ya garantizó que el mapa cubre toda clase.
      */
-    private fun acceptsArgument(
+    private fun acceptanceOf(
         argument: Expression,
-    ): Boolean {
-        return when (argument) {
-            is IdentifierExpression -> true
-
-            is NumberLiteralExpression -> true
-
-            is StringLiteralExpression -> true
-
-            is BinaryExpression -> false
-
-            is UnaryExpression -> false
-
-            is GroupingExpression -> false
-        }
+    ): ArgumentAcceptance {
+        return acceptanceByKind.getValue(
+            ExpressionKind.of(argument),
+        )
     }
 }

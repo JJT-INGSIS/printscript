@@ -6,5 +6,12 @@ public sealed interface RuleConfiguration {
         public val convention: NamingConvention,
     ) : RuleConfiguration
 
-    public data object PrintlnArgument : RuleConfiguration
+    /**
+     * Qué se acepta como argumento de `println`. El mapa tiene que
+     * cubrir todas las clases de expresión: una que falte es un error de
+     * configuración, no un caso que pasa de largo.
+     */
+    public data class PrintlnArgument(
+        public val acceptanceByKind: Map<ExpressionKind, ArgumentAcceptance>,
+    ) : RuleConfiguration
 }

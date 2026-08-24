@@ -5,8 +5,10 @@ import printscript.ast.expression.Expression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.statement.Statement
+import printscript.linter.internal.DiagnosticSearch
 import printscript.linter.internal.PrintScriptLinter
 import printscript.linter.internal.rule.LintRule
+import printscript.linter.internal.rule.RuleSet
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 import printscript.token.Token
@@ -22,7 +24,7 @@ class PrintScriptLinterTest {
 
     private val everyRule: Linter = linterWith(
         RuleConfiguration.IdentifierNaming(NamingConvention.CAMEL_CASE),
-        RuleConfiguration.PrintlnArgument,
+        printlnArgumentRule(),
     )
 
     @Test
@@ -78,7 +80,7 @@ class PrintScriptLinterTest {
     @Test
     fun `ignores the rules left out of the configuration`() {
         // given
-        val linter = linterWith(RuleConfiguration.PrintlnArgument)
+        val linter = linterWith(printlnArgumentRule())
         val declaration = declare("my_total", DeclaredType.NUMBER, number("1"))
 
         // when
@@ -167,8 +169,14 @@ class PrintScriptLinterTest {
         )
 
         val linter = PrintScriptLinter(
-            rules = listOf(
-                AlwaysReportingRule(reportCount = EXPECTED_READS_WITHOUT_ADVANCING),
+            search = DiagnosticSearch(
+                rules = RuleSet(
+                    rules = listOf(
+                        AlwaysReportingRule(
+                            reportCount = EXPECTED_READS_WITHOUT_ADVANCING,
+                        ),
+                    ),
+                ),
             ),
         )
 

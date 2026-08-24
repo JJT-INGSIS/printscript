@@ -220,6 +220,19 @@ private class ReadCounter {
 // Construcción del sujeto bajo prueba
 // --------------------------------------------------------------------
 
+/**
+ * La política de `println` de PrintScript 1.0: variable o literal.
+ */
+internal fun printlnArgumentRule(): RuleConfiguration {
+    return RuleConfiguration.PrintlnArgument(
+        acceptanceByKind = mapOf(
+            ExpressionKind.LITERAL to ArgumentAcceptance.ACCEPTED,
+            ExpressionKind.VARIABLE to ArgumentAcceptance.ACCEPTED,
+            ExpressionKind.COMPOSED to ArgumentAcceptance.REJECTED,
+        ),
+    )
+}
+
 internal fun linterWith(
     vararg rules: RuleConfiguration,
 ): Linter {

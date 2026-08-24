@@ -4,8 +4,8 @@ import printscript.ast.statement.Statement
 import printscript.linter.Diagnostic
 
 /**
- * Toda regla mira toda sentencia: no hay despacho, hay fan-out. La que
- * no aplica devuelve la lista vacía.
+ * Una regla mira toda sentencia. La que no aplica devuelve la lista
+ * vacía.
  */
 internal interface LintRule {
 
