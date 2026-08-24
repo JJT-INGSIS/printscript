@@ -23,5 +23,6 @@ include(
     "token-source",
     "interpreter",
     "statement-source",
+    "cli",
     "integration-tests",
 )
