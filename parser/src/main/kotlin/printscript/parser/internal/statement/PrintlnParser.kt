@@ -30,16 +30,10 @@ internal class PrintlnParser(
         val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
-        val leftParenthesis = keyword.resultingContext.expect(TokenType.LEFT_PAREN)
+        val argument = readParenthesizedArgument(keyword.resultingContext)
             .orReturn { return it }
 
-        val argument = expressionParser.parseExpression(leftParenthesis.resultingContext)
-            .orReturn { return it }
-
-        val rightParenthesis = argument.resultingContext.expect(TokenType.RIGHT_PAREN)
-            .orReturn { return it }
-
-        val semicolon = rightParenthesis.resultingContext.expect(TokenType.SEMICOLON)
+        val semicolon = argument.resultingContext.expect(TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(
@@ -49,6 +43,26 @@ internal class PrintlnParser(
                 semicolonToken = semicolon.value,
             ),
             resultingContext = semicolon.resultingContext,
+        )
+    }
+
+    /**
+     * Los paréntesis se consumen pero no se guardan: no aportan nada al
+     * árbol, solo delimitan dónde empieza y termina el argumento.
+     */
+    private fun readParenthesizedArgument(context: ParsingContext): ParsingResult<Expression> {
+        val leftParenthesis = context.expect(TokenType.LEFT_PAREN)
+            .orReturn { return it }
+
+        val argument = expressionParser.parseExpression(leftParenthesis.resultingContext)
+            .orReturn { return it }
+
+        val rightParenthesis = argument.resultingContext.expect(TokenType.RIGHT_PAREN)
+            .orReturn { return it }
+
+        return ParsingResult.Success(
+            value = argument.value,
+            resultingContext = rightParenthesis.resultingContext,
         )
     }
 

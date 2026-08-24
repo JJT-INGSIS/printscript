@@ -36,16 +36,10 @@ internal class DeclarationParser(
         val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
-        val identifier = keyword.resultingContext.expect(TokenType.IDENTIFIER)
+        val typedIdentifier = readTypedIdentifier(keyword.resultingContext)
             .orReturn { return it }
 
-        val colon = identifier.resultingContext.expect(TokenType.COLON)
-            .orReturn { return it }
-
-        val declaredType = readDeclaredType(colon.resultingContext)
-            .orReturn { return it }
-
-        val initializer = readOptionalInitializer(declaredType.resultingContext)
+        val initializer = readOptionalInitializer(typedIdentifier.resultingContext)
             .orReturn { return it }
 
         val semicolon = initializer.resultingContext.expect(TokenType.SEMICOLON)
@@ -54,12 +48,35 @@ internal class DeclarationParser(
         return ParsingResult.Success(
             value = DeclarationComponents(
                 keywordToken = keyword.value,
-                identifierToken = identifier.value,
-                declaredType = declaredType.value,
+                identifierToken = typedIdentifier.value.identifierToken,
+                declaredType = typedIdentifier.value.declaredType,
                 initializer = initializer.value,
                 semicolonToken = semicolon.value,
             ),
             resultingContext = semicolon.resultingContext,
+        )
+    }
+
+    /**
+     * Lee la anotación de tipo completa: `a: number`. Es una unidad de la
+     * gramática, y los dos puntos solo separan sin aportar al árbol.
+     */
+    private fun readTypedIdentifier(context: ParsingContext): ParsingResult<TypedIdentifier> {
+        val identifier = context.expect(TokenType.IDENTIFIER)
+            .orReturn { return it }
+
+        val colon = identifier.resultingContext.expect(TokenType.COLON)
+            .orReturn { return it }
+
+        val declaredType = readDeclaredType(colon.resultingContext)
+            .orReturn { return it }
+
+        return ParsingResult.Success(
+            value = TypedIdentifier(
+                identifierToken = identifier.value,
+                declaredType = declaredType.value,
+            ),
+            resultingContext = declaredType.resultingContext,
         )
     }
 
@@ -120,6 +137,11 @@ internal class DeclarationParser(
             ),
         )
     }
+
+    private data class TypedIdentifier(
+        val identifierToken: Token,
+        val declaredType: DeclaredType,
+    )
 
     private data class DeclarationComponents(
         val keywordToken: Token,
