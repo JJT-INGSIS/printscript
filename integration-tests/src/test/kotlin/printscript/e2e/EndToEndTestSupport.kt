@@ -6,9 +6,7 @@ import printscript.lexer.PrintScriptLexerFactory
 import printscript.parser.PrintScriptParserFactory
 import printscript.source.SourceReaderFactory
 
-internal fun runV1Script(
-    sourceCode: String,
-): ProgramExecution {
+internal fun runV1Script(sourceCode: String): ProgramExecution {
     val output = RecordingProgramOutput()
 
     val lexer = PrintScriptLexerFactory.createV1()
@@ -20,7 +18,7 @@ internal fun runV1Script(
 
     val tokens = lexer.tokenize(
         sourceReader =
-            SourceReaderFactory.fromString(sourceCode),
+        SourceReaderFactory.fromString(sourceCode),
     )
 
     val statements = parser.parse(
@@ -42,9 +40,7 @@ private class RecordingProgramOutput : ProgramOutput {
     private val emittedLines =
         mutableListOf<String>()
 
-    override fun writeLine(
-        line: String,
-    ) {
+    override fun writeLine(line: String) {
         emittedLines.add(line)
     }
 
