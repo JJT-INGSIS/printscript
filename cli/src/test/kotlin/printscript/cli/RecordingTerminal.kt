@@ -2,27 +2,26 @@ package printscript.cli
 
 import printscript.cli.internal.io.Terminal
 
-/**
- * Terminal de prueba que guarda por separado lo que va a la salida
- * estándar y lo que va a la salida de errores.
- *
- * Sin esto habría que capturar `System.out`, que es global y hace que
- * los tests no se puedan correr en paralelo.
- */
 internal class RecordingTerminal : Terminal {
 
-    private val outputLines = mutableListOf<String>()
-    private val errorLines = mutableListOf<String>()
+    private val writtenOutput = StringBuilder()
+    private val writtenErrorLines = mutableListOf<String>()
+
+    override fun writePreformatted(text: String) {
+        writtenOutput.append(text)
+    }
 
     override fun writeLine(line: String) {
-        outputLines.add(line)
+        writtenOutput.append(line).append('\n')
     }
 
-    override fun writeError(line: String) {
-        errorLines.add(line)
+    override fun writeErrorLine(line: String) {
+        writtenErrorLines.add(line)
     }
 
-    fun output(): List<String> = outputLines.toList()
+    fun outputText(): String = writtenOutput.toString()
 
-    fun errors(): List<String> = errorLines.toList()
+    fun output(): List<String> = outputText().split("\n").dropLastWhile { line -> line.isEmpty() }
+
+    fun errors(): List<String> = writtenErrorLines.toList()
 }

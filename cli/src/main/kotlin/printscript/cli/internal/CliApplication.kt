@@ -24,6 +24,7 @@ internal class CliApplication(
     private val commandDispatcher: CommandDispatcher,
     private val errorReporter: ErrorReporter,
 ) {
+
     fun runCommandLine(commandLineArguments: List<String>): ExitCode {
         val arguments = when (
             val parsing = argumentsParser.parseArguments(commandLineArguments)
@@ -63,17 +64,11 @@ internal class CliApplication(
 
         return when (outcome) {
             CommandOutcome.Success -> ExitCode.SUCCESS
+            is CommandOutcome.CompletedWithFindings -> reportFindings(outcome.message)
             is CommandOutcome.Failure -> reportSourceError(outcome.message)
         }
     }
 
-    /**
-     * Arma el pipeline y lo envuelve con el reporte de progreso.
-     *
-     * El progreso entra por un decorator y no modificando a los
-     * consumidores: ni el intérprete ni el formatter ni el analizador
-     * tienen un solo parámetro dedicado a esto.
-     */
     private fun progressReportingStatementsOf(sourceReader: SourceReader, arguments: CliArguments): StatementSource {
         val statements = pipeline.statementsFrom(
             sourceReader = sourceReader,
@@ -83,22 +78,27 @@ internal class CliApplication(
         return ProgressReportingStatementSource(
             delegate = statements,
             totalBytes = sourceSizeOf(arguments.sourceFilePath),
-            onProgress = { percentage -> terminal.writeError("parsing... $percentage%") },
+            onProgress = { percentage -> terminal.writeErrorLine("parsing... $percentage%") },
         )
     }
 
     private fun sourceSizeOf(sourceFilePath: Path): Long {
         return runCatching { Files.size(sourceFilePath) }.getOrDefault(0L)
     }
+    private fun reportFindings(message: String): ExitCode {
+        terminal.writeLine(message)
+
+        return ExitCode.FINDINGS
+    }
 
     private fun reportUsageError(message: String): ExitCode {
-        terminal.writeError(message)
+        terminal.writeErrorLine(message)
 
         return ExitCode.USAGE_ERROR
     }
 
     private fun reportSourceError(message: String): ExitCode {
-        terminal.writeError(message)
+        terminal.writeErrorLine(message)
 
         return ExitCode.SOURCE_ERROR
     }

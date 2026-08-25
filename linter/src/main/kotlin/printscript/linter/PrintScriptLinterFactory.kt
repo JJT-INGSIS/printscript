@@ -9,6 +9,23 @@ import printscript.linter.internal.rule.RuleSet
 
 public object PrintScriptLinterFactory {
 
+    public fun defaultV1Configuration(): LinterConfiguration {
+        return LinterConfiguration(
+            rules = listOf(
+                RuleConfiguration.IdentifierNaming(
+                    convention = NamingConvention.CAMEL_CASE,
+                ),
+                RuleConfiguration.PrintlnArgument(
+                    acceptanceByKind = mapOf(
+                        ExpressionKind.LITERAL to ArgumentAcceptance.ACCEPTED,
+                        ExpressionKind.VARIABLE to ArgumentAcceptance.ACCEPTED,
+                        ExpressionKind.COMPOSED to ArgumentAcceptance.REJECTED,
+                    ),
+                ),
+            ),
+        )
+    }
+
     public fun createV1(configuration: LinterConfiguration): Linter {
         return PrintScriptLinter(
             search = DiagnosticSearch(
