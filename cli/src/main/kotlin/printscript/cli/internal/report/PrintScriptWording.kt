@@ -4,6 +4,7 @@ import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.UnaryOperator
 import printscript.linter.NamingConvention
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 
 /**
@@ -32,23 +33,24 @@ internal object PrintScriptWording {
 
     fun describe(tokenType: TokenType): String {
         return when (tokenType) {
-            TokenType.LET -> "let"
-            TokenType.NUMBER_TYPE -> "number"
-            TokenType.STRING_TYPE -> "string"
-            TokenType.PRINTLN -> "println"
-            TokenType.IDENTIFIER -> "un identificador"
-            TokenType.NUMBER_LITERAL -> "un número"
-            TokenType.STRING_LITERAL -> "un texto"
-            TokenType.PLUS -> "+"
-            TokenType.MINUS -> "-"
-            TokenType.STAR -> "*"
-            TokenType.SLASH -> "/"
-            TokenType.ASSIGN -> "="
-            TokenType.COLON -> ":"
-            TokenType.SEMICOLON -> ";"
-            TokenType.LEFT_PAREN -> "("
-            TokenType.RIGHT_PAREN -> ")"
-            TokenType.EOF -> "el final del archivo"
+            PrintScriptV1TokenType.LET -> "let"
+            PrintScriptV1TokenType.NUMBER_TYPE -> "number"
+            PrintScriptV1TokenType.STRING_TYPE -> "string"
+            PrintScriptV1TokenType.PRINTLN -> "println"
+            PrintScriptV1TokenType.IDENTIFIER -> "un identificador"
+            PrintScriptV1TokenType.NUMBER_LITERAL -> "un número"
+            PrintScriptV1TokenType.STRING_LITERAL -> "un texto"
+            PrintScriptV1TokenType.PLUS -> "+"
+            PrintScriptV1TokenType.MINUS -> "-"
+            PrintScriptV1TokenType.STAR -> "*"
+            PrintScriptV1TokenType.SLASH -> "/"
+            PrintScriptV1TokenType.ASSIGN -> "="
+            PrintScriptV1TokenType.COLON -> ":"
+            PrintScriptV1TokenType.SEMICOLON -> ";"
+            PrintScriptV1TokenType.LEFT_PAREN -> "("
+            PrintScriptV1TokenType.RIGHT_PAREN -> ")"
+            PrintScriptV1TokenType.EOF -> "el final del archivo"
+            else -> tokenType.toString()
         }
     }
 

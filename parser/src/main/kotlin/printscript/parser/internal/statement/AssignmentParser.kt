@@ -9,6 +9,7 @@ import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenType
 
@@ -34,7 +35,7 @@ internal class AssignmentParser(
         val expression = expressionParser.parseExpression(assignment.resultingContext)
             .orReturn { return it }
 
-        val semicolon = expression.resultingContext.expect(TokenType.SEMICOLON)
+        val semicolon = expression.resultingContext.expect(PrintScriptV1TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(

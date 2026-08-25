@@ -4,7 +4,7 @@ import printscript.interpreter.InterpretationResult
 import printscript.interpreter.SemanticError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -175,12 +175,12 @@ class PrintScriptV1EndToEndTest {
             )
 
         assertEquals(
-            expected = setOf(TokenType.SEMICOLON),
+            expected = setOf(PrintScriptV1TokenType.SEMICOLON),
             actual = parseError.expected,
         )
 
         assertEquals(
-            expected = TokenType.EOF,
+            expected = PrintScriptV1TokenType.EOF,
             actual = parseError.actual.type,
         )
 

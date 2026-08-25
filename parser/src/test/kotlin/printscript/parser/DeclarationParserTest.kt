@@ -5,6 +5,7 @@ import printscript.ast.expression.NumberLiteralExpression
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -123,8 +124,8 @@ class DeclarationParserTest {
                     semicolon()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.IDENTIFIER),
-                actualTokenType = TokenType.COLON,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.IDENTIFIER),
+                actualTokenType = PrintScriptV1TokenType.COLON,
             ),
             MalformedDeclaration(
                 description = "sin dos puntos",
@@ -135,8 +136,8 @@ class DeclarationParserTest {
                     semicolon()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.COLON),
-                actualTokenType = TokenType.NUMBER_TYPE,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.COLON),
+                actualTokenType = PrintScriptV1TokenType.NUMBER_TYPE,
             ),
             MalformedDeclaration(
                 description = "con un tipo inexistente",
@@ -149,10 +150,10 @@ class DeclarationParserTest {
                     eof()
                 },
                 expectedTokenTypes = setOf(
-                    TokenType.NUMBER_TYPE,
-                    TokenType.STRING_TYPE,
+                    PrintScriptV1TokenType.NUMBER_TYPE,
+                    PrintScriptV1TokenType.STRING_TYPE,
                 ),
-                actualTokenType = TokenType.IDENTIFIER,
+                actualTokenType = PrintScriptV1TokenType.IDENTIFIER,
             ),
             MalformedDeclaration(
                 description = "sin punto y coma",
@@ -163,8 +164,8 @@ class DeclarationParserTest {
                     numberType()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.SEMICOLON),
-                actualTokenType = TokenType.EOF,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.SEMICOLON),
+                actualTokenType = PrintScriptV1TokenType.EOF,
             ),
         )
 

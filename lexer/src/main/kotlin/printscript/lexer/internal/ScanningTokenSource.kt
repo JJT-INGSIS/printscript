@@ -13,6 +13,7 @@ private const val EOF_LEXEME = ""
 internal data class ScanningTokenSource(
     private val characterCursor: CharacterCursor,
     private val tokenScannerDispatcher: TokenScannerDispatcher,
+    private val endOfInputTokenType: TokenType,
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
@@ -93,7 +94,7 @@ internal data class ScanningTokenSource(
 
         return TokenReadResult.Success(
             token = Token(
-                type = TokenType.EOF,
+                type = endOfInputTokenType,
                 lexeme = EOF_LEXEME,
                 span = SourceSpan(
                     start = endOfInputPosition,

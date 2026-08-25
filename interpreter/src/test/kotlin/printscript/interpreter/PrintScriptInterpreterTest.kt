@@ -18,8 +18,8 @@ import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
-import printscript.token.TokenType
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -420,9 +420,9 @@ class PrintScriptInterpreterTest {
     @Test
     fun `a parse error is propagated without executing anything`() {
         val parseError = ParseError.UnexpectedToken(
-            expected = setOf(TokenType.SEMICOLON),
+            expected = setOf(PrintScriptV1TokenType.SEMICOLON),
             actual = Token(
-                type = TokenType.LET,
+                type = PrintScriptV1TokenType.LET,
                 lexeme = "let",
                 span = anySpan,
             ),

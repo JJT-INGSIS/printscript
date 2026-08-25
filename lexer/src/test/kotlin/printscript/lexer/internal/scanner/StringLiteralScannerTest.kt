@@ -8,7 +8,7 @@ import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.lexer.cursorForChunks
 import printscript.token.LexicalError
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -22,7 +22,8 @@ class StringLiteralScannerTest {
     )
 
     private val scanner = StringLiteralScanner(
-        supportedQuoteDelimiters,
+        supportedQuoteDelimiters = supportedQuoteDelimiters,
+        stringLiteralTokenType = PrintScriptV1TokenType.STRING_LITERAL,
     )
 
     @Test
@@ -74,7 +75,7 @@ class StringLiteralScannerTest {
             val token = scanResult.assertSuccessToken()
 
             assertEquals(
-                expected = TokenType.STRING_LITERAL,
+                expected = PrintScriptV1TokenType.STRING_LITERAL,
                 actual = token.type,
             )
 
@@ -106,7 +107,7 @@ class StringLiteralScannerTest {
         val token = scanResult.assertSuccessToken()
 
         assertEquals(
-            expected = TokenType.STRING_LITERAL,
+            expected = PrintScriptV1TokenType.STRING_LITERAL,
             actual = token.type,
         )
 
@@ -215,7 +216,7 @@ class StringLiteralScannerTest {
         val token = scanResult.assertSuccessToken()
 
         assertEquals(
-            expected = TokenType.STRING_LITERAL,
+            expected = PrintScriptV1TokenType.STRING_LITERAL,
             actual = token.type,
         )
         assertEquals(
@@ -234,7 +235,8 @@ class StringLiteralScannerTest {
         val mutableSupportedQuoteDelimiters = mutableSetOf('"')
         val scannerWithMutableConfiguration =
             StringLiteralScanner(
-                mutableSupportedQuoteDelimiters,
+                supportedQuoteDelimiters = mutableSupportedQuoteDelimiters,
+                stringLiteralTokenType = PrintScriptV1TokenType.STRING_LITERAL,
             )
 
         mutableSupportedQuoteDelimiters.clear()

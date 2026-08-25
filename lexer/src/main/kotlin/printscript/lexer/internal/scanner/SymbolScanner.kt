@@ -8,8 +8,11 @@ import printscript.token.Token
 import printscript.token.TokenType
 
 internal class SymbolScanner(
-    private val tokenTypeByLexeme: Map<String, TokenType>,
+    tokenTypeByLexeme: Map<String, TokenType>,
 ) : TokenScanner {
+
+    private val tokenTypeByLexeme: Map<String, TokenType> =
+        tokenTypeByLexeme.toMap()
 
     override fun canStartWith(character: Char): Boolean {
         return tokenTypeByLexeme.containsKey(

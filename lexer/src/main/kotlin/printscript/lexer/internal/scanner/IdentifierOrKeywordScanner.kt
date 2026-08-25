@@ -11,6 +11,7 @@ private const val UNDERSCORE = '_'
 
 internal class IdentifierOrKeywordScanner(
     keywordTokenTypesByLexeme: Map<String, TokenType>,
+    private val identifierTokenType: TokenType,
 ) : TokenScanner {
 
     private val keywordTokenTypesByLexeme: Map<String, TokenType> =
@@ -89,7 +90,7 @@ internal class IdentifierOrKeywordScanner(
 
     private fun tokenTypeForLexeme(lexeme: String): TokenType {
         return keywordTokenTypesByLexeme[lexeme]
-            ?: TokenType.IDENTIFIER
+            ?: identifierTokenType
     }
 
     private fun isIdentifierStart(character: Char): Boolean {

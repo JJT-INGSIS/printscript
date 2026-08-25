@@ -13,7 +13,7 @@ import printscript.parser.internal.statement.IdentifierStatementParser
 import printscript.parser.internal.statement.PrintlnParser
 import printscript.parser.internal.statement.StatementParser
 import printscript.parser.internal.statement.TargetedStatementParser
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 
 public object PrintScriptParserFactory {
 
@@ -21,6 +21,7 @@ public object PrintScriptParserFactory {
         val expressionParser = v1ExpressionParser()
 
         return PrintScriptParser(
+            endOfInputTokenType = PrintScriptV1TokenType.EOF,
             statementParsers = v1StatementParsers(
                 expressionParser = expressionParser,
             ),
@@ -39,36 +40,32 @@ public object PrintScriptParserFactory {
         )
     }
 
-    private fun v1StatementParsers(
-        expressionParser: ExpressionParser,
-    ): List<StatementParser> {
+    private fun v1StatementParsers(expressionParser: ExpressionParser): List<StatementParser> {
         return listOf(
             DeclarationParser(
                 expressionParser = expressionParser,
-                startTokenType = TokenType.LET,
-                initializerTokenType = TokenType.ASSIGN,
+                startTokenType = PrintScriptV1TokenType.LET,
+                initializerTokenType = PrintScriptV1TokenType.ASSIGN,
                 declaredTypeByToken = printScriptV1DeclaredTypesByTokenType,
             ),
             PrintlnParser(
                 expressionParser = expressionParser,
-                startTokenType = TokenType.PRINTLN,
+                startTokenType = PrintScriptV1TokenType.PRINTLN,
             ),
             IdentifierStatementParser(
                 parsers = v1TargetedStatementParsers(
                     expressionParser = expressionParser,
                 ),
-                startTokenType = TokenType.IDENTIFIER,
+                startTokenType = PrintScriptV1TokenType.IDENTIFIER,
             ),
         )
     }
 
-    private fun v1TargetedStatementParsers(
-        expressionParser: ExpressionParser,
-    ): List<TargetedStatementParser> {
+    private fun v1TargetedStatementParsers(expressionParser: ExpressionParser): List<TargetedStatementParser> {
         return listOf(
             AssignmentParser(
                 expressionParser = expressionParser,
-                followingTokenType = TokenType.ASSIGN,
+                followingTokenType = PrintScriptV1TokenType.ASSIGN,
             ),
         )
     }

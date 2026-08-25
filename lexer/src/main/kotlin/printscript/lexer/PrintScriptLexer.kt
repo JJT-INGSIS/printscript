@@ -6,9 +6,11 @@ import printscript.lexer.internal.scanner.TokenScanner
 import printscript.lexer.internal.scanner.TokenScannerDispatcher
 import printscript.source.SourceReader
 import printscript.token.TokenSource
+import printscript.token.TokenType
 
 internal class PrintScriptLexer(
     tokenScanners: List<TokenScanner>,
+    private val endOfInputTokenType: TokenType,
 ) : Lexer {
 
     private val tokenScannerDispatcher =
@@ -24,6 +26,7 @@ internal class PrintScriptLexer(
             ),
             tokenScannerDispatcher =
             tokenScannerDispatcher,
+            endOfInputTokenType = endOfInputTokenType,
         )
     }
 }

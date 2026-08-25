@@ -8,6 +8,7 @@ import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenType
 
@@ -33,7 +34,7 @@ internal class PrintlnParser(
         val argument = readParenthesizedArgument(keyword.resultingContext)
             .orReturn { return it }
 
-        val semicolon = argument.resultingContext.expect(TokenType.SEMICOLON)
+        val semicolon = argument.resultingContext.expect(PrintScriptV1TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(
@@ -51,13 +52,13 @@ internal class PrintlnParser(
      * árbol, solo delimitan dónde empieza y termina el argumento.
      */
     private fun readParenthesizedArgument(context: ParsingContext): ParsingResult<Expression> {
-        val leftParenthesis = context.expect(TokenType.LEFT_PAREN)
+        val leftParenthesis = context.expect(PrintScriptV1TokenType.LEFT_PAREN)
             .orReturn { return it }
 
         val argument = expressionParser.parseExpression(leftParenthesis.resultingContext)
             .orReturn { return it }
 
-        val rightParenthesis = argument.resultingContext.expect(TokenType.RIGHT_PAREN)
+        val rightParenthesis = argument.resultingContext.expect(PrintScriptV1TokenType.RIGHT_PAREN)
             .orReturn { return it }
 
         return ParsingResult.Success(

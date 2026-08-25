@@ -11,8 +11,8 @@ import printscript.linter.internal.rule.LintRule
 import printscript.linter.internal.rule.RuleSet
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
-import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -205,9 +205,9 @@ class PrintScriptLinterTest {
 
     private fun unexpectedTokenError(): ParseError {
         return ParseError.UnexpectedToken(
-            expected = setOf(TokenType.SEMICOLON),
+            expected = setOf(PrintScriptV1TokenType.SEMICOLON),
             actual = Token(
-                type = TokenType.EOF,
+                type = PrintScriptV1TokenType.EOF,
                 lexeme = "",
                 span = anySpan,
             ),

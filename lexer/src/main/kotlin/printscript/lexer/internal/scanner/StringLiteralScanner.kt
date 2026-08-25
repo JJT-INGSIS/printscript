@@ -13,6 +13,7 @@ private const val CARRIAGE_RETURN = '\r'
 
 internal class StringLiteralScanner(
     supportedQuoteDelimiters: Set<Char>,
+    private val stringLiteralTokenType: TokenType,
 ) : TokenScanner {
 
     private val supportedQuoteDelimiters: Set<Char> =
@@ -94,7 +95,7 @@ internal class StringLiteralScanner(
     ): TokenScanResult.Success {
         return TokenScanResult.Success(
             token = Token(
-                type = TokenType.STRING_LITERAL,
+                type = stringLiteralTokenType,
                 lexeme = lexeme,
                 span = createSourceSpan(
                     startPosition = startPosition,
