@@ -12,9 +12,7 @@ internal class IdentifierNamingRule(
     private val convention: NamingConvention,
 ) : LintRule {
 
-    override fun inspect(
-        statement: Statement,
-    ): List<Diagnostic> {
+    override fun inspect(statement: Statement): List<Diagnostic> {
         return declaredIdentifiersOf(statement)
             .filterNot { identifier -> convention.matches(identifier.value) }
             .map { identifier -> violationOf(identifier) }
@@ -24,9 +22,7 @@ internal class IdentifierNamingRule(
      * Solo el sitio de declaración: revisar cada uso repetiría el mismo
      * diagnóstico sobre el mismo nombre.
      */
-    private fun declaredIdentifiersOf(
-        statement: Statement,
-    ): List<Identifier> {
+    private fun declaredIdentifiersOf(statement: Statement): List<Identifier> {
         return when (statement) {
             is VariableDeclarationStatement -> listOf(statement.identifier)
 
@@ -36,9 +32,7 @@ internal class IdentifierNamingRule(
         }
     }
 
-    private fun violationOf(
-        identifier: Identifier,
-    ): Diagnostic {
+    private fun violationOf(identifier: Identifier): Diagnostic {
         return Diagnostic.NamingConventionViolation(
             identifier = identifier,
             expectedConvention = convention,

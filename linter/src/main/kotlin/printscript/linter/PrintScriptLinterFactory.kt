@@ -9,9 +9,7 @@ import printscript.linter.internal.rule.RuleSet
 
 public object PrintScriptLinterFactory {
 
-    public fun createV1(
-        configuration: LinterConfiguration,
-    ): Linter {
+    public fun createV1(configuration: LinterConfiguration): Linter {
         return PrintScriptLinter(
             search = DiagnosticSearch(
                 rules = ruleSetOf(configuration),
@@ -19,17 +17,13 @@ public object PrintScriptLinterFactory {
         )
     }
 
-    private fun ruleSetOf(
-        configuration: LinterConfiguration,
-    ): RuleSet {
+    private fun ruleSetOf(configuration: LinterConfiguration): RuleSet {
         return RuleSet(
             rules = configuration.rules.map { rule -> ruleFor(rule) },
         )
     }
 
-    private fun ruleFor(
-        configuration: RuleConfiguration,
-    ): LintRule {
+    private fun ruleFor(configuration: RuleConfiguration): LintRule {
         return when (configuration) {
             is RuleConfiguration.IdentifierNaming ->
                 IdentifierNamingRule(configuration.convention)

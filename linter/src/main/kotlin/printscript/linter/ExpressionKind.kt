@@ -20,9 +20,7 @@ public enum class ExpressionKind {
 
     public companion object {
 
-        public fun of(
-            expression: Expression,
-        ): ExpressionKind {
+        public fun of(expression: Expression): ExpressionKind {
             return when (expression) {
                 is NumberLiteralExpression -> LITERAL
 

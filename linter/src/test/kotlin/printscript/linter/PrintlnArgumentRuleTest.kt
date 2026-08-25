@@ -14,9 +14,7 @@ class PrintlnArgumentRuleTest {
         printlnArgumentRule(),
     )
 
-    private fun diagnosticsForArgument(
-        argument: Expression,
-    ): List<Diagnostic> {
+    private fun diagnosticsForArgument(argument: Expression): List<Diagnostic> {
         return diagnosticsOf(linter, printOf(argument))
     }
 

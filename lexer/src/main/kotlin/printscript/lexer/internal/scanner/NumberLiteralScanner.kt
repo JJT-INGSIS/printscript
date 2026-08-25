@@ -9,6 +9,7 @@ import printscript.token.Token
 import printscript.token.TokenType
 
 private const val DECIMAL_SEPARATOR = '.'
+private const val MAXIMUM_DECIMAL_SEPARATOR_COUNT = 1
 
 internal class NumberLiteralScanner : TokenScanner {
 
@@ -17,191 +18,87 @@ internal class NumberLiteralScanner : TokenScanner {
     }
 
     override fun scan(cursor: CharacterCursor, startingCharacter: Char): TokenScanResult {
-        val resultingCursor =
+        val cursorAfterStartingDigit =
             cursor.advance().resultingCursor
 
-        return consumeIntegerDigits(
-            cursor = resultingCursor,
+        return consumeNumericLexeme(
+            cursor = cursorAfterStartingDigit,
             lexeme = startingCharacter.toString(),
             startPosition = cursor.position,
         )
     }
 
-    private tailrec fun consumeIntegerDigits(
+    private tailrec fun consumeNumericLexeme(
         cursor: CharacterCursor,
         lexeme: String,
         startPosition: SourcePosition,
     ): TokenScanResult {
-        return when (val result = cursor.peek()) {
-            is CharacterReadResult.EndOfInput -> {
-                createNumberSuccess(
+        return when (val readResult = cursor.peek()) {
+            is CharacterReadResult.EndOfInput ->
+                completeNumberScan(
                     lexeme = lexeme,
                     startPosition = startPosition,
-                    resultingCursor =
-                    result.resultingCursor,
+                    resultingCursor = readResult.resultingCursor,
                 )
-            }
 
             is CharacterReadResult.Success -> {
-                when {
-                    result.character.isDigit() -> {
-                        consumeIntegerDigits(
-                            cursor = consumeCharacter(result),
-                            lexeme = lexeme + result.character,
-                            startPosition = startPosition,
-                        )
-                    }
-
-                    result.character ==
-                        DECIMAL_SEPARATOR -> {
-                        consumeFirstDecimalDigit(
-                            cursor = consumeCharacter(result),
-                            lexeme =
-                            lexeme + result.character,
-                            startPosition = startPosition,
-                        )
-                    }
-
-                    else -> {
-                        createNumberSuccess(
-                            lexeme = lexeme,
-                            startPosition = startPosition,
-                            resultingCursor =
-                            result.resultingCursor,
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private fun consumeFirstDecimalDigit(
-        cursor: CharacterCursor,
-        lexeme: String,
-        startPosition: SourcePosition,
-    ): TokenScanResult {
-        return when (val result = cursor.peek()) {
-            is CharacterReadResult.EndOfInput -> {
-                createInvalidNumberFailure(
-                    lexeme = lexeme,
-                    startPosition = startPosition,
-                    resultingCursor =
-                    result.resultingCursor,
-                )
-            }
-
-            is CharacterReadResult.Success -> {
-                if (result.character.isDigit()) {
-                    return consumeDecimalDigits(
-                        cursor = consumeCharacter(result),
-                        lexeme = lexeme + result.character,
+                if (!isNumericLexemeCharacter(readResult.character)) {
+                    return completeNumberScan(
+                        lexeme = lexeme,
                         startPosition = startPosition,
+                        resultingCursor = readResult.resultingCursor,
                     )
                 }
 
-                consumeInvalidTail(
-                    cursor = result.resultingCursor,
-                    lexeme = lexeme,
+                consumeNumericLexeme(
+                    cursor = consumeCharacter(readResult),
+                    lexeme = lexeme + readResult.character,
                     startPosition = startPosition,
                 )
             }
         }
     }
 
-    private tailrec fun consumeDecimalDigits(
-        cursor: CharacterCursor,
+    private fun completeNumberScan(
         lexeme: String,
         startPosition: SourcePosition,
+        resultingCursor: CharacterCursor,
     ): TokenScanResult {
-        return when (val result = cursor.peek()) {
-            is CharacterReadResult.EndOfInput -> {
-                createNumberSuccess(
-                    lexeme = lexeme,
-                    startPosition = startPosition,
-                    resultingCursor =
-                    result.resultingCursor,
-                )
-            }
-
-            is CharacterReadResult.Success -> {
-                when {
-                    result.character.isDigit() -> {
-                        consumeDecimalDigits(
-                            cursor = consumeCharacter(result),
-                            lexeme = lexeme + result.character,
-                            startPosition = startPosition,
-                        )
-                    }
-
-                    result.character ==
-                        DECIMAL_SEPARATOR -> {
-                        consumeInvalidTail(
-                            cursor = consumeCharacter(result),
-                            lexeme =
-                            lexeme + result.character,
-                            startPosition = startPosition,
-                        )
-                    }
-
-                    else -> {
-                        createNumberSuccess(
-                            lexeme = lexeme,
-                            startPosition = startPosition,
-                            resultingCursor =
-                            result.resultingCursor,
-                        )
-                    }
-                }
-            }
+        return if (isValidNumberLexeme(lexeme)) {
+            createNumberSuccess(
+                lexeme = lexeme,
+                startPosition = startPosition,
+                resultingCursor = resultingCursor,
+            )
+        } else {
+            createInvalidNumberFailure(
+                lexeme = lexeme,
+                startPosition = startPosition,
+                resultingCursor = resultingCursor,
+            )
         }
     }
 
-    private tailrec fun consumeInvalidTail(
-        cursor: CharacterCursor,
-        lexeme: String,
-        startPosition: SourcePosition,
-    ): TokenScanResult {
-        return when (val result = cursor.peek()) {
-            is CharacterReadResult.EndOfInput -> {
-                createInvalidNumberFailure(
-                    lexeme = lexeme,
-                    startPosition = startPosition,
-                    resultingCursor =
-                    result.resultingCursor,
-                )
-            }
-
-            is CharacterReadResult.Success -> {
-                if (isNumericTailCharacter(
-                        result.character,
-                    )
-                ) {
-                    return consumeInvalidTail(
-                        cursor = consumeCharacter(result),
-                        lexeme = lexeme + result.character,
-                        startPosition = startPosition,
-                    )
-                }
-
-                createInvalidNumberFailure(
-                    lexeme = lexeme,
-                    startPosition = startPosition,
-                    resultingCursor =
-                    result.resultingCursor,
-                )
-            }
-        }
-    }
-
-    private fun consumeCharacter(result: CharacterReadResult.Success): CharacterCursor {
-        return result.resultingCursor
+    private fun consumeCharacter(readResult: CharacterReadResult.Success): CharacterCursor {
+        return readResult.resultingCursor
             .advance()
             .resultingCursor
     }
 
-    private fun isNumericTailCharacter(character: Char): Boolean {
+    private fun isNumericLexemeCharacter(character: Char): Boolean {
         return character.isDigit() ||
             character == DECIMAL_SEPARATOR
+    }
+
+    private fun isValidNumberLexeme(lexeme: String): Boolean {
+        val decimalSeparatorCount =
+            lexeme.count { character ->
+                character == DECIMAL_SEPARATOR
+            }
+
+        return decimalSeparatorCount <=
+            MAXIMUM_DECIMAL_SEPARATOR_COUNT &&
+            lexeme.last() != DECIMAL_SEPARATOR
     }
 
     private fun createNumberSuccess(
@@ -213,9 +110,9 @@ internal class NumberLiteralScanner : TokenScanner {
             token = Token(
                 type = TokenType.NUMBER_LITERAL,
                 lexeme = lexeme,
-                span = SourceSpan(
-                    start = startPosition,
-                    end = resultingCursor.position,
+                span = createSourceSpan(
+                    startPosition = startPosition,
+                    resultingCursor = resultingCursor,
                 ),
             ),
             resultingCursor = resultingCursor,
@@ -230,12 +127,19 @@ internal class NumberLiteralScanner : TokenScanner {
         return TokenScanResult.Failure(
             error = LexicalError.InvalidNumber(
                 lexeme = lexeme,
-                span = SourceSpan(
-                    start = startPosition,
-                    end = resultingCursor.position,
+                span = createSourceSpan(
+                    startPosition = startPosition,
+                    resultingCursor = resultingCursor,
                 ),
             ),
             resultingCursor = resultingCursor,
+        )
+    }
+
+    private fun createSourceSpan(startPosition: SourcePosition, resultingCursor: CharacterCursor): SourceSpan {
+        return SourceSpan(
+            start = startPosition,
+            end = resultingCursor.position,
         )
     }
 }

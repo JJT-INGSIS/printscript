@@ -4,7 +4,5 @@ import printscript.statement.StatementSource
 
 public interface Linter {
 
-    public fun lint(
-        source: StatementSource,
-    ): DiagnosticSource
+    public fun lint(source: StatementSource): DiagnosticSource
 }

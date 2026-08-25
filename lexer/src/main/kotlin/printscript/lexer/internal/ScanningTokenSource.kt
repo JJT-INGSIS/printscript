@@ -18,55 +18,51 @@ internal data class ScanningTokenSource(
     override fun nextToken(): TokenReadResult {
         val cursorWithoutWhitespace =
             consumeLeadingWhitespace(characterCursor)
+        val nextCharacterResult =
+            cursorWithoutWhitespace.peek()
 
-        return when (
-            val characterResult =
-                cursorWithoutWhitespace.peek()
-        ) {
+        return when (nextCharacterResult) {
             is CharacterReadResult.EndOfInput -> {
-                createEofTokenSuccess(
-                    cursor =
-                    characterResult.resultingCursor,
+                createEndOfInputResult(
+                    cursor = nextCharacterResult.resultingCursor,
                 )
             }
 
             is CharacterReadResult.Success -> {
                 scanNextToken(
-                    cursor =
-                    characterResult.resultingCursor,
-                    character =
-                    characterResult.character,
+                    cursor = nextCharacterResult.resultingCursor,
+                    startingCharacter = nextCharacterResult.character,
                 )
             }
         }
     }
 
     private tailrec fun consumeLeadingWhitespace(cursor: CharacterCursor): CharacterCursor {
-        return when (val result = cursor.peek()) {
+        return when (val readResult = cursor.peek()) {
             is CharacterReadResult.EndOfInput -> {
-                result.resultingCursor
+                readResult.resultingCursor
             }
 
             is CharacterReadResult.Success -> {
-                if (!result.character.isWhitespace()) {
-                    return result.resultingCursor
+                if (readResult.character.isWhitespace()) {
+                    consumeLeadingWhitespace(
+                        cursor =
+                        readResult.resultingCursor
+                            .advance()
+                            .resultingCursor,
+                    )
+                } else {
+                    readResult.resultingCursor
                 }
-
-                consumeLeadingWhitespace(
-                    cursor =
-                    result.resultingCursor
-                        .advance()
-                        .resultingCursor,
-                )
             }
         }
     }
 
-    private fun scanNextToken(cursor: CharacterCursor, character: Char): TokenReadResult {
+    private fun scanNextToken(cursor: CharacterCursor, startingCharacter: Char): TokenReadResult {
         val scanResult =
             tokenScannerDispatcher.scan(
                 cursor = cursor,
-                currentCharacter = character,
+                startingCharacter = startingCharacter,
             )
 
         return when (scanResult) {
@@ -74,7 +70,7 @@ internal data class ScanningTokenSource(
                 TokenReadResult.Success(
                     token = scanResult.token,
                     remainingSource =
-                    withCursor(
+                    continuingFrom(
                         scanResult.resultingCursor,
                     ),
                 )
@@ -84,7 +80,7 @@ internal data class ScanningTokenSource(
                 TokenReadResult.Failure(
                     error = scanResult.error,
                     remainingSource =
-                    withCursor(
+                    continuingFrom(
                         scanResult.resultingCursor,
                     ),
                 )
@@ -92,7 +88,7 @@ internal data class ScanningTokenSource(
         }
     }
 
-    private fun createEofTokenSuccess(cursor: CharacterCursor): TokenReadResult.Success {
+    private fun createEndOfInputResult(cursor: CharacterCursor): TokenReadResult.Success {
         val endOfInputPosition = cursor.position
 
         return TokenReadResult.Success(
@@ -104,11 +100,11 @@ internal data class ScanningTokenSource(
                     end = endOfInputPosition,
                 ),
             ),
-            remainingSource = withCursor(cursor),
+            remainingSource = continuingFrom(cursor),
         )
     }
 
-    private fun withCursor(cursor: CharacterCursor): ScanningTokenSource {
+    private fun continuingFrom(cursor: CharacterCursor): ScanningTokenSource {
         return copy(
             characterCursor = cursor,
         )

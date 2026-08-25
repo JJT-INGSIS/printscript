@@ -5,22 +5,25 @@ import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
 
 internal class TokenScannerDispatcher(
-    private val scanners: List<TokenScanner>,
+    scanners: List<TokenScanner>,
 ) {
 
-    fun scan(cursor: CharacterCursor, currentCharacter: Char): TokenScanResult {
+    private val scanners: List<TokenScanner> =
+        scanners.toList()
+
+    fun scan(cursor: CharacterCursor, startingCharacter: Char): TokenScanResult {
         for (scanner in scanners) {
-            if (scanner.canStartWith(currentCharacter)) {
+            if (scanner.canStartWith(startingCharacter)) {
                 return scanner.scan(
                     cursor = cursor,
-                    startingCharacter = currentCharacter,
+                    startingCharacter = startingCharacter,
                 )
             }
         }
 
         return createUnexpectedCharacterFailure(
             cursor = cursor,
-            character = currentCharacter,
+            character = startingCharacter,
         )
     }
 

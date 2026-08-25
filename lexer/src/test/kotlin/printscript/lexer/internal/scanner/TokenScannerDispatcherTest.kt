@@ -31,7 +31,7 @@ class TokenScannerDispatcherTest {
 
         val scanResult = dispatcher.scan(
             cursor = cursor,
-            currentCharacter = 'a',
+            startingCharacter = 'a',
         )
 
         val token = scanResult.assertSuccessToken()
@@ -50,6 +50,30 @@ class TokenScannerDispatcherTest {
     }
 
     @Test
+    fun `scanner configuration cannot change after dispatcher creation`() {
+        val scanners = mutableListOf<TokenScanner>(
+            IdentifierOrKeywordScanner(
+                mapOf("alias" to TokenType.LET),
+            ),
+        )
+        val dispatcher = TokenScannerDispatcher(
+            scanners = scanners,
+        )
+
+        scanners.clear()
+
+        val scanResult = dispatcher.scan(
+            cursor = cursorFor("alias"),
+            startingCharacter = 'a',
+        )
+
+        assertEquals(
+            expected = TokenType.LET,
+            actual = scanResult.assertSuccessToken().type,
+        )
+    }
+
+    @Test
     fun `returns failure and consumes character when no scanner accepts it`() {
         val dispatcher = TokenScannerDispatcher(
             scanners = emptyList(),
@@ -59,7 +83,7 @@ class TokenScannerDispatcherTest {
 
         val scanResult = dispatcher.scan(
             cursor = cursor,
-            currentCharacter = '@',
+            startingCharacter = '@',
         )
 
         val lexicalError =

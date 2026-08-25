@@ -223,9 +223,7 @@ private class AlwaysReportingRule(
     private val reportCount: Int,
 ) : LintRule {
 
-    override fun inspect(
-        statement: Statement,
-    ): List<Diagnostic> {
+    override fun inspect(statement: Statement): List<Diagnostic> {
         return List(reportCount) {
             Diagnostic.UnsupportedPrintlnArgument(
                 argument = anyExpressionAt(statement.span),
@@ -233,9 +231,7 @@ private class AlwaysReportingRule(
         }
     }
 
-    private fun anyExpressionAt(
-        span: SourceSpan,
-    ): Expression {
+    private fun anyExpressionAt(span: SourceSpan): Expression {
         return StringLiteralExpression(
             value = "",
             quoteStyle = StringQuoteStyle.DOUBLE,

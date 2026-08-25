@@ -10,8 +10,11 @@ import printscript.token.TokenType
 private const val UNDERSCORE = '_'
 
 internal class IdentifierOrKeywordScanner(
-    private val fixedTokenTypesByLexeme: Map<String, TokenType>,
+    keywordTokenTypesByLexeme: Map<String, TokenType>,
 ) : TokenScanner {
+
+    private val keywordTokenTypesByLexeme: Map<String, TokenType> =
+        keywordTokenTypesByLexeme.toMap()
 
     override fun canStartWith(character: Char): Boolean {
         return isIdentifierStart(character)
@@ -38,8 +41,7 @@ internal class IdentifierOrKeywordScanner(
                 createTokenSuccess(
                     lexeme = lexeme,
                     startPosition = startPosition,
-                    resultingCursor =
-                    result.resultingCursor,
+                    resultingCursor = result.resultingCursor,
                 )
             }
 
@@ -48,8 +50,7 @@ internal class IdentifierOrKeywordScanner(
                     return createTokenSuccess(
                         lexeme = lexeme,
                         startPosition = startPosition,
-                        resultingCursor =
-                        result.resultingCursor,
+                        resultingCursor = result.resultingCursor,
                     )
                 }
 
@@ -75,7 +76,7 @@ internal class IdentifierOrKeywordScanner(
     ): TokenScanResult.Success {
         return TokenScanResult.Success(
             token = Token(
-                type = classifyIdentifier(lexeme),
+                type = tokenTypeForLexeme(lexeme),
                 lexeme = lexeme,
                 span = SourceSpan(
                     start = startPosition,
@@ -86,8 +87,8 @@ internal class IdentifierOrKeywordScanner(
         )
     }
 
-    private fun classifyIdentifier(lexeme: String): TokenType {
-        return fixedTokenTypesByLexeme[lexeme]
+    private fun tokenTypeForLexeme(lexeme: String): TokenType {
+        return keywordTokenTypesByLexeme[lexeme]
             ?: TokenType.IDENTIFIER
     }
 

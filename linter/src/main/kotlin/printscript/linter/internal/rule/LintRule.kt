@@ -9,7 +9,5 @@ import printscript.linter.Diagnostic
  */
 internal interface LintRule {
 
-    fun inspect(
-        statement: Statement,
-    ): List<Diagnostic>
+    fun inspect(statement: Statement): List<Diagnostic>
 }

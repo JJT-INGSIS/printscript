@@ -1,6 +1,7 @@
 package printscript.lexer
 
 import printscript.lexer.internal.printScriptV1KeywordTokenTypesByLexeme
+import printscript.lexer.internal.printScriptV1StringQuoteDelimiters
 import printscript.lexer.internal.printScriptV1SymbolTokenTypesByLexeme
 import printscript.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.lexer.internal.scanner.NumberLiteralScanner
@@ -12,7 +13,10 @@ public object PrintScriptLexerFactory {
     public fun createV1(): Lexer {
         return PrintScriptLexer(
             tokenScanners = listOf(
-                StringLiteralScanner(),
+                StringLiteralScanner(
+                    supportedQuoteDelimiters =
+                    printScriptV1StringQuoteDelimiters,
+                ),
                 NumberLiteralScanner(),
                 IdentifierOrKeywordScanner(
                     printScriptV1KeywordTokenTypesByLexeme,
