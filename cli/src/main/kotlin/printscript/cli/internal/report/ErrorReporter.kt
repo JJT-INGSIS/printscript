@@ -5,6 +5,7 @@ import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.UnaryOperator
 import printscript.interpreter.SemanticError
 import printscript.model.source.SourceSpan
+import printscript.source.SourceAccessError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
 import printscript.token.TokenType
@@ -12,17 +13,43 @@ import printscript.token.TokenType
 /**
  * Convierte cualquier error del pipeline en un mensaje para el usuario.
  *
- * Es una sola clase con `when` exhaustivos y sin dispatcher: el
- * conjunto de errores es cerrado y sellado, así que el compilador avisa
- * cuando alguien agrega una variante nueva. Un dispatcher daría
- * apertura que nadie necesita y perdería esa garantía.
+ * Es una sola clase con `when` exhaustivos y sin dispatcher: el conjunto
+ * de errores es cerrado y sellado, así que el compilador avisa cuando
+ * alguien agrega una variante nueva. Un dispatcher daría apertura que
+ * nadie necesita y perdería esa garantía.
  *
- * Las tablas de este archivo —tipos, operadores, tokens— se parecen a
- * las del formatter, pero no son las mismas: allá se produce **código**
- * y acá un **mensaje para humanos**, que mañana podría estar traducido.
- * Hoy coinciden por casualidad, no por necesidad.
+ * Hay un `describe` público por familia de errores, según en qué momento
+ * del pipeline aparecen: al abrir el archivo, al parsearlo, o al
+ * ejecutarlo.
+ *
+ * Las tablas de este archivo —tipos, operadores, tokens— se parecen a las
+ * del formatter, pero no son las mismas: allá se produce **código** y acá
+ * un **mensaje para humanos**, que mañana podría estar traducido. Hoy
+ * coinciden por casualidad, no por necesidad.
  */
 internal class ErrorReporter {
+
+    /**
+     * Los problemas de acceso al archivo no tienen posición dentro del
+     * código: pasaron antes de leer una sola línea.
+     */
+    fun describe(error: SourceAccessError): String {
+        val description = when (error) {
+            is SourceAccessError.NotFound ->
+                "no se encontró el archivo '${error.path}'"
+
+            is SourceAccessError.NotAFile ->
+                "'${error.path}' no es un archivo"
+
+            is SourceAccessError.NotReadable ->
+                "no hay permisos de lectura sobre '${error.path}'"
+
+            is SourceAccessError.ReadFailed ->
+                "no se pudo leer '${error.path}': ${error.reason}"
+        }
+
+        return "error: $description"
+    }
 
     fun describe(error: ParseError): String {
         val description = when (error) {

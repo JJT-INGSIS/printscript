@@ -1,20 +1,19 @@
 package printscript.cli.internal.command
 
 import printscript.cli.internal.arguments.CliArguments
+import printscript.cli.internal.io.DiscardedProgramOutput
 import printscript.cli.internal.io.Terminal
 import printscript.cli.internal.report.ErrorReporter
-import printscript.statement.StatementReadResult
+import printscript.interpreter.InterpretationResult
+import printscript.interpreter.Interpreter
+import printscript.interpreter.PrintScriptInterpreterFactory
+import printscript.interpreter.output.ProgramOutput
 import printscript.statement.StatementSource
 
-/**
- * Recorre el programa entero sin ejecutarlo, para reportar únicamente
- * errores de sintaxis.
- *
- * No usa ningún consumidor: el trabajo lo hace el parser, y este
- * comando solo tira de la fuente hasta el final.
- */
 internal class ValidationCommand(
     private val errorReporter: ErrorReporter,
+    private val createInterpreter: (ProgramOutput) -> Interpreter =
+        PrintScriptInterpreterFactory::createV1,
 ) : CliCommand {
 
     override val operationName: String = "validation"
@@ -24,31 +23,24 @@ internal class ValidationCommand(
         statements: StatementSource,
         terminal: Terminal,
     ): CommandOutcome {
-        val outcome = validateRemaining(statements)
+        val interpreter = createInterpreter(DiscardedProgramOutput)
 
-        if (outcome is CommandOutcome.Success) {
-            terminal.writeLine("El archivo no tiene errores de sintaxis.")
-        }
+        return when (val result = interpreter.interpret(statements)) {
+            InterpretationResult.Success -> {
+                terminal.writeLine("El archivo es válido.")
 
-        return outcome
-    }
-
-    /**
-     * `tailrec` para no necesitar una variable mutable ni arriesgar un
-     * desborde de pila: el compilador lo convierte en un bucle.
-     */
-    private tailrec fun validateRemaining(source: StatementSource): CommandOutcome {
-        return when (val readResult = source.nextStatement()) {
-            StatementReadResult.EndOfInput ->
                 CommandOutcome.Success
+            }
 
-            is StatementReadResult.Failure ->
+            is InterpretationResult.ParseFailure ->
                 CommandOutcome.Failure(
-                    errorReporter.describe(readResult.error),
+                    errorReporter.describe(result.error),
                 )
 
-            is StatementReadResult.Success ->
-                validateRemaining(readResult.remainingSource)
+            is InterpretationResult.SemanticFailure ->
+                CommandOutcome.Failure(
+                    errorReporter.describe(result.error),
+                )
         }
     }
 }

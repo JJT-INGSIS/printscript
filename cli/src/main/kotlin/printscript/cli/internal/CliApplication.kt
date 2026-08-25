@@ -9,17 +9,20 @@ import printscript.cli.internal.command.CommandOutcome
 import printscript.cli.internal.io.Terminal
 import printscript.cli.internal.pipeline.StatementSourcePipeline
 import printscript.cli.internal.progress.ProgressReportingStatementSource
-import printscript.cli.internal.source.SourceCodeLoader
-import printscript.cli.internal.source.SourceLoadingResult
+import printscript.cli.internal.report.ErrorReporter
+import printscript.source.SourceReader
+import printscript.source.SourceReaderCreationResult
 import printscript.source.SourceReaderFactory
 import printscript.statement.StatementSource
+import java.nio.file.Files
+import java.nio.file.Path
 
 internal class CliApplication(
     private val terminal: Terminal,
     private val argumentsParser: CliArgumentsParser,
-    private val sourceCodeLoader: SourceCodeLoader,
     private val pipeline: StatementSourcePipeline,
     private val commandDispatcher: CommandDispatcher,
+    private val errorReporter: ErrorReporter,
 ) {
     fun runCommandLine(commandLineArguments: List<String>): ExitCode {
         val arguments = when (
@@ -35,24 +38,26 @@ internal class CliApplication(
                     "Disponibles: ${commandDispatcher.availableOperationNames().joinToString()}",
             )
 
-        val sourceCode = when (
-            val loading = sourceCodeLoader.loadSourceCode(arguments.sourceFilePath)
+        val sourceReader = when (
+            val creation = SourceReaderFactory.fromPath(arguments.sourceFilePath)
         ) {
-            is SourceLoadingResult.Failure -> return reportSourceError(loading.message)
-            is SourceLoadingResult.Success -> loading.sourceCode
+            is SourceReaderCreationResult.Failure ->
+                return reportSourceError(errorReporter.describe(creation.error))
+
+            is SourceReaderCreationResult.Success -> creation.reader
         }
 
         return runCommand(
             command = command,
             arguments = arguments,
-            sourceCode = sourceCode,
+            sourceReader = sourceReader,
         )
     }
 
-    private fun runCommand(command: CliCommand, arguments: CliArguments, sourceCode: String): ExitCode {
+    private fun runCommand(command: CliCommand, arguments: CliArguments, sourceReader: SourceReader): ExitCode {
         val outcome = command.runOperation(
             arguments = arguments,
-            statements = statementsOf(sourceCode, arguments),
+            statements = progressReportingStatementsOf(sourceReader, arguments),
             terminal = terminal,
         )
 
@@ -62,17 +67,28 @@ internal class CliApplication(
         }
     }
 
-    private fun statementsOf(sourceCode: String, arguments: CliArguments): StatementSource {
+    /**
+     * Arma el pipeline y lo envuelve con el reporte de progreso.
+     *
+     * El progreso entra por un decorator y no modificando a los
+     * consumidores: ni el intérprete ni el formatter ni el analizador
+     * tienen un solo parámetro dedicado a esto.
+     */
+    private fun progressReportingStatementsOf(sourceReader: SourceReader, arguments: CliArguments): StatementSource {
         val statements = pipeline.statementsFrom(
-            sourceReader = SourceReaderFactory.fromString(sourceCode),
+            sourceReader = sourceReader,
             version = arguments.version,
         )
 
         return ProgressReportingStatementSource(
             delegate = statements,
-            totalCharacters = sourceCode.length.toLong(),
+            totalBytes = sourceSizeOf(arguments.sourceFilePath),
             onProgress = { percentage -> terminal.writeError("parsing... $percentage%") },
         )
+    }
+
+    private fun sourceSizeOf(sourceFilePath: Path): Long {
+        return runCatching { Files.size(sourceFilePath) }.getOrDefault(0L)
     }
 
     private fun reportUsageError(message: String): ExitCode {
