@@ -10,6 +10,15 @@ complexity:
     threshold: 60
     excludes: ['**/test/**']
 
+    # ELEGIDA — mismo umbral que el default (15), pero ignorando las ramas de
+    # un `when` cuyo cuerpo es una sola expresión. Un `when` que mapea un enum
+    # a texto es una tabla de correspondencias, no lógica ramificada: sumarla
+    # a la complejidad esconde los métodos que sí son difíciles de entender.
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+    ignoreSimpleWhenEntries: true
+
 style:
   # ELEGIDA — la segunda más violada (4 casos). max 5 en vez de 2: el manejo
   # de errores como valores produce un return por paso validado. Se ajustaron

@@ -24,6 +24,7 @@ include(
     "interpreter",
     "linter",
     "statement-source",
+    "cli",
     "integration-tests",
     "formatter",
 )
