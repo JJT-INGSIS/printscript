@@ -11,7 +11,6 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.source.SourceCodeLoader
 import kotlin.system.exitProcess
 
-
 public fun main(args: Array<String>) {
     val application = CliApplication(
         terminal = ConsoleTerminal(),

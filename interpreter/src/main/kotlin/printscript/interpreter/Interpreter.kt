@@ -4,7 +4,5 @@ import printscript.statement.StatementSource
 
 public interface Interpreter {
 
-    public fun interpret(
-        source: StatementSource,
-    ): InterpretationResult
+    public fun interpret(source: StatementSource): InterpretationResult
 }

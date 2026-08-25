@@ -17,9 +17,7 @@ internal class PrintScriptParser(
             parsers = statementParsers.toList(),
         )
 
-    override fun parse(
-        tokens: TokenSource,
-    ): StatementSource {
+    override fun parse(tokens: TokenSource): StatementSource {
         return ParsingStatementSource(
             context = DefaultParsingContext(
                 cursor = TokenCursor.initial(tokens),

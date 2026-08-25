@@ -30,7 +30,7 @@ internal class ErrorReporter {
 
             is ParseError.UnexpectedToken ->
                 "se esperaba ${describeExpected(error.expected)} " +
-                        "pero se encontró '${error.actual.lexeme}'"
+                    "pero se encontró '${error.actual.lexeme}'"
 
             is ParseError.InvalidLiteral ->
                 "el literal '${error.token.lexeme}' no es válido"
@@ -52,15 +52,15 @@ internal class ErrorReporter {
 
             is SemanticError.TypeMismatch ->
                 "'${error.name}' es de tipo ${describe(error.expected)} " +
-                        "y se le intentó asignar un ${describe(error.actual)}"
+                    "y se le intentó asignar un ${describe(error.actual)}"
 
             is SemanticError.InvalidBinaryOperands ->
                 "el operador '${describe(error.operator)}' no se puede aplicar " +
-                        "entre ${describe(error.left)} y ${describe(error.right)}"
+                    "entre ${describe(error.left)} y ${describe(error.right)}"
 
             is SemanticError.InvalidUnaryOperand ->
                 "el operador '${describe(error.operator)}' no se puede aplicar " +
-                        "a un ${describe(error.operand)}"
+                    "a un ${describe(error.operand)}"
 
             is SemanticError.DivisionByZero ->
                 "división por cero"

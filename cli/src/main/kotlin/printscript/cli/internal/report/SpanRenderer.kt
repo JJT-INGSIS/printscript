@@ -18,6 +18,6 @@ internal object SpanRenderer {
         }
 
         return "línea ${span.start.line}, columna ${span.start.column} " +
-                "a línea ${span.end.line}, columna ${span.end.column}"
+            "a línea ${span.end.line}, columna ${span.end.column}"
     }
 }

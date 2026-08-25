@@ -37,9 +37,7 @@ internal class ValidationCommand(
      * `tailrec` para no necesitar una variable mutable ni arriesgar un
      * desborde de pila: el compilador lo convierte en un bucle.
      */
-    private tailrec fun validateRemaining(
-        source: StatementSource,
-    ): CommandOutcome {
+    private tailrec fun validateRemaining(source: StatementSource): CommandOutcome {
         return when (val readResult = source.nextStatement()) {
             StatementReadResult.EndOfInput ->
                 CommandOutcome.Success

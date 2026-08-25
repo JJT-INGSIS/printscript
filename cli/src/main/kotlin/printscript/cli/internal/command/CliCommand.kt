@@ -20,9 +20,5 @@ internal interface CliCommand {
 
     val operationName: String
 
-    fun runOperation(
-        arguments: CliArguments,
-        statements: StatementSource,
-        terminal: Terminal,
-    ): CommandOutcome
+    fun runOperation(arguments: CliArguments, statements: StatementSource, terminal: Terminal): CommandOutcome
 }

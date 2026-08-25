@@ -11,18 +11,13 @@ internal class SymbolScanner(
     private val tokenTypeByLexeme: Map<String, TokenType>,
 ) : TokenScanner {
 
-    override fun canStartWith(
-        character: Char,
-    ): Boolean {
+    override fun canStartWith(character: Char): Boolean {
         return tokenTypeByLexeme.containsKey(
             character.toString(),
         )
     }
 
-    override fun scan(
-        cursor: CharacterCursor,
-        startingCharacter: Char,
-    ): TokenScanResult {
+    override fun scan(cursor: CharacterCursor, startingCharacter: Char): TokenScanResult {
         val startPosition = cursor.position
         val symbolLexeme = startingCharacter.toString()
         val resultingCursor =

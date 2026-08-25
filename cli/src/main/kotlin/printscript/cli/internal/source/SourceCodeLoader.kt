@@ -18,9 +18,7 @@ import java.io.File
  */
 internal class SourceCodeLoader {
 
-    fun loadSourceCode(
-        sourceFilePath: String,
-    ): SourceLoadingResult {
+    fun loadSourceCode(sourceFilePath: String): SourceLoadingResult {
         val sourceFile = File(sourceFilePath)
 
         if (!sourceFile.exists()) {

@@ -23,4 +23,5 @@ gradle-app.setting
 .idea/
 *.iml
 .gradle/
-out/
+.kotlin/
+out/.DS_Store

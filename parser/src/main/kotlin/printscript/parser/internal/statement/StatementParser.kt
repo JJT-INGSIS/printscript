@@ -9,7 +9,5 @@ internal interface StatementParser {
 
     val startTokenType: TokenType
 
-    fun parseStatement(
-        context: ParsingContext,
-    ): ParsingResult<Statement>
+    fun parseStatement(context: ParsingContext): ParsingResult<Statement>
 }

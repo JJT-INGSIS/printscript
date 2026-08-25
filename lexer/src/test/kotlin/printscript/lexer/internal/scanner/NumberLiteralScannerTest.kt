@@ -78,9 +78,7 @@ class NumberLiteralScannerTest {
         }
     }
 
-    private fun assertScansValidNumberLiteral(
-        numberLexeme: String,
-    ) {
+    private fun assertScansValidNumberLiteral(numberLexeme: String) {
         val followingCharacter = '+'
         val sourceText = "$numberLexeme$followingCharacter"
         val cursor = cursorFor(sourceText)
@@ -112,9 +110,7 @@ class NumberLiteralScannerTest {
         )
     }
 
-    private fun assertRejectsMalformedNumberLiteral(
-        malformedNumberLexeme: String,
-    ) {
+    private fun assertRejectsMalformedNumberLiteral(malformedNumberLexeme: String) {
         val followingCharacter = '+'
         val sourceText = "$malformedNumberLexeme$followingCharacter"
         val cursor = cursorFor(sourceText)

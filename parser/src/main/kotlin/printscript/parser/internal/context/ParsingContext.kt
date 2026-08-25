@@ -11,13 +11,9 @@ internal interface ParsingContext {
 
     fun consume(): ParsingResult<Token>
 
-    fun expect(
-        expected: Set<TokenType>,
-    ): ParsingResult<Token>
+    fun expect(expected: Set<TokenType>): ParsingResult<Token>
 
-    fun expect(
-        expected: TokenType,
-    ): ParsingResult<Token> {
+    fun expect(expected: TokenType): ParsingResult<Token> {
         return expect(setOf(expected))
     }
 

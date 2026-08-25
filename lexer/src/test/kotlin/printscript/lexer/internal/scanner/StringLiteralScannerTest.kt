@@ -187,7 +187,7 @@ class StringLiteralScannerTest {
             assertSingleLineSpan(
                 actualSpan = error.span,
                 consumedCharacterCount =
-                    case.sourceText.indexOf(case.expectedLineBreak),
+                case.sourceText.indexOf(case.expectedLineBreak),
             )
 
             scanResult.resultingCursor.assertNextCharacter(
@@ -196,10 +196,7 @@ class StringLiteralScannerTest {
         }
     }
 
-    private fun assertSingleLineSpan(
-        actualSpan: SourceSpan,
-        consumedCharacterCount: Int,
-    ) {
+    private fun assertSingleLineSpan(actualSpan: SourceSpan, consumedCharacterCount: Int) {
         assertEquals(
             expected = SourceSpan(
                 start = SourcePosition(

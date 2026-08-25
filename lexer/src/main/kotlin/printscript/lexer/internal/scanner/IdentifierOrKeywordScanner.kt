@@ -13,16 +13,11 @@ internal class IdentifierOrKeywordScanner(
     private val fixedTokenTypesByLexeme: Map<String, TokenType>,
 ) : TokenScanner {
 
-    override fun canStartWith(
-        character: Char,
-    ): Boolean {
+    override fun canStartWith(character: Char): Boolean {
         return isIdentifierStart(character)
     }
 
-    override fun scan(
-        cursor: CharacterCursor,
-        startingCharacter: Char,
-    ): TokenScanResult {
+    override fun scan(cursor: CharacterCursor, startingCharacter: Char): TokenScanResult {
         val resultingCursor =
             cursor.advance().resultingCursor
 
@@ -44,7 +39,7 @@ internal class IdentifierOrKeywordScanner(
                     lexeme = lexeme,
                     startPosition = startPosition,
                     resultingCursor =
-                        result.resultingCursor,
+                    result.resultingCursor,
                 )
             }
 
@@ -54,7 +49,7 @@ internal class IdentifierOrKeywordScanner(
                         lexeme = lexeme,
                         startPosition = startPosition,
                         resultingCursor =
-                            result.resultingCursor,
+                        result.resultingCursor,
                     )
                 }
 
@@ -67,9 +62,7 @@ internal class IdentifierOrKeywordScanner(
         }
     }
 
-    private fun consumeCharacter(
-        result: CharacterReadResult.Success,
-    ): CharacterCursor {
+    private fun consumeCharacter(result: CharacterReadResult.Success): CharacterCursor {
         return result.resultingCursor
             .advance()
             .resultingCursor
@@ -93,24 +86,18 @@ internal class IdentifierOrKeywordScanner(
         )
     }
 
-    private fun classifyIdentifier(
-        lexeme: String,
-    ): TokenType {
+    private fun classifyIdentifier(lexeme: String): TokenType {
         return fixedTokenTypesByLexeme[lexeme]
             ?: TokenType.IDENTIFIER
     }
 
-    private fun isIdentifierStart(
-        character: Char,
-    ): Boolean {
+    private fun isIdentifierStart(character: Char): Boolean {
         return character.isLetter() ||
-                character == UNDERSCORE
+            character == UNDERSCORE
     }
 
-    private fun isIdentifierPart(
-        character: Char,
-    ): Boolean {
+    private fun isIdentifierPart(character: Char): Boolean {
         return character.isLetterOrDigit() ||
-                character == UNDERSCORE
+            character == UNDERSCORE
     }
 }

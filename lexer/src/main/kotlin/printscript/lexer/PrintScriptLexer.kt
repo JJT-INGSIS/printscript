@@ -16,16 +16,14 @@ internal class PrintScriptLexer(
             scanners = tokenScanners,
         )
 
-    override fun tokenize(
-        sourceReader: SourceReader,
-    ): TokenSource {
+    override fun tokenize(sourceReader: SourceReader): TokenSource {
         return ScanningTokenSource(
             characterCursor =
-                CharacterCursor.initial(
-                    sourceReader = sourceReader,
-                ),
+            CharacterCursor.initial(
+                sourceReader = sourceReader,
+            ),
             tokenScannerDispatcher =
-                tokenScannerDispatcher,
+            tokenScannerDispatcher,
         )
     }
 }

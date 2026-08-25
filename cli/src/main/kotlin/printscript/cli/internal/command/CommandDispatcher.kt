@@ -1,6 +1,5 @@
 package printscript.cli.internal.command
 
-
 internal class CommandDispatcher(
     commands: List<CliCommand>,
 ) {

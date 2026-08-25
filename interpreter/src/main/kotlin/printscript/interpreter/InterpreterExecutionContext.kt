@@ -12,18 +12,14 @@ internal class InterpreterExecutionContext(
     private val output: ProgramOutput,
 ) : ExecutionContext {
 
-    override fun evaluateExpression(
-        expression: Expression,
-    ): ExecutionResult<RuntimeValue> {
+    override fun evaluateExpression(expression: Expression): ExecutionResult<RuntimeValue> {
         return expressionEvaluator.evaluateExpression(
             expression = expression,
             environment = environment,
         )
     }
 
-    override fun writeLine(
-        line: String,
-    ) {
+    override fun writeLine(line: String) {
         output.writeLine(line)
     }
 }

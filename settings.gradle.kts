@@ -25,4 +25,5 @@ include(
     "statement-source",
     "cli",
     "integration-tests",
+    "formatter",
 )

@@ -26,24 +26,22 @@ internal data class ScanningTokenSource(
             is CharacterReadResult.EndOfInput -> {
                 createEofTokenSuccess(
                     cursor =
-                        characterResult.resultingCursor,
+                    characterResult.resultingCursor,
                 )
             }
 
             is CharacterReadResult.Success -> {
                 scanNextToken(
                     cursor =
-                        characterResult.resultingCursor,
+                    characterResult.resultingCursor,
                     character =
-                        characterResult.character,
+                    characterResult.character,
                 )
             }
         }
     }
 
-    private tailrec fun consumeLeadingWhitespace(
-        cursor: CharacterCursor,
-    ): CharacterCursor {
+    private tailrec fun consumeLeadingWhitespace(cursor: CharacterCursor): CharacterCursor {
         return when (val result = cursor.peek()) {
             is CharacterReadResult.EndOfInput -> {
                 result.resultingCursor
@@ -56,18 +54,15 @@ internal data class ScanningTokenSource(
 
                 consumeLeadingWhitespace(
                     cursor =
-                        result.resultingCursor
-                            .advance()
-                            .resultingCursor,
+                    result.resultingCursor
+                        .advance()
+                        .resultingCursor,
                 )
             }
         }
     }
 
-    private fun scanNextToken(
-        cursor: CharacterCursor,
-        character: Char,
-    ): TokenReadResult {
+    private fun scanNextToken(cursor: CharacterCursor, character: Char): TokenReadResult {
         val scanResult =
             tokenScannerDispatcher.scan(
                 cursor = cursor,
@@ -79,9 +74,9 @@ internal data class ScanningTokenSource(
                 TokenReadResult.Success(
                     token = scanResult.token,
                     remainingSource =
-                        withCursor(
-                            scanResult.resultingCursor,
-                        ),
+                    withCursor(
+                        scanResult.resultingCursor,
+                    ),
                 )
             }
 
@@ -89,17 +84,15 @@ internal data class ScanningTokenSource(
                 TokenReadResult.Failure(
                     error = scanResult.error,
                     remainingSource =
-                        withCursor(
-                            scanResult.resultingCursor,
-                        ),
+                    withCursor(
+                        scanResult.resultingCursor,
+                    ),
                 )
             }
         }
     }
 
-    private fun createEofTokenSuccess(
-        cursor: CharacterCursor,
-    ): TokenReadResult.Success {
+    private fun createEofTokenSuccess(cursor: CharacterCursor): TokenReadResult.Success {
         val endOfInputPosition = cursor.position
 
         return TokenReadResult.Success(
@@ -115,9 +108,7 @@ internal data class ScanningTokenSource(
         )
     }
 
-    private fun withCursor(
-        cursor: CharacterCursor,
-    ): ScanningTokenSource {
+    private fun withCursor(cursor: CharacterCursor): ScanningTokenSource {
         return copy(
             characterCursor = cursor,
         )

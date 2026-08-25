@@ -7,9 +7,7 @@ private const val MAXIMUM_OPTIONAL_ARGUMENT_COUNT = 2
 
 internal class CliArgumentsParser {
 
-    fun parseArguments(
-        commandLineArguments: List<String>,
-    ): ArgumentsParsingResult {
+    fun parseArguments(commandLineArguments: List<String>): ArgumentsParsingResult {
         if (commandLineArguments.size < REQUIRED_ARGUMENT_COUNT) {
             return ArgumentsParsingResult.Failure(
                 "Faltan argumentos. Se esperaba: <operación> <archivo> [versión] [configuración]",

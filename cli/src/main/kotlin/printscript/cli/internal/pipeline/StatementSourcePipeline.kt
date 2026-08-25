@@ -16,18 +16,13 @@ import printscript.statement.StatementSource
  */
 internal class StatementSourcePipeline {
 
-    fun statementsFrom(
-        sourceReader: SourceReader,
-        version: LanguageVersion,
-    ): StatementSource {
+    fun statementsFrom(sourceReader: SourceReader, version: LanguageVersion): StatementSource {
         return when (version) {
             LanguageVersion.V1_0 -> v1StatementsFrom(sourceReader)
         }
     }
 
-    private fun v1StatementsFrom(
-        sourceReader: SourceReader,
-    ): StatementSource {
+    private fun v1StatementsFrom(sourceReader: SourceReader): StatementSource {
         return PrintScriptParserFactory.createV1().parse(
             tokens = PrintScriptLexerFactory.createV1().tokenize(
                 sourceReader = sourceReader,

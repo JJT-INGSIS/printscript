@@ -58,15 +58,11 @@ internal class ProgressReportingStatementSource(
      * Solo se informa al cruzar cada decena, para que un archivo grande
      * no llene la pantalla con una línea por sentencia.
      */
-    private fun crossedReportingStep(
-        percentage: Int,
-    ): Boolean {
+    private fun crossedReportingStep(percentage: Int): Boolean {
         return percentage / REPORTING_STEP > lastReportedPercentage / REPORTING_STEP
     }
 
-    private fun percentageAt(
-        offset: Long,
-    ): Int {
+    private fun percentageAt(offset: Long): Int {
         if (totalCharacters <= 0) {
             return COMPLETE_PERCENTAGE
         }

@@ -21,9 +21,7 @@ internal class CliApplication(
     private val pipeline: StatementSourcePipeline,
     private val commandDispatcher: CommandDispatcher,
 ) {
-    fun runCommandLine(
-        commandLineArguments: List<String>,
-    ): ExitCode {
+    fun runCommandLine(commandLineArguments: List<String>): ExitCode {
         val arguments = when (
             val parsing = argumentsParser.parseArguments(commandLineArguments)
         ) {
@@ -34,7 +32,7 @@ internal class CliApplication(
         val command = commandDispatcher.commandFor(arguments.operationName)
             ?: return reportUsageError(
                 "La operación '${arguments.operationName}' no existe. " +
-                        "Disponibles: ${commandDispatcher.availableOperationNames().joinToString()}",
+                    "Disponibles: ${commandDispatcher.availableOperationNames().joinToString()}",
             )
 
         val sourceCode = when (
@@ -51,11 +49,7 @@ internal class CliApplication(
         )
     }
 
-    private fun runCommand(
-        command: CliCommand,
-        arguments: CliArguments,
-        sourceCode: String,
-    ): ExitCode {
+    private fun runCommand(command: CliCommand, arguments: CliArguments, sourceCode: String): ExitCode {
         val outcome = command.runOperation(
             arguments = arguments,
             statements = statementsOf(sourceCode, arguments),
@@ -68,10 +62,7 @@ internal class CliApplication(
         }
     }
 
-    private fun statementsOf(
-        sourceCode: String,
-        arguments: CliArguments,
-    ): StatementSource {
+    private fun statementsOf(sourceCode: String, arguments: CliArguments): StatementSource {
         val statements = pipeline.statementsFrom(
             sourceReader = SourceReaderFactory.fromString(sourceCode),
             version = arguments.version,

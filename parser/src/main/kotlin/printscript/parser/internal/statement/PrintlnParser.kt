@@ -16,9 +16,7 @@ internal class PrintlnParser(
     override val startTokenType: TokenType = DEFAULT_START_TOKEN,
 ) : StatementParser {
 
-    override fun parseStatement(
-        context: ParsingContext,
-    ): ParsingResult<Statement> {
+    override fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
         val components = readComponents(context)
             .orReturn { return it }
 
@@ -28,22 +26,14 @@ internal class PrintlnParser(
         )
     }
 
-    private fun readComponents(
-        context: ParsingContext,
-    ): ParsingResult<PrintlnComponents> {
+    private fun readComponents(context: ParsingContext): ParsingResult<PrintlnComponents> {
         val keyword = context.expect(startTokenType)
             .orReturn { return it }
 
-        val leftParenthesis = keyword.resultingContext.expect(TokenType.LEFT_PAREN)
+        val argument = readParenthesizedArgument(keyword.resultingContext)
             .orReturn { return it }
 
-        val argument = expressionParser.parseExpression(leftParenthesis.resultingContext)
-            .orReturn { return it }
-
-        val rightParenthesis = argument.resultingContext.expect(TokenType.RIGHT_PAREN)
-            .orReturn { return it }
-
-        val semicolon = rightParenthesis.resultingContext.expect(TokenType.SEMICOLON)
+        val semicolon = argument.resultingContext.expect(TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(
@@ -56,9 +46,27 @@ internal class PrintlnParser(
         )
     }
 
-    private fun buildStatement(
-        components: PrintlnComponents,
-    ): Statement {
+    /**
+     * Los paréntesis se consumen pero no se guardan: no aportan nada al
+     * árbol, solo delimitan dónde empieza y termina el argumento.
+     */
+    private fun readParenthesizedArgument(context: ParsingContext): ParsingResult<Expression> {
+        val leftParenthesis = context.expect(TokenType.LEFT_PAREN)
+            .orReturn { return it }
+
+        val argument = expressionParser.parseExpression(leftParenthesis.resultingContext)
+            .orReturn { return it }
+
+        val rightParenthesis = argument.resultingContext.expect(TokenType.RIGHT_PAREN)
+            .orReturn { return it }
+
+        return ParsingResult.Success(
+            value = argument.value,
+            resultingContext = rightParenthesis.resultingContext,
+        )
+    }
+
+    private fun buildStatement(components: PrintlnComponents): Statement {
         return PrintlnStatement(
             argument = components.argument,
             span = SourceSpan(

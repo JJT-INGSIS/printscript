@@ -7,6 +7,23 @@ siguiente elemento cuando lo necesita y entrega también la fuente que represent
 el resto de la entrada. De esta forma no se materializan listas completas de
 tokens ni de sentencias.
 
+## Requisitos
+
+- **JDK 21.** La versión de la JVM que usa Gradle está fijada en
+  `gradle/gradle-daemon-jvm.properties`, de modo que el build es reproducible
+  sin importar qué JDK tenga instalado cada integrante.
+
+## Puesta en marcha
+
+Después de clonar el repositorio, una sola vez:
+
+```bash
+./gradlew installHooks
+```
+
+Eso instala el hook de pre-commit versionado en `.githooks/`. Ver
+[Herramientas de desarrollo](#herramientas-de-desarrollo).
+
 ## Pipeline
 
 ```text
@@ -14,12 +31,16 @@ código fuente
     │
     ▼
 SourceReader → Lexer → TokenSource → Parser → StatementSource → Interpreter → ProgramOutput
+                                                             ├→ Formatter
+                                                             └→ Analyzer
 ```
 
 - `SourceReader` entrega el código en bloques.
 - `TokenSource` produce un token por solicitud.
 - `StatementSource` produce una sentencia por solicitud.
 - El interpreter consume y ejecuta las sentencias en orden.
+- El formatter y el analyzer consumen la misma `StatementSource`: son
+  consumidores alternativos del mismo pipeline, no etapas nuevas.
 
 Los resultados exitosos transportan la fuente restante en lugar de modificar la
 fuente actual. Los errores léxicos, sintácticos y semánticos se representan como
@@ -36,6 +57,7 @@ resultados de dominio y no mediante excepciones.
 | `statement-source` | AST, errores sintácticos y contrato entre parser e interpreter. |
 | `parser` | Parser recursive descent y producción lazy de sentencias. |
 | `interpreter` | Evaluación del AST, validaciones semánticas y salida del programa. |
+| `formatter` | Reescritura del código con un estilo uniforme y configurable. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
 
 Los módulos se conectan mediante interfaces pequeñas. Las implementaciones
@@ -127,9 +149,83 @@ hello world
 ```bash
 ./gradlew build
 ./gradlew test
+./gradlew check
 ```
 
-La configuración compartida de Kotlin, Java 21 y tests vive en un convention
-plugin dentro de `buildSrc`. Las pruebas de cada módulo validan sus propias
-responsabilidades y `integration-tests` verifica el flujo completo desde el
-código fuente hasta la salida o el error correspondiente.
+`check` es la orden que corre todo: compila, verifica formato, ejecuta el
+análisis estático, corre los tests y valida el umbral de cobertura.
+
+La configuración compartida de Kotlin, Java 21, tests y herramientas de calidad
+vive en convention plugins dentro de `buildSrc`:
+
+- `printscript.kotlin-library` — todos los módulos de librería.
+- `printscript.kotlin-application` — módulos con `main`.
+
+Las pruebas de cada módulo validan sus propias responsabilidades y
+`integration-tests` verifica el flujo completo desde el código fuente hasta la
+salida o el error correspondiente.
+
+## Herramientas de desarrollo
+
+| Herramienta | Responde | Configuración |
+|---|---|---|
+| **ktlint** | ¿el código se ve como acordamos? | `.editorconfig` |
+| **detekt** | ¿hay algo mal escrito? | `config/detekt/detekt.yml` |
+| **JaCoCo** | ¿qué partes no ejercitan los tests? | convention plugin |
+| **git hooks** | ¿cuándo corre todo lo anterior? | `.githooks/` |
+
+```bash
+./gradlew ktlintCheck      # verifica el formato
+./gradlew ktlintFormat     # lo corrige
+./gradlew detekt           # análisis estático
+./gradlew test             # tests y reporte de cobertura
+./gradlew check            # todo junto
+```
+
+Los reportes quedan en `<módulo>/build/reports/`.
+
+### Formato — ktlint
+
+`.editorconfig` está versionado y lo leen tanto ktlint como el IDE. Se apartan
+dos valores del default:
+
+- `ktlint_code_style = intellij_idea` en lugar de `ktlint_official`, para que el
+  formateo del IDE y el de ktlint coincidan.
+- `max_line_length = 120` en lugar de 140.
+
+### Análisis estático — detekt
+
+`config/detekt/detekt.yml` parte de la configuración por defecto
+(`buildUponDefaultConfig = true`) y ajusta las reglas que el equipo considera
+relevantes, cada una con su motivo documentado en el archivo. Las principales:
+
+- `LongMethod` con umbral 60: el estilo de un argumento nombrado por línea infla
+  el conteo de líneas sin agregar complejidad real.
+- `ReturnCount` con máximo 5: el manejo de errores como valores produce un
+  `return` por cada paso validado.
+- `MagicNumber`, `FunctionNaming`, `VariableNaming`, `ClassNaming`,
+  `NewLineAtEndOfFile` y `MatchingDeclarationName` activas.
+
+### Cobertura — JaCoCo
+
+El reporte se genera automáticamente al correr los tests y el umbral mínimo del
+80 % se verifica dentro de `check`.
+
+```bash
+open interpreter/build/reports/jacoco/test/html/index.html
+```
+
+### Hooks — pre-commit
+
+`.git/hooks/` no se versiona, así que el hook vive en `.githooks/` y se instala
+con una tarea de Gradle:
+
+```bash
+./gradlew installHooks
+```
+
+Antes de cada commit se ejecutan `ktlintCheck` y `detekt`. Los tests quedan
+fuera del hook a propósito, para que commitear no tarde minutos.
+
+El hook es una comodidad local y voluntario —`git commit --no-verify` lo
+saltea—, no una garantía para el equipo.

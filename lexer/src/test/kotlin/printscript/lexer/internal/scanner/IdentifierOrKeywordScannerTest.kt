@@ -93,10 +93,7 @@ class IdentifierOrKeywordScannerTest {
         )
     }
 
-    private fun assertScansLexemeAs(
-        lexeme: String,
-        expectedTokenType: TokenType,
-    ) {
+    private fun assertScansLexemeAs(lexeme: String, expectedTokenType: TokenType) {
         val followingCharacter = '+'
         val sourceText = "$lexeme$followingCharacter"
         val cursor = cursorFor(sourceText)

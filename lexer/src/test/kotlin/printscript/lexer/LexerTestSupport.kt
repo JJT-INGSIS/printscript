@@ -26,23 +26,17 @@ internal data class ExpectedToken(
     val lexeme: String,
 )
 
-internal fun sourceReaderFor(
-    sourceText: String,
-): SourceReader {
+internal fun sourceReaderFor(sourceText: String): SourceReader {
     return SourceReaderFactory.fromString(sourceText)
 }
 
-internal fun cursorFor(
-    sourceText: String,
-): CharacterCursor {
+internal fun cursorFor(sourceText: String): CharacterCursor {
     return CharacterCursor.initial(
         sourceReader = sourceReaderFor(sourceText),
     )
 }
 
-internal fun cursorForChunks(
-    vararg chunks: String,
-): CharacterCursor {
+internal fun cursorForChunks(vararg chunks: String): CharacterCursor {
     return CharacterCursor.initial(
         sourceReader = ChunkListSourceReader(
             chunks = chunks.toList(),
@@ -66,9 +60,7 @@ internal inline fun <reified T : LexicalError> TokenReadResult.assertLexicalErro
     return assertIs<T>(failure.error)
 }
 
-internal fun TokenSource.assertNextToken(
-    expectedToken: ExpectedToken,
-): TokenReadResult.Success {
+internal fun TokenSource.assertNextToken(expectedToken: ExpectedToken): TokenReadResult.Success {
     val result = assertIs<TokenReadResult.Success>(nextToken())
 
     assertEquals(
@@ -99,14 +91,12 @@ internal tailrec fun TokenSource.assertProducesTokenSequence(
     result.remainingSource.assertProducesTokenSequence(
         expectedTokens = expectedTokens,
         currentTokenIndex =
-            currentTokenIndex +
-                TOKEN_INDEX_INCREMENT,
+        currentTokenIndex +
+            TOKEN_INDEX_INCREMENT,
     )
 }
 
-internal fun CharacterCursor.assertNextCharacter(
-    expectedCharacter: Char,
-) {
+internal fun CharacterCursor.assertNextCharacter(expectedCharacter: Char) {
     val result = assertIs<CharacterReadResult.Success>(peek())
 
     assertEquals(
@@ -119,10 +109,7 @@ internal fun CharacterCursor.assertEndOfInput() {
     assertIs<CharacterReadResult.EndOfInput>(peek())
 }
 
-internal fun assertInitialSingleLineSpan(
-    actualSpan: SourceSpan,
-    consumedCharacterCount: Int,
-) {
+internal fun assertInitialSingleLineSpan(actualSpan: SourceSpan, consumedCharacterCount: Int) {
     val expectedSpan = SourceSpan(
         start = SourcePosition(
             line = 1,
@@ -165,8 +152,8 @@ private data class ChunkListSourceReader(
             ),
             remainingReader = copy(
                 currentChunkIndex =
-                    currentChunkIndex +
-                        CHUNK_INDEX_INCREMENT,
+                currentChunkIndex +
+                    CHUNK_INDEX_INCREMENT,
             ),
         )
     }
