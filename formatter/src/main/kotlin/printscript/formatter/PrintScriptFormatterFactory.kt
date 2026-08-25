@@ -8,7 +8,19 @@ import printscript.formatter.internal.statement.DeclarationFormatter
 import printscript.formatter.internal.statement.PrintlnFormatter
 import printscript.formatter.internal.statement.StatementFormatterDispatcher
 
+private const val SINGLE_LINE_BREAK: UInt = 1u
 public object PrintScriptFormatterFactory {
+
+    public fun defaultV1Configuration(): FormatterConfiguration {
+        return FormatterConfiguration(
+            insertSpaceBeforeColon = false,
+            insertSpaceAfterColon = true,
+            insertSpaceAroundEqualsOperator = true,
+            insertSpaceAroundBinaryOperators = true,
+            lineBreakCountBetweenStatements = SINGLE_LINE_BREAK,
+            lineBreakCountBeforeOutputStatements = SINGLE_LINE_BREAK,
+        )
+    }
 
     public fun createV1(configuration: FormatterConfiguration): Formatter {
         val expressionFormatter =
