@@ -1,0 +1,98 @@
+@startuml printscript-modulos
+title PrintScript — Vista de módulos: dependencias Gradle y acoplamiento entre etapas
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowFontSize 11
+skinparam PackageFontSize 14
+skinparam PackageBorderColor #B3B6B7
+skinparam PackageBackgroundColor #FBFCFC
+skinparam DefaultFontName Helvetica
+
+skinparam rectangle {
+  FontColor #1B2631
+  BorderColor<<contrato>> #2E86C1
+  BackgroundColor<<contrato>> #EAF2F8
+  BorderColor<<etapa>> #CA6F1E
+  BackgroundColor<<etapa>> #FDEBD0
+  BorderColor<<test>> #17A589
+  BackgroundColor<<test>> #E8F8F5
+  BorderColor<<build>> #7D3C98
+  BackgroundColor<<build>> #F4ECF7
+}
+
+package "Verificación" {
+  rectangle "**integration-tests**\n\nPrintScriptV1EndToEndTest\nEndToEndTestSupport\n(caja negra del pipeline)" as tests <<test>>
+}
+
+package "Etapas del pipeline — implementaciones (internal)" {
+  rectangle "**lexer**\n\nLexer\nPrintScriptLexerFactory.createV1()\n--\ninternal: ScanningTokenSource,\nCharacterCursor, TokenScanner*,\nTokenScannerDispatcher" as lexer <<etapa>>
+  rectangle "**parser**\n\nParser\nPrintScriptParserFactory.createV1()\n--\ninternal: ParsingStatementSource,\nParsingContext / TokenCursor,\nStatementParser*, ExpressionParser*" as parser <<etapa>>
+  rectangle "**interpreter**\n\nInterpreter, InterpretationResult\nSemanticError, ProgramOutput\nPrintScriptInterpreterFactory.createV1()\n--\ninternal: Environment, RuntimeValue,\nStatementExecutor*, BinaryOperation*" as interpreter <<etapa>>
+  rectangle "**linter**\n\nLinter, DiagnosticSource\nDiagnostic, LinterConfiguration\nPrintScriptLinterFactory.createV1()\n--\ninternal: LintingSource,\nDiagnosticSearch, LintRule*, RuleSet" as linter <<etapa>>
+}
+
+package "Contratos y modelo — API pública compartida" {
+  rectangle "**source-reader**\n\nSourceReader\nSourceChunk\nSourceChunkReadResult\nSourceReaderFactory" as sourcereader <<contrato>>
+  rectangle "**token-source**\n\nTokenSource\nToken / TokenType\nTokenReadResult\nLexicalError" as tokensource <<contrato>>
+  rectangle "**statement-source**\n\nStatementSource\nStatementReadResult\nParseError\nAST: printscript.ast.*" as statementsource <<contrato>>
+  rectangle "**common**\n\nSourcePosition\nSourceSpan" as common <<contrato>>
+}
+
+package "Build" {
+  rectangle "**buildSrc**\n\nconvention plugin\nprintscript.kotlin-library\n(Kotlin 2.4 / Java 21 / explicit API)" as buildsrc <<build>>
+}
+
+' ---- api: la dependencia se re-expone a los consumidores ----
+lexer        -[#2E86C1,bold]-> sourcereader   : api
+lexer        -[#2E86C1,bold]-> tokensource    : api
+parser       -[#2E86C1,bold]-> tokensource    : api
+parser       -[#2E86C1,bold]-> statementsource: api
+interpreter  -[#2E86C1,bold]-> statementsource: api
+interpreter  -[#2E86C1,bold]-> common         : api
+linter       -[#2E86C1,bold]-> statementsource: api
+linter       -[#2E86C1,bold]-> common         : api
+statementsource -[#2E86C1,bold]-> tokensource : api
+statementsource -[#2E86C1,bold]-> common      : api
+tokensource  -[#2E86C1,bold]-> common         : api
+
+' ---- implementation: detalle interno, no se propaga ----
+lexer   .[#7F8C8D].> common : implementation
+parser  .[#7F8C8D].> common : implementation
+
+' ---- testImplementation ----
+tests .[#17A589].> lexer       : testImplementation
+tests .[#17A589].> parser      : testImplementation
+tests .[#17A589].> interpreter : testImplementation
+
+note right of parser
+  **Las etapas no se conocen entre sí.**
+  lexer no depende de parser, ni parser de
+  interpreter o linter: se acoplan solo a través
+  de los módulos de contrato (`token-source`,
+  `statement-source`). El cableado lo hace el
+  cliente con las factories.
+end note
+
+note bottom of linter
+  `interpreter` y `linter` son consumidores
+  **intercambiables** de la misma
+  `StatementSource`: mismas dependencias,
+  ninguna relación entre ellos.
+end note
+
+note as N1
+  `source-reader` y `common` no dependen de nadie:
+  son las hojas del grafo.
+end note
+N1 .. sourcereader
+
+legend bottom
+  |= Línea |= Significado |
+  | <color:#2E86C1>——▶</color> | `api` — el tipo aparece en la firma pública y se re-expone |
+  | <color:#7F8C8D>- - ▶</color> | `implementation` — uso interno, no se propaga al consumidor |
+  | <color:#17A589>- - ▶</color> | `testImplementation` — solo en el classpath de tests |
+endlegend
+
+@enduml

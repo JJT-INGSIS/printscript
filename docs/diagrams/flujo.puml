@@ -1,0 +1,171 @@
+@startuml printscript-flujo
+title PrintScript — Flujo pull & lazy: el consumidor tira de una sentencia a la vez
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName Helvetica
+skinparam ParticipantPadding 12
+skinparam BoxPadding 12
+skinparam sequence {
+  ArrowColor #34495E
+  LifeLineBorderColor #AEB6BF
+  GroupBackgroundColor #D5DBDB
+}
+
+actor Cliente as C
+
+box "source-reader" #EAF2F8
+  participant "SourceReaderFactory" as F
+  participant "StringSourceReader" as SR
+end box
+
+box "lexer" #FDEBD0
+  participant "PrintScriptLexer" as LX
+  participant "ScanningTokenSource" as TS
+  participant "TokenScannerDispatcher" as TSD
+end box
+
+box "parser" #FDEBD0
+  participant "PrintScriptParser" as PS
+  participant "ParsingStatementSource" as SS
+  participant "StatementParserDispatcher" as SPD
+end box
+
+box "interpreter" #FDEBD0
+  participant "PrintScriptInterpreter" as IT
+  participant "StatementExecutorDispatcher" as SED
+  participant "ProgramOutput" as OUT
+end box
+
+box "linter" #FDEBD0
+  participant "LintingSource" as LS
+  participant "RuleSet" as RS
+end box
+
+== 1. Cableado — todavía no se lee ni un carácter ==
+
+C -> F ++ : fromString(sourceCode)
+F --> C -- : SourceReader
+C -> LX ++ : tokenize(sourceReader)
+LX --> C -- : TokenSource
+C -> PS ++ : parse(tokens)
+PS --> C -- : StatementSource
+
+note over C, SS
+  Las etapas quedaron **encadenadas pero frías**: cada `create`/`parse`
+  solo devuelve una fuente perezosa. El trabajo empieza cuando alguien
+  pide el primer elemento.
+end note
+
+== 2. Ejecución — la demanda viaja hacia atrás en el pipeline ==
+
+C -> IT ++ : interpret(source)
+
+loop mientras el resultado no sea terminal
+  IT -> SS ++ : nextStatement()
+
+  loop tokens que necesita esta sentencia
+    SS -> TS ++ : nextToken()
+
+    opt el cursor de caracteres se quedó sin buffer
+      TS -> SR ++ : readChunk()
+      SR --> TS -- : Success(chunk, remainingReader)
+    end
+
+    TS -> TSD ++ : scan(cursor, char)
+    note right of TSD
+      Elige el primer scanner que
+      acepta el carácter: string,
+      número, identificador/keyword,
+      símbolo.
+    end note
+    TSD --> TS -- : TokenScanResult
+
+    alt token reconocido
+      TS --> SS : Success(token, **remainingSource**)
+    else carácter inesperado
+      TS --> SS : Failure(LexicalError, remainingSource)
+    end
+    deactivate TS
+  end
+
+  SS -> SPD ++ : parseStatement(context)
+  note right of SPD
+    Despacha por el token inicial:
+    `let` → DeclarationParser,
+    `println` → PrintlnParser,
+    IDENTIFIER → AssignmentParser.
+  end note
+  SPD --> SS -- : ParsingResult<Statement>
+
+  alt sentencia parseada
+    SS --> IT : Success(statement, **remainingSource**)
+    IT -> SED ++ : dispatchToExecutor(statement, context)
+    note right of SED
+      Declaration / Assignment / Println.
+      El Environment es inmutable: cada
+      ejecución devuelve uno nuevo.
+    end note
+    opt la sentencia es println
+      SED -> OUT : writeLine(texto)
+    end
+    alt ejecución OK
+      SED --> IT : ExecutionResult.Success(newEnvironment)
+      note over IT : sigue el loop con la fuente\ny el entorno resultantes
+    else error semántico
+      SED --> IT : ExecutionResult.Failure(SemanticError)
+    end
+    deactivate SED
+  else error sintáctico  (terminal)
+    SS --> IT : Failure(ParseError)
+  else fin de entrada  (terminal)
+    SS --> IT : EndOfInput
+  end
+  deactivate SS
+end
+
+IT --> C -- : InterpretationResult\nSuccess | ParseFailure | SemanticFailure
+
+== 3. Mismo pipeline, otro consumidor: el linter ==
+
+note over C, RS
+  `Linter.lint(StatementSource)` reemplaza al interpreter sin tocar
+  las etapas anteriores: consume el mismo contrato y devuelve otra
+  fuente perezosa, la `DiagnosticSource`.
+end note
+
+C -> LS ++ : nextDiagnostic()
+
+alt quedaron diagnósticos de la sentencia anterior
+  LS --> C : Success(diagnostic, remainingSource)
+else hay que buscar la próxima sentencia que incumpla
+  loop hasta encontrar diagnósticos o resultado terminal
+    LS -> SS ++ : nextStatement()
+    SS --> LS -- : Success | Failure | EndOfInput
+    LS -> RS ++ : inspect(statement)
+    note right of RS
+      Fan-out, no dispatch: **toda** regla
+      mira **toda** sentencia y devuelve
+      lista vacía si no aplica.
+    end note
+    RS --> LS -- : List<Diagnostic>
+  end
+  alt encontró
+    LS --> C : Success(diagnostic, remainingSource)
+  else error sintáctico  (terminal)
+    LS --> C : Failure(ParseError)
+  else fin  (terminal)
+    LS --> C : EndOfInput
+  end
+end
+deactivate LS
+
+legend bottom
+  **Invariantes del pipeline**
+  · **Pull**: nadie empuja; cada etapa lee de la anterior solo cuando le piden un elemento.
+  · **Inmutable**: el éxito trae `remainingSource`/`remainingReader`; ninguna fuente se muta.
+  · **Sin excepciones**: los errores léxicos, sintácticos y semánticos son resultados de dominio.
+  · **Terminal**: tras `Failure` o `EndOfInput` el consumidor debe dejar de leer.
+endlegend
+
+@enduml

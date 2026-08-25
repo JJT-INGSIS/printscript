@@ -21,10 +21,6 @@ internal class LeftAssociativeBinaryExpressionParser(
         return parseRemainingOperands(firstOperand)
     }
 
-    /**
-     * Acumula hacia la izquierda: cada operando nuevo envuelve a lo ya
-     * parseado, que es lo que hace al operador asociativo a izquierda.
-     */
     private tailrec fun parseRemainingOperands(left: ParsingResult.Success<Expression>): ParsingResult<Expression> {
         val peeked = left.resultingContext.peek()
             .orReturn { return it }

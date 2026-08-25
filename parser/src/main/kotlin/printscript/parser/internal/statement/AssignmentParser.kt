@@ -14,7 +14,7 @@ import printscript.token.TokenType
 
 internal class AssignmentParser(
     private val expressionParser: ExpressionParser,
-    override val followingTokenType: TokenType = DEFAULT_FOLLOWING_TOKEN,
+    override val followingTokenType: TokenType,
 ) : TargetedStatementParser {
 
     override fun parseStatement(target: Identifier, context: ParsingContext): ParsingResult<Statement> {
@@ -61,8 +61,4 @@ internal class AssignmentParser(
         val expression: Expression,
         val semicolonToken: Token,
     )
-
-    private companion object {
-        val DEFAULT_FOLLOWING_TOKEN = TokenType.ASSIGN
-    }
 }

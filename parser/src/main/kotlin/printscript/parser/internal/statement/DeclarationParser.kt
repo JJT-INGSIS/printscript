@@ -16,8 +16,9 @@ import printscript.token.TokenType
 
 internal class DeclarationParser(
     private val expressionParser: ExpressionParser,
-    override val startTokenType: TokenType = DEFAULT_START_TOKEN,
-    private val declaredTypeByToken: Map<TokenType, DeclaredType> = DEFAULT_DECLARED_TYPES,
+    override val startTokenType: TokenType,
+    private val initializerTokenType: TokenType,
+    private val declaredTypeByToken: Map<TokenType, DeclaredType>,
 ) : StatementParser {
 
     private val typeTokens: Set<TokenType> = declaredTypeByToken.keys
@@ -106,7 +107,7 @@ internal class DeclarationParser(
         val peeked = context.peek()
             .orReturn { return it }
 
-        if (peeked.value.type != INITIALIZER_TOKEN) {
+        if (peeked.value.type != initializerTokenType) {
             return ParsingResult.Success(
                 value = null,
                 resultingContext = peeked.resultingContext,
@@ -117,7 +118,7 @@ internal class DeclarationParser(
     }
 
     private fun readInitializer(context: ParsingContext): ParsingResult<Expression?> {
-        val assignment = context.expect(INITIALIZER_TOKEN)
+        val assignment = context.expect(initializerTokenType)
             .orReturn { return it }
 
         return expressionParser.parseExpression(assignment.resultingContext)
@@ -150,15 +151,4 @@ internal class DeclarationParser(
         val initializer: Expression?,
         val semicolonToken: Token,
     )
-
-    private companion object {
-        val DEFAULT_START_TOKEN = TokenType.LET
-
-        val INITIALIZER_TOKEN = TokenType.ASSIGN
-
-        val DEFAULT_DECLARED_TYPES = mapOf(
-            TokenType.NUMBER_TYPE to DeclaredType.NUMBER,
-            TokenType.STRING_TYPE to DeclaredType.STRING,
-        )
-    }
 }
