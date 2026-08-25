@@ -2,39 +2,28 @@ build:
   maxIssues: 0
 
 complexity:
-  # ELEGIDA — la más violada del proyecto (7 casos). Threshold 60 en vez de
-  # 40: el estilo de un argumento nombrado por línea infla el conteo sin
-  # agregar complejidad real. Tests excluidos: su largo son datos, no lógica.
+
   LongMethod:
     active: true
     threshold: 60
     excludes: ['**/test/**']
 
-    # ELEGIDA — mismo umbral que el default (15), pero ignorando las ramas de
-    # un `when` cuyo cuerpo es una sola expresión. Un `when` que mapea un enum
-    # a texto es una tabla de correspondencias, no lógica ramificada: sumarla
-    # a la complejidad esconde los métodos que sí son difíciles de entender.
+
   CyclomaticComplexMethod:
     active: true
     threshold: 15
     ignoreSimpleWhenEntries: true
 
 style:
-  # ELEGIDA — la segunda más violada (4 casos). max 5 en vez de 2: el manejo
-  # de errores como valores produce un return por paso validado. Se ajustaron
-  # los dos métodos que lo superaban, extrayendo unidades reales de la
-  # gramática en vez de cortes arbitrarios.
+
   ReturnCount:
     active: true
     max: 5
 
-  # ELEGIDA — la tercera más violada (4 casos). Sin ajustes: se cumple
-  # siempre y ktlint la corrige sola.
+
   NewLineAtEndOfFile:
     active: true
 
-  # ELEGIDA — cero violaciones porque el proyecto ya usa constantes con
-  # nombre. Activa para que siga siendo cierto.
   MagicNumber:
     active: true
     ignoreNumbers: ['-1', '0', '1', '2']
@@ -42,12 +31,9 @@ style:
     ignoreAnnotation: true
 
 naming:
-  # ELEGIDA — un caso real, que se arregla en el código y no en la config.
   MatchingDeclarationName:
     active: true
 
-  # ELEGIDA — métodos en camelCase. Se excluyen los tests porque usan
-  # nombres entre backticks con espacios, que es la convención de Kotlin.
   FunctionNaming:
     active: true
     excludes: ['**/test/**']
