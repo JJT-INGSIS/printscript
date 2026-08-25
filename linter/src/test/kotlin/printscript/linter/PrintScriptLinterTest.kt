@@ -7,8 +7,8 @@ import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.statement.Statement
 import printscript.linter.internal.DiagnosticSearch
 import printscript.linter.internal.PrintScriptLinter
+import printscript.linter.internal.rule.CompositeRule
 import printscript.linter.internal.rule.LintRule
-import printscript.linter.internal.rule.RuleSet
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 import printscript.token.PrintScriptV1TokenType
@@ -170,7 +170,7 @@ class PrintScriptLinterTest {
 
         val linter = PrintScriptLinter(
             search = DiagnosticSearch(
-                rules = RuleSet(
+                rule = CompositeRule(
                     rules = listOf(
                         AlwaysReportingRule(
                             reportCount = EXPECTED_READS_WITHOUT_ADVANCING,

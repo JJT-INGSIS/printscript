@@ -2,10 +2,10 @@ package printscript.linter
 
 import printscript.linter.internal.DiagnosticSearch
 import printscript.linter.internal.PrintScriptLinter
+import printscript.linter.internal.rule.CompositeRule
 import printscript.linter.internal.rule.IdentifierNamingRule
 import printscript.linter.internal.rule.LintRule
 import printscript.linter.internal.rule.PrintlnArgumentRule
-import printscript.linter.internal.rule.RuleSet
 
 public object PrintScriptLinterFactory {
 
@@ -29,13 +29,13 @@ public object PrintScriptLinterFactory {
     public fun createV1(configuration: LinterConfiguration): Linter {
         return PrintScriptLinter(
             search = DiagnosticSearch(
-                rules = ruleSetOf(configuration),
+                rule = compositeOf(configuration),
             ),
         )
     }
 
-    private fun ruleSetOf(configuration: LinterConfiguration): RuleSet {
-        return RuleSet(
+    private fun compositeOf(configuration: LinterConfiguration): LintRule {
+        return CompositeRule(
             rules = configuration.rules.map { rule -> ruleFor(rule) },
         )
     }
