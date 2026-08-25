@@ -7,7 +7,7 @@ import printscript.lexer.cursorFor
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,8 +16,8 @@ import kotlin.test.assertTrue
 class SymbolScannerTest {
 
     private val configuredTokenTypesByLexeme = mapOf(
-        "+" to TokenType.PLUS,
-        ";" to TokenType.SEMICOLON,
+        "+" to PrintScriptV1TokenType.PLUS,
+        ";" to PrintScriptV1TokenType.SEMICOLON,
     )
 
     private val scanner = SymbolScanner(
@@ -82,6 +82,20 @@ class SymbolScannerTest {
                 message = "Scanner should not accept '$unconfiguredCharacter'",
             )
         }
+    }
+
+    @Test
+    fun `keeps initial symbol configuration after input map is mutated`() {
+        val mutableTokenTypesByLexeme = mutableMapOf(
+            "+" to PrintScriptV1TokenType.PLUS,
+        )
+        val scannerWithMutableConfiguration = SymbolScanner(
+            tokenTypeByLexeme = mutableTokenTypesByLexeme,
+        )
+
+        mutableTokenTypesByLexeme.clear()
+
+        assertTrue(scannerWithMutableConfiguration.canStartWith('+'))
     }
 
     @Test

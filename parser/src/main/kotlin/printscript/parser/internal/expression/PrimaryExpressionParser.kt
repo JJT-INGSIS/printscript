@@ -12,6 +12,7 @@ import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenType
 
@@ -25,16 +26,16 @@ internal class PrimaryExpressionParser(
             .orReturn { return it }
 
         return when (peeked.value.type) {
-            TokenType.NUMBER_LITERAL ->
+            PrintScriptV1TokenType.NUMBER_LITERAL ->
                 consumeAndBuild(peeked.resultingContext, ::numberLiteral)
 
-            TokenType.STRING_LITERAL ->
+            PrintScriptV1TokenType.STRING_LITERAL ->
                 consumeAndBuild(peeked.resultingContext, ::stringLiteral)
 
-            TokenType.IDENTIFIER ->
+            PrintScriptV1TokenType.IDENTIFIER ->
                 consumeAndBuild(peeked.resultingContext, ::identifier)
 
-            TokenType.LEFT_PAREN ->
+            PrintScriptV1TokenType.LEFT_PAREN ->
                 parseGrouping(peeked.resultingContext)
 
             else ->
@@ -103,13 +104,13 @@ internal class PrimaryExpressionParser(
     }
 
     private fun parseGrouping(context: ParsingContext): ParsingResult<Expression> {
-        val openParenthesis = context.expect(TokenType.LEFT_PAREN)
+        val openParenthesis = context.expect(PrintScriptV1TokenType.LEFT_PAREN)
             .orReturn { return it }
 
         val expression = parseNestedExpression(openParenthesis.resultingContext)
             .orReturn { return it }
 
-        val closeParenthesis = expression.resultingContext.expect(TokenType.RIGHT_PAREN)
+        val closeParenthesis = expression.resultingContext.expect(PrintScriptV1TokenType.RIGHT_PAREN)
             .orReturn { return it }
 
         return ParsingResult.Success(
@@ -150,11 +151,11 @@ internal class PrimaryExpressionParser(
         const val QUOTE_LENGTH = 1
         const val MINIMUM_QUOTED_LITERAL_LENGTH = QUOTE_LENGTH * 2
 
-        val PRIMARY_START_TOKENS = setOf(
-            TokenType.NUMBER_LITERAL,
-            TokenType.STRING_LITERAL,
-            TokenType.IDENTIFIER,
-            TokenType.LEFT_PAREN,
+        val PRIMARY_START_TOKENS: Set<TokenType> = setOf(
+            PrintScriptV1TokenType.NUMBER_LITERAL,
+            PrintScriptV1TokenType.STRING_LITERAL,
+            PrintScriptV1TokenType.IDENTIFIER,
+            PrintScriptV1TokenType.LEFT_PAREN,
         )
     }
 }

@@ -8,7 +8,7 @@ import printscript.lexer.cursorFor
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,10 +19,16 @@ class TokenScannerDispatcherTest {
         val dispatcher = TokenScannerDispatcher(
             scanners = listOf(
                 IdentifierOrKeywordScanner(
-                    mapOf("alias" to TokenType.LET),
+                    keywordTokenTypesByLexeme = mapOf(
+                        "alias" to PrintScriptV1TokenType.LET,
+                    ),
+                    identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
                 ),
                 IdentifierOrKeywordScanner(
-                    mapOf("alias" to TokenType.PRINTLN),
+                    keywordTokenTypesByLexeme = mapOf(
+                        "alias" to PrintScriptV1TokenType.PRINTLN,
+                    ),
+                    identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
                 ),
             ),
         )
@@ -37,7 +43,7 @@ class TokenScannerDispatcherTest {
         val token = scanResult.assertSuccessToken()
 
         assertEquals(
-            expected = TokenType.LET,
+            expected = PrintScriptV1TokenType.LET,
             actual = token.type,
         )
 
@@ -53,7 +59,10 @@ class TokenScannerDispatcherTest {
     fun `scanner configuration cannot change after dispatcher creation`() {
         val scanners = mutableListOf<TokenScanner>(
             IdentifierOrKeywordScanner(
-                mapOf("alias" to TokenType.LET),
+                keywordTokenTypesByLexeme = mapOf(
+                    "alias" to PrintScriptV1TokenType.LET,
+                ),
+                identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
             ),
         )
         val dispatcher = TokenScannerDispatcher(
@@ -68,7 +77,7 @@ class TokenScannerDispatcherTest {
         )
 
         assertEquals(
-            expected = TokenType.LET,
+            expected = PrintScriptV1TokenType.LET,
             actual = scanResult.assertSuccessToken().type,
         )
     }

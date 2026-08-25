@@ -11,7 +11,9 @@ import printscript.token.TokenType
 private const val DECIMAL_SEPARATOR = '.'
 private const val MAXIMUM_DECIMAL_SEPARATOR_COUNT = 1
 
-internal class NumberLiteralScanner : TokenScanner {
+internal class NumberLiteralScanner(
+    private val numberLiteralTokenType: TokenType,
+) : TokenScanner {
 
     override fun canStartWith(character: Char): Boolean {
         return character.isDigit()
@@ -108,7 +110,7 @@ internal class NumberLiteralScanner : TokenScanner {
     ): TokenScanResult.Success {
         return TokenScanResult.Success(
             token = Token(
-                type = TokenType.NUMBER_LITERAL,
+                type = numberLiteralTokenType,
                 lexeme = lexeme,
                 span = createSourceSpan(
                     startPosition = startPosition,

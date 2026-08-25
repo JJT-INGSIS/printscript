@@ -6,6 +6,7 @@ import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.statement.PrintlnStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -96,8 +97,8 @@ class PrintlnParserTest {
                     semicolon()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.LEFT_PAREN),
-                actualTokenType = TokenType.IDENTIFIER,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.LEFT_PAREN),
+                actualTokenType = PrintScriptV1TokenType.IDENTIFIER,
             ),
             MalformedPrintln(
                 description = "sin paréntesis de cierre",
@@ -108,8 +109,8 @@ class PrintlnParserTest {
                     semicolon()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.RIGHT_PAREN),
-                actualTokenType = TokenType.SEMICOLON,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.RIGHT_PAREN),
+                actualTokenType = PrintScriptV1TokenType.SEMICOLON,
             ),
             MalformedPrintln(
                 description = "sin punto y coma",
@@ -120,8 +121,8 @@ class PrintlnParserTest {
                     close()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.SEMICOLON),
-                actualTokenType = TokenType.EOF,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.SEMICOLON),
+                actualTokenType = PrintScriptV1TokenType.EOF,
             ),
         )
 

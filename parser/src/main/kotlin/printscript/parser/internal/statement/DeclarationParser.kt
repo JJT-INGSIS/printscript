@@ -11,6 +11,7 @@ import printscript.parser.internal.context.ParsingContext
 import printscript.parser.internal.expression.ExpressionParser
 import printscript.parser.internal.orReturn
 import printscript.statement.ParseError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenType
 
@@ -43,7 +44,7 @@ internal class DeclarationParser(
         val initializer = readOptionalInitializer(typedIdentifier.resultingContext)
             .orReturn { return it }
 
-        val semicolon = initializer.resultingContext.expect(TokenType.SEMICOLON)
+        val semicolon = initializer.resultingContext.expect(PrintScriptV1TokenType.SEMICOLON)
             .orReturn { return it }
 
         return ParsingResult.Success(
@@ -63,10 +64,10 @@ internal class DeclarationParser(
      * gramática, y los dos puntos solo separan sin aportar al árbol.
      */
     private fun readTypedIdentifier(context: ParsingContext): ParsingResult<TypedIdentifier> {
-        val identifier = context.expect(TokenType.IDENTIFIER)
+        val identifier = context.expect(PrintScriptV1TokenType.IDENTIFIER)
             .orReturn { return it }
 
-        val colon = identifier.resultingContext.expect(TokenType.COLON)
+        val colon = identifier.resultingContext.expect(PrintScriptV1TokenType.COLON)
             .orReturn { return it }
 
         val declaredType = readDeclaredType(colon.resultingContext)

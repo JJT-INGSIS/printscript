@@ -2,6 +2,7 @@ package printscript.lexer
 
 import printscript.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.token.LexicalError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,31 +25,31 @@ class PrintScriptLexerTest {
         )
 
         val expectedTokens = listOf(
-            ExpectedToken(TokenType.LET, "let"),
-            ExpectedToken(TokenType.IDENTIFIER, "age"),
-            ExpectedToken(TokenType.COLON, ":"),
-            ExpectedToken(TokenType.NUMBER_TYPE, "number"),
-            ExpectedToken(TokenType.ASSIGN, "="),
-            ExpectedToken(TokenType.NUMBER_LITERAL, "12.5"),
-            ExpectedToken(TokenType.SEMICOLON, ";"),
+            ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "age"),
+            ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+            ExpectedToken(PrintScriptV1TokenType.NUMBER_TYPE, "number"),
+            ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+            ExpectedToken(PrintScriptV1TokenType.NUMBER_LITERAL, "12.5"),
+            ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
 
-            ExpectedToken(TokenType.LET, "let"),
-            ExpectedToken(TokenType.IDENTIFIER, "name"),
-            ExpectedToken(TokenType.COLON, ":"),
-            ExpectedToken(TokenType.STRING_TYPE, "string"),
-            ExpectedToken(TokenType.ASSIGN, "="),
-            ExpectedToken(TokenType.STRING_LITERAL, "'Joe'"),
-            ExpectedToken(TokenType.SEMICOLON, ";"),
+            ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "name"),
+            ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+            ExpectedToken(PrintScriptV1TokenType.STRING_TYPE, "string"),
+            ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+            ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "'Joe'"),
+            ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
 
-            ExpectedToken(TokenType.PRINTLN, "println"),
-            ExpectedToken(TokenType.LEFT_PAREN, "("),
-            ExpectedToken(TokenType.IDENTIFIER, "name"),
-            ExpectedToken(TokenType.PLUS, "+"),
-            ExpectedToken(TokenType.STRING_LITERAL, "\" Doe\""),
-            ExpectedToken(TokenType.RIGHT_PAREN, ")"),
-            ExpectedToken(TokenType.SEMICOLON, ";"),
+            ExpectedToken(PrintScriptV1TokenType.PRINTLN, "println"),
+            ExpectedToken(PrintScriptV1TokenType.LEFT_PAREN, "("),
+            ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "name"),
+            ExpectedToken(PrintScriptV1TokenType.PLUS, "+"),
+            ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "\" Doe\""),
+            ExpectedToken(PrintScriptV1TokenType.RIGHT_PAREN, ")"),
+            ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
 
-            ExpectedToken(TokenType.EOF, ""),
+            ExpectedToken(PrintScriptV1TokenType.EOF, ""),
         )
 
         tokenSource.assertProducesTokenSequence(expectedTokens)
@@ -57,11 +58,13 @@ class PrintScriptLexerTest {
     @Test
     fun `uses injected scanner configuration without V1 defaults`() {
         val configurableLexer: Lexer = PrintScriptLexer(
+            endOfInputTokenType = CustomTokenType.END_OF_INPUT,
             tokenScanners = listOf(
                 IdentifierOrKeywordScanner(
                     keywordTokenTypesByLexeme = mapOf(
-                        "var" to TokenType.LET,
+                        "var" to CustomTokenType.KEYWORD,
                     ),
+                    identifierTokenType = CustomTokenType.IDENTIFIER,
                 ),
             ),
         )
@@ -73,15 +76,15 @@ class PrintScriptLexerTest {
         tokenSource.assertProducesTokenSequence(
             listOf(
                 ExpectedToken(
-                    tokenType = TokenType.LET,
+                    tokenType = CustomTokenType.KEYWORD,
                     lexeme = "var",
                 ),
                 ExpectedToken(
-                    tokenType = TokenType.IDENTIFIER,
+                    tokenType = CustomTokenType.IDENTIFIER,
                     lexeme = "let",
                 ),
                 ExpectedToken(
-                    tokenType = TokenType.EOF,
+                    tokenType = CustomTokenType.END_OF_INPUT,
                     lexeme = "",
                 ),
             ),
@@ -103,19 +106,19 @@ class PrintScriptLexerTest {
 
         tokenSource.assertProducesTokenSequence(
             listOf(
-                ExpectedToken(TokenType.LET, "let"),
-                ExpectedToken(TokenType.IDENTIFIER, "value"),
-                ExpectedToken(TokenType.COLON, ":"),
-                ExpectedToken(TokenType.NUMBER_TYPE, "number"),
-                ExpectedToken(TokenType.ASSIGN, "="),
-                ExpectedToken(TokenType.NUMBER_LITERAL, "1"),
-                ExpectedToken(TokenType.SEMICOLON, ";"),
-                ExpectedToken(TokenType.PRINTLN, "println"),
-                ExpectedToken(TokenType.LEFT_PAREN, "("),
-                ExpectedToken(TokenType.IDENTIFIER, "value"),
-                ExpectedToken(TokenType.RIGHT_PAREN, ")"),
-                ExpectedToken(TokenType.SEMICOLON, ";"),
-                ExpectedToken(TokenType.EOF, ""),
+                ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
+                ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+                ExpectedToken(PrintScriptV1TokenType.NUMBER_TYPE, "number"),
+                ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+                ExpectedToken(PrintScriptV1TokenType.NUMBER_LITERAL, "1"),
+                ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
+                ExpectedToken(PrintScriptV1TokenType.PRINTLN, "println"),
+                ExpectedToken(PrintScriptV1TokenType.LEFT_PAREN, "("),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
+                ExpectedToken(PrintScriptV1TokenType.RIGHT_PAREN, ")"),
+                ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
+                ExpectedToken(PrintScriptV1TokenType.EOF, ""),
             ),
         )
     }
@@ -132,11 +135,11 @@ class PrintScriptLexerTest {
         )
 
         val firstRead = tokenSource.assertNextToken(
-            ExpectedToken(TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.LET, "let"),
         )
 
         val repeatedRead = tokenSource.assertNextToken(
-            ExpectedToken(TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.LET, "let"),
         )
 
         assertEquals(
@@ -145,7 +148,7 @@ class PrintScriptLexerTest {
         )
 
         firstRead.remainingSource.assertNextToken(
-            ExpectedToken(TokenType.IDENTIFIER, "value"),
+            ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
         )
     }
 
@@ -160,23 +163,23 @@ class PrintScriptLexerTest {
         )
 
         val firstResult = firstTokenSource.assertNextToken(
-            ExpectedToken(TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.LET, "let"),
         )
 
         val secondResult = secondTokenSource.assertNextToken(
-            ExpectedToken(TokenType.PRINTLN, "println"),
+            ExpectedToken(PrintScriptV1TokenType.PRINTLN, "println"),
         )
 
         firstResult.remainingSource.assertNextToken(
             ExpectedToken(
-                TokenType.IDENTIFIER,
+                PrintScriptV1TokenType.IDENTIFIER,
                 "first",
             ),
         )
 
         secondResult.remainingSource.assertNextToken(
             ExpectedToken(
-                TokenType.IDENTIFIER,
+                PrintScriptV1TokenType.IDENTIFIER,
                 "second",
             ),
         )
@@ -199,9 +202,15 @@ class PrintScriptLexerTest {
 
         failureResult.remainingSource.assertNextToken(
             ExpectedToken(
-                tokenType = TokenType.NUMBER_LITERAL,
+                tokenType = PrintScriptV1TokenType.NUMBER_LITERAL,
                 lexeme = "5",
             ),
         )
+    }
+
+    private enum class CustomTokenType : TokenType {
+        KEYWORD,
+        IDENTIFIER,
+        END_OF_INPUT,
     }
 }

@@ -5,6 +5,7 @@ import printscript.lexer.assertInitialSingleLineSpan
 import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,12 +15,13 @@ import kotlin.test.assertTrue
 class IdentifierOrKeywordScannerTest {
 
     private val configuredKeywordTokenTypesByLexeme = mapOf(
-        "let" to TokenType.LET,
-        "println" to TokenType.PRINTLN,
+        "let" to PrintScriptV1TokenType.LET,
+        "println" to PrintScriptV1TokenType.PRINTLN,
     )
 
     private val scanner = IdentifierOrKeywordScanner(
-        configuredKeywordTokenTypesByLexeme,
+        keywordTokenTypesByLexeme = configuredKeywordTokenTypesByLexeme,
+        identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
     )
 
     @Test
@@ -78,7 +80,7 @@ class IdentifierOrKeywordScannerTest {
         for (identifierLexeme in identifierLexemes) {
             assertScansLexemeAs(
                 lexeme = identifierLexeme,
-                expectedTokenType = TokenType.IDENTIFIER,
+                expectedTokenType = PrintScriptV1TokenType.IDENTIFIER,
             )
         }
     }
@@ -87,7 +89,7 @@ class IdentifierOrKeywordScannerTest {
     fun `keyword prefix remains part of longer identifier`() {
         assertScansLexemeAs(
             lexeme = "letter",
-            expectedTokenType = TokenType.IDENTIFIER,
+            expectedTokenType = PrintScriptV1TokenType.IDENTIFIER,
         )
     }
 
@@ -104,7 +106,7 @@ class IdentifierOrKeywordScannerTest {
         val scannedToken = scanResult.assertSuccessToken()
 
         assertEquals(
-            expected = TokenType.IDENTIFIER,
+            expected = PrintScriptV1TokenType.IDENTIFIER,
             actual = scannedToken.type,
         )
         assertEquals(
@@ -121,18 +123,19 @@ class IdentifierOrKeywordScannerTest {
     @Test
     fun `keeps initial keyword configuration after input map is mutated`() {
         val mutableKeywordTokenTypesByLexeme = mutableMapOf(
-            "reserved" to TokenType.LET,
+            "reserved" to PrintScriptV1TokenType.LET,
         )
         val scannerWithMutableConfiguration =
             IdentifierOrKeywordScanner(
-                mutableKeywordTokenTypesByLexeme,
+                keywordTokenTypesByLexeme = mutableKeywordTokenTypesByLexeme,
+                identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
             )
 
         mutableKeywordTokenTypesByLexeme.clear()
 
         assertScansLexemeAs(
             lexeme = "reserved",
-            expectedTokenType = TokenType.LET,
+            expectedTokenType = PrintScriptV1TokenType.LET,
             scanner = scannerWithMutableConfiguration,
         )
     }

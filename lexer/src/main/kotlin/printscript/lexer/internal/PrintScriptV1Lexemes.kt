@@ -1,5 +1,6 @@
 package printscript.lexer.internal
 
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 
 internal val printScriptV1StringQuoteDelimiters: Set<Char> =
@@ -10,21 +11,21 @@ internal val printScriptV1StringQuoteDelimiters: Set<Char> =
 
 internal val printScriptV1KeywordTokenTypesByLexeme:
     Map<String, TokenType> = mapOf(
-        "let" to TokenType.LET,
-        "number" to TokenType.NUMBER_TYPE,
-        "string" to TokenType.STRING_TYPE,
-        "println" to TokenType.PRINTLN,
+        "let" to PrintScriptV1TokenType.LET,
+        "number" to PrintScriptV1TokenType.NUMBER_TYPE,
+        "string" to PrintScriptV1TokenType.STRING_TYPE,
+        "println" to PrintScriptV1TokenType.PRINTLN,
     )
 
 internal val printScriptV1SymbolTokenTypesByLexeme:
     Map<String, TokenType> = mapOf(
-        "+" to TokenType.PLUS,
-        "-" to TokenType.MINUS,
-        "*" to TokenType.STAR,
-        "/" to TokenType.SLASH,
-        "=" to TokenType.ASSIGN,
-        ":" to TokenType.COLON,
-        ";" to TokenType.SEMICOLON,
-        "(" to TokenType.LEFT_PAREN,
-        ")" to TokenType.RIGHT_PAREN,
+        "+" to PrintScriptV1TokenType.PLUS,
+        "-" to PrintScriptV1TokenType.MINUS,
+        "*" to PrintScriptV1TokenType.STAR,
+        "/" to PrintScriptV1TokenType.SLASH,
+        "=" to PrintScriptV1TokenType.ASSIGN,
+        ":" to PrintScriptV1TokenType.COLON,
+        ";" to PrintScriptV1TokenType.SEMICOLON,
+        "(" to PrintScriptV1TokenType.LEFT_PAREN,
+        ")" to PrintScriptV1TokenType.RIGHT_PAREN,
     )

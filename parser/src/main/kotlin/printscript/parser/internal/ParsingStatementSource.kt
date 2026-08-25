@@ -8,6 +8,7 @@ import printscript.token.TokenType
 
 internal data class ParsingStatementSource(
     private val context: ParsingContext,
+    private val endOfInputTokenType: TokenType,
 ) : StatementSource {
 
     override fun nextStatement(): StatementReadResult {
@@ -21,7 +22,7 @@ internal data class ParsingStatementSource(
     }
 
     private fun readFromToken(lookahead: ParsingResult.Success<Token>): StatementReadResult {
-        return if (lookahead.value.type == TokenType.EOF) {
+        return if (lookahead.value.type == endOfInputTokenType) {
             StatementReadResult.EndOfInput
         } else {
             parseNextStatement(lookahead.resultingContext)

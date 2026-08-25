@@ -6,7 +6,7 @@ import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
 import printscript.token.LexicalError
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -14,7 +14,9 @@ import kotlin.test.assertTrue
 
 class NumberLiteralScannerTest {
 
-    private val scanner = NumberLiteralScanner()
+    private val scanner = NumberLiteralScanner(
+        numberLiteralTokenType = PrintScriptV1TokenType.NUMBER_LITERAL,
+    )
 
     @Test
     fun `accepts digits as starting characters`() {
@@ -91,7 +93,7 @@ class NumberLiteralScannerTest {
         val scannedToken = scanResult.assertSuccessToken()
 
         assertEquals(
-            expected = TokenType.NUMBER_LITERAL,
+            expected = PrintScriptV1TokenType.NUMBER_LITERAL,
             actual = scannedToken.type,
         )
 

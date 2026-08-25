@@ -1,5 +1,6 @@
 package printscript.source
 
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
@@ -98,16 +99,23 @@ class SourceReaderFactoryTest {
     }
 
     @Test
-    fun `fromPath reports a file that cannot be read`() {
+    fun `fromPath reports an unreadable file when the platform can deny read access`() {
         val file = scriptFile("let a: number = 5;")
-        file.toFile().setReadable(false)
+        val permissionChangeSucceeded = file.toFile().setReadable(false)
 
-        assertEquals(
-            expected = SourceAccessError.NotReadable(file),
-            actual = errorOf(SourceReaderFactory.fromPath(file)),
-        )
+        try {
+            assumeTrue(
+                permissionChangeSucceeded && !Files.isReadable(file),
+                "The platform did not make the temporary file unreadable",
+            )
 
-        file.toFile().setReadable(true)
+            assertEquals(
+                expected = SourceAccessError.NotReadable(file),
+                actual = errorOf(SourceReaderFactory.fromPath(file)),
+            )
+        } finally {
+            file.toFile().setReadable(true)
+        }
     }
 
     @Test

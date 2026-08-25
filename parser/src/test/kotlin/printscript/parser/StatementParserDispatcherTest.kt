@@ -3,7 +3,7 @@ package printscript.parser
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.VariableDeclarationStatement
-import printscript.token.TokenType
+import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertIs
 
@@ -68,11 +68,11 @@ class StatementParserDispatcherTest {
             },
         ).assertUnexpectedToken(
             expectedTokenTypes = setOf(
-                TokenType.LET,
-                TokenType.IDENTIFIER,
-                TokenType.PRINTLN,
+                PrintScriptV1TokenType.LET,
+                PrintScriptV1TokenType.IDENTIFIER,
+                PrintScriptV1TokenType.PRINTLN,
             ),
-            actualTokenType = TokenType.NUMBER_LITERAL,
+            actualTokenType = PrintScriptV1TokenType.NUMBER_LITERAL,
         )
     }
 
@@ -89,8 +89,8 @@ class StatementParserDispatcherTest {
                 eof()
             },
         ).assertUnexpectedToken(
-            expectedTokenTypes = setOf(TokenType.ASSIGN),
-            actualTokenType = TokenType.PLUS,
+            expectedTokenTypes = setOf(PrintScriptV1TokenType.ASSIGN),
+            actualTokenType = PrintScriptV1TokenType.PLUS,
         )
     }
 }

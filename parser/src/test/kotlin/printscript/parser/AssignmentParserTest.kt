@@ -4,6 +4,7 @@ import printscript.ast.expression.NumberLiteralExpression
 import printscript.ast.statement.AssignmentStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -75,8 +76,8 @@ class AssignmentParserTest {
                     semicolon()
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.ASSIGN),
-                actualTokenType = TokenType.PLUS,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.ASSIGN),
+                actualTokenType = PrintScriptV1TokenType.PLUS,
             ),
             MalformedAssignment(
                 description = "sin expresión",
@@ -87,12 +88,12 @@ class AssignmentParserTest {
                     eof()
                 },
                 expectedTokenTypes = setOf(
-                    TokenType.NUMBER_LITERAL,
-                    TokenType.STRING_LITERAL,
-                    TokenType.IDENTIFIER,
-                    TokenType.LEFT_PAREN,
+                    PrintScriptV1TokenType.NUMBER_LITERAL,
+                    PrintScriptV1TokenType.STRING_LITERAL,
+                    PrintScriptV1TokenType.IDENTIFIER,
+                    PrintScriptV1TokenType.LEFT_PAREN,
                 ),
-                actualTokenType = TokenType.SEMICOLON,
+                actualTokenType = PrintScriptV1TokenType.SEMICOLON,
             ),
             MalformedAssignment(
                 description = "sin punto y coma",
@@ -102,8 +103,8 @@ class AssignmentParserTest {
                     number("5")
                     eof()
                 },
-                expectedTokenTypes = setOf(TokenType.SEMICOLON),
-                actualTokenType = TokenType.EOF,
+                expectedTokenTypes = setOf(PrintScriptV1TokenType.SEMICOLON),
+                actualTokenType = PrintScriptV1TokenType.EOF,
             ),
         )
 

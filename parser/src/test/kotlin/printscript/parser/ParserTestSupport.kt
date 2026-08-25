@@ -9,6 +9,7 @@ import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import printscript.token.LexicalError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource
@@ -66,39 +67,39 @@ internal class TokenListBuilder {
         return this
     }
 
-    fun let() = token(TokenType.LET, "let")
+    fun let() = token(PrintScriptV1TokenType.LET, "let")
 
-    fun id(name: String) = token(TokenType.IDENTIFIER, name)
+    fun id(name: String) = token(PrintScriptV1TokenType.IDENTIFIER, name)
 
-    fun numberType() = token(TokenType.NUMBER_TYPE, "number")
+    fun numberType() = token(PrintScriptV1TokenType.NUMBER_TYPE, "number")
 
-    fun stringType() = token(TokenType.STRING_TYPE, "string")
+    fun stringType() = token(PrintScriptV1TokenType.STRING_TYPE, "string")
 
-    fun println() = token(TokenType.PRINTLN, "println")
+    fun println() = token(PrintScriptV1TokenType.PRINTLN, "println")
 
-    fun number(value: String) = token(TokenType.NUMBER_LITERAL, value)
+    fun number(value: String) = token(PrintScriptV1TokenType.NUMBER_LITERAL, value)
 
-    fun string(literal: String) = token(TokenType.STRING_LITERAL, literal)
+    fun string(literal: String) = token(PrintScriptV1TokenType.STRING_LITERAL, literal)
 
-    fun assign() = token(TokenType.ASSIGN, "=")
+    fun assign() = token(PrintScriptV1TokenType.ASSIGN, "=")
 
-    fun colon() = token(TokenType.COLON, ":")
+    fun colon() = token(PrintScriptV1TokenType.COLON, ":")
 
-    fun semicolon() = token(TokenType.SEMICOLON, ";")
+    fun semicolon() = token(PrintScriptV1TokenType.SEMICOLON, ";")
 
-    fun plus() = token(TokenType.PLUS, "+")
+    fun plus() = token(PrintScriptV1TokenType.PLUS, "+")
 
-    fun minus() = token(TokenType.MINUS, "-")
+    fun minus() = token(PrintScriptV1TokenType.MINUS, "-")
 
-    fun star() = token(TokenType.STAR, "*")
+    fun star() = token(PrintScriptV1TokenType.STAR, "*")
 
-    fun slash() = token(TokenType.SLASH, "/")
+    fun slash() = token(PrintScriptV1TokenType.SLASH, "/")
 
-    fun open() = token(TokenType.LEFT_PAREN, "(")
+    fun open() = token(PrintScriptV1TokenType.LEFT_PAREN, "(")
 
-    fun close() = token(TokenType.RIGHT_PAREN, ")")
+    fun close() = token(PrintScriptV1TokenType.RIGHT_PAREN, ")")
 
-    fun eof() = token(TokenType.EOF, "")
+    fun eof() = token(PrintScriptV1TokenType.EOF, "")
 
     fun build(): List<TokenReadFixture> {
         return results.toList()
@@ -175,7 +176,7 @@ internal class FakeTokenSource(
 
         return TokenReadResult.Success(
             token = Token(
-                type = TokenType.EOF,
+                type = PrintScriptV1TokenType.EOF,
                 lexeme = "",
                 span = SourceSpan(
                     start = position,

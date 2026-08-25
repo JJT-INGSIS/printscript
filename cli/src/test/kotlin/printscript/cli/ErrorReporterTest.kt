@@ -10,6 +10,7 @@ import printscript.model.source.SourceSpan
 import printscript.source.SourceAccessError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
+import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenType
 import java.nio.file.Path
@@ -78,8 +79,8 @@ class ErrorReporterTest {
     fun `describes an unexpected token naming every expected one`() {
         val message = reporter.describe(
             ParseError.UnexpectedToken(
-                expected = TokenType.entries.toSet(),
-                actual = tokenOf(TokenType.LET, "let"),
+                expected = PrintScriptV1TokenType.entries.toSet(),
+                actual = tokenOf(PrintScriptV1TokenType.LET, "let"),
             ),
         )
 
@@ -91,10 +92,22 @@ class ErrorReporterTest {
     @Test
     fun `describes an invalid literal`() {
         val message = reporter.describe(
-            ParseError.InvalidLiteral(tokenOf(TokenType.NUMBER_LITERAL, "1..2")),
+            ParseError.InvalidLiteral(tokenOf(PrintScriptV1TokenType.NUMBER_LITERAL, "1..2")),
         )
 
         assertContains(message, "'1..2' no es válido")
+    }
+
+    @Test
+    fun `describes extension token types using their representation`() {
+        val message = reporter.describe(
+            ParseError.UnexpectedToken(
+                expected = setOf(ExtensionTokenType),
+                actual = tokenOf(PrintScriptV1TokenType.EOF, ""),
+            ),
+        )
+
+        assertContains(message, ExtensionTokenType.toString())
     }
 
     // --- errores semánticos ------------------------------------------
@@ -181,6 +194,13 @@ class ErrorReporterTest {
             )
 
             assertContains(message, "no está soportado")
+        }
+    }
+
+    private object ExtensionTokenType : TokenType {
+
+        override fun toString(): String {
+            return "EXTENSION_TOKEN"
         }
     }
 }
