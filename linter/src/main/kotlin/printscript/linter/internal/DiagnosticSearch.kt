@@ -1,6 +1,6 @@
 package printscript.linter.internal
 
-import printscript.linter.internal.rule.RuleSet
+import printscript.linter.internal.rule.LintRule
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
@@ -9,7 +9,7 @@ import printscript.statement.StatementSource
  * solo hasta encontrarla: un programa largo no se lee entero.
  */
 internal class DiagnosticSearch(
-    private val rules: RuleSet,
+    private val rule: LintRule,
 ) {
 
     /**
@@ -53,7 +53,7 @@ internal class DiagnosticSearch(
      * Null significa "seguí buscando": esta sentencia no incumple nada.
      */
     private fun foundIn(readResult: StatementReadResult.Success): DiagnosticSearchResult? {
-        return rules.inspect(readResult.statement)
+        return rule.inspect(readResult.statement)
             .takeIf { diagnostics -> diagnostics.isNotEmpty() }
             ?.let { diagnostics ->
                 DiagnosticSearchResult.Found(
