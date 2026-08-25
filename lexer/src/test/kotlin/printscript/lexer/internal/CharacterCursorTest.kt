@@ -5,6 +5,8 @@ import printscript.lexer.assertNextCharacter
 import printscript.lexer.cursorFor
 import printscript.lexer.cursorForChunks
 import printscript.model.source.SourcePosition
+import printscript.source.SourceChunkReadResult
+import printscript.source.SourceReader
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -148,6 +150,26 @@ class CharacterCursorTest {
     }
 
     @Test
+    fun `end of input does not read source again`() {
+        val sourceReader = CountingEndOfInputSourceReader()
+        val initialCursor = CharacterCursor.initial(sourceReader)
+
+        val firstEndOfInput =
+            assertIs<CharacterReadResult.EndOfInput>(
+                initialCursor.peek(),
+            )
+
+        assertIs<CharacterReadResult.EndOfInput>(
+            firstEndOfInput.resultingCursor.peek(),
+        )
+
+        assertEquals(
+            expected = 1,
+            actual = sourceReader.readCount,
+        )
+    }
+
+    @Test
     fun `line feed moves cursor to beginning of next line`() {
         val initialCursor = cursorFor("a\nb")
 
@@ -220,6 +242,33 @@ class CharacterCursorTest {
             expectedColumn = 2,
             expectedOffset = 3,
         )
+    }
+
+    @Test
+    fun `CRLF split across chunks counts as one logical line break`() {
+        val initialCursor = cursorForChunks(
+            "\r",
+            "\n",
+            "x",
+        )
+
+        val afterCarriageReturn = advance(
+            cursor = initialCursor,
+            expectedCharacter = '\r',
+        )
+        val afterLineFeed = advance(
+            cursor = afterCarriageReturn,
+            expectedCharacter = '\n',
+        )
+
+        assertCursorPosition(
+            cursor = afterLineFeed,
+            expectedLine = 2,
+            expectedColumn = 1,
+            expectedOffset = 2,
+        )
+
+        afterLineFeed.assertNextCharacter('x')
     }
 
     @Test
@@ -301,5 +350,17 @@ class CharacterCursorTest {
             ),
             actual = cursor.position,
         )
+    }
+
+    private class CountingEndOfInputSourceReader : SourceReader {
+
+        var readCount: Int = 0
+            private set
+
+        override fun readChunk(): SourceChunkReadResult {
+            readCount += 1
+
+            return SourceChunkReadResult.EndOfInput
+        }
     }
 }

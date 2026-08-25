@@ -59,7 +59,7 @@ class PrintScriptLexerTest {
         val configurableLexer: Lexer = PrintScriptLexer(
             tokenScanners = listOf(
                 IdentifierOrKeywordScanner(
-                    fixedTokenTypesByLexeme = mapOf(
+                    keywordTokenTypesByLexeme = mapOf(
                         "var" to TokenType.LET,
                     ),
                 ),
@@ -84,6 +84,38 @@ class PrintScriptLexerTest {
                     tokenType = TokenType.EOF,
                     lexeme = "",
                 ),
+            ),
+        )
+    }
+
+    @Test
+    fun `tokenizes source independently of source chunk boundaries`() {
+        val tokenSource = lexer.tokenize(
+            sourceReaderForChunks(
+                "le",
+                "t value",
+                ": num",
+                "ber = 1",
+                ";\nprint",
+                "ln(value);",
+            ),
+        )
+
+        tokenSource.assertProducesTokenSequence(
+            listOf(
+                ExpectedToken(TokenType.LET, "let"),
+                ExpectedToken(TokenType.IDENTIFIER, "value"),
+                ExpectedToken(TokenType.COLON, ":"),
+                ExpectedToken(TokenType.NUMBER_TYPE, "number"),
+                ExpectedToken(TokenType.ASSIGN, "="),
+                ExpectedToken(TokenType.NUMBER_LITERAL, "1"),
+                ExpectedToken(TokenType.SEMICOLON, ";"),
+                ExpectedToken(TokenType.PRINTLN, "println"),
+                ExpectedToken(TokenType.LEFT_PAREN, "("),
+                ExpectedToken(TokenType.IDENTIFIER, "value"),
+                ExpectedToken(TokenType.RIGHT_PAREN, ")"),
+                ExpectedToken(TokenType.SEMICOLON, ";"),
+                ExpectedToken(TokenType.EOF, ""),
             ),
         )
     }

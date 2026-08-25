@@ -8,9 +8,7 @@ internal class PrintScriptLinter(
     private val search: DiagnosticSearch,
 ) : Linter {
 
-    override fun lint(
-        source: StatementSource,
-    ): DiagnosticSource {
+    override fun lint(source: StatementSource): DiagnosticSource {
         return LintingSource.initial(
             statements = source,
             search = search,

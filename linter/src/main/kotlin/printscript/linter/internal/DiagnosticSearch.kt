@@ -16,24 +16,18 @@ internal class DiagnosticSearch(
      * Total: toda lectura terminal —fin de entrada o error— da un
      * resultado, así que la búsqueda siempre encuentra uno.
      */
-    fun findNext(
-        statements: StatementSource,
-    ): DiagnosticSearchResult {
+    fun findNext(statements: StatementSource): DiagnosticSearchResult {
         return statementReads(statements)
             .firstNotNullOf { readResult -> outcomeOf(readResult) }
     }
 
-    private fun statementReads(
-        statements: StatementSource,
-    ): Sequence<StatementReadResult> {
+    private fun statementReads(statements: StatementSource): Sequence<StatementReadResult> {
         return generateSequence(statements.nextStatement()) { previous ->
             continuationOf(previous)
         }
     }
 
-    private fun continuationOf(
-        previous: StatementReadResult,
-    ): StatementReadResult? {
+    private fun continuationOf(previous: StatementReadResult): StatementReadResult? {
         return when (previous) {
             is StatementReadResult.Success -> previous.remainingSource.nextStatement()
 
@@ -43,9 +37,7 @@ internal class DiagnosticSearch(
         }
     }
 
-    private fun outcomeOf(
-        readResult: StatementReadResult,
-    ): DiagnosticSearchResult? {
+    private fun outcomeOf(readResult: StatementReadResult): DiagnosticSearchResult? {
         return when (readResult) {
             StatementReadResult.EndOfInput ->
                 DiagnosticSearchResult.Exhausted
@@ -60,9 +52,7 @@ internal class DiagnosticSearch(
     /**
      * Null significa "seguí buscando": esta sentencia no incumple nada.
      */
-    private fun foundIn(
-        readResult: StatementReadResult.Success,
-    ): DiagnosticSearchResult? {
+    private fun foundIn(readResult: StatementReadResult.Success): DiagnosticSearchResult? {
         return rules.inspect(readResult.statement)
             .takeIf { diagnostics -> diagnostics.isNotEmpty() }
             ?.let { diagnostics ->

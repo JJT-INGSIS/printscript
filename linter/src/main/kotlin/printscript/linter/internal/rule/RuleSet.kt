@@ -13,9 +13,7 @@ internal class RuleSet(
 
     private val rules: List<LintRule> = rules.toList()
 
-    fun inspect(
-        statement: Statement,
-    ): List<Diagnostic> {
+    fun inspect(statement: Statement): List<Diagnostic> {
         return rules.flatMap { rule -> rule.inspect(statement) }
     }
 }

@@ -23,9 +23,7 @@ internal data class LintingSource(
             ?: deliverNextFound()
     }
 
-    private fun deliverPending(
-        diagnostic: Diagnostic,
-    ): DiagnosticReadResult {
+    private fun deliverPending(diagnostic: Diagnostic): DiagnosticReadResult {
         return deliver(
             diagnostic = diagnostic,
             remainingStatements = statements,
@@ -45,9 +43,7 @@ internal data class LintingSource(
         }
     }
 
-    private fun deliverFirstOf(
-        result: DiagnosticSearchResult.Found,
-    ): DiagnosticReadResult {
+    private fun deliverFirstOf(result: DiagnosticSearchResult.Found): DiagnosticReadResult {
         return deliver(
             diagnostic = result.diagnostics.first(),
             remainingStatements = result.remainingStatements,
@@ -71,10 +67,7 @@ internal data class LintingSource(
 
     companion object {
 
-        fun initial(
-            statements: StatementSource,
-            search: DiagnosticSearch,
-        ): LintingSource {
+        fun initial(statements: StatementSource, search: DiagnosticSearch): LintingSource {
             return LintingSource(
                 statements = statements,
                 search = search,

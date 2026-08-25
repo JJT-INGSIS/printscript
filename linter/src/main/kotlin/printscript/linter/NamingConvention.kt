@@ -7,9 +7,7 @@ public enum class NamingConvention(
     SNAKE_CASE(Regex("[a-z]+(?:_[a-z0-9]+)*")),
     ;
 
-    public fun matches(
-        name: String,
-    ): Boolean {
+    public fun matches(name: String): Boolean {
         return pattern.matches(name)
     }
 }

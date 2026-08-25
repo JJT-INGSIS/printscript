@@ -30,6 +30,12 @@ internal fun sourceReaderFor(sourceText: String): SourceReader {
     return SourceReaderFactory.fromString(sourceText)
 }
 
+internal fun sourceReaderForChunks(vararg chunks: String): SourceReader {
+    return ChunkListSourceReader(
+        chunks = chunks.toList(),
+    )
+}
+
 internal fun cursorFor(sourceText: String): CharacterCursor {
     return CharacterCursor.initial(
         sourceReader = sourceReaderFor(sourceText),
@@ -38,9 +44,7 @@ internal fun cursorFor(sourceText: String): CharacterCursor {
 
 internal fun cursorForChunks(vararg chunks: String): CharacterCursor {
     return CharacterCursor.initial(
-        sourceReader = ChunkListSourceReader(
-            chunks = chunks.toList(),
-        ),
+        sourceReader = sourceReaderForChunks(*chunks),
     )
 }
 

@@ -12,45 +12,37 @@ internal data class SourceLocation(
 
     fun after(character: Char): SourceLocation {
         return when (character) {
-            CARRIAGE_RETURN -> {
-                nextLocation(
-                    position = position.nextLine(),
-                    previousCharacterWasCarriageReturn = true,
-                )
-            }
-
-            LINE_FEED -> {
-                afterLineFeed()
-            }
-
-            else -> {
-                nextLocation(
-                    position = position.nextColumn(),
-                    previousCharacterWasCarriageReturn = false,
-                )
-            }
+            CARRIAGE_RETURN -> afterCarriageReturn()
+            LINE_FEED -> afterLineFeed()
+            else -> afterNonLineBreakCharacter()
         }
     }
 
-    private fun afterLineFeed(): SourceLocation {
-        if (previousCharacterWasCarriageReturn) {
-            return nextLocation(
-                position = position.nextOffset(),
-                previousCharacterWasCarriageReturn = false,
-            )
-        }
-
-        return nextLocation(
+    private fun afterCarriageReturn(): SourceLocation {
+        return copy(
             position = position.nextLine(),
+            previousCharacterWasCarriageReturn = true,
+        )
+    }
+
+    private fun afterLineFeed(): SourceLocation {
+        val positionAfterLineFeed =
+            if (previousCharacterWasCarriageReturn) {
+                position.nextOffset()
+            } else {
+                position.nextLine()
+            }
+
+        return copy(
+            position = positionAfterLineFeed,
             previousCharacterWasCarriageReturn = false,
         )
     }
 
-    private fun nextLocation(position: SourcePosition, previousCharacterWasCarriageReturn: Boolean): SourceLocation {
-        return SourceLocation(
-            position = position,
-            previousCharacterWasCarriageReturn =
-            previousCharacterWasCarriageReturn,
+    private fun afterNonLineBreakCharacter(): SourceLocation {
+        return copy(
+            position = position.nextColumn(),
+            previousCharacterWasCarriageReturn = false,
         )
     }
 

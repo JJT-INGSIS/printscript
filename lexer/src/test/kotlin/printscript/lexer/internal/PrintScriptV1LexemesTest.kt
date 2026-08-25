@@ -7,6 +7,19 @@ import kotlin.test.assertEquals
 class PrintScriptV1LexemesTest {
 
     @Test
+    fun `contains all PrintScript V1 string quote delimiters`() {
+        val expectedStringQuoteDelimiters = setOf(
+            '\'',
+            '"',
+        )
+
+        assertEquals(
+            expected = expectedStringQuoteDelimiters,
+            actual = printScriptV1StringQuoteDelimiters,
+        )
+    }
+
+    @Test
     fun `contains all PrintScript V1 keyword lexemes`() {
         val expectedKeywordTokenTypesByLexeme = mapOf(
             "let" to TokenType.LET,

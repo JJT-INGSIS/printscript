@@ -39,27 +39,21 @@ internal val anySpan: SourceSpan = SourceSpan(
 // Construcción del AST
 // --------------------------------------------------------------------
 
-internal fun name(
-    value: String,
-): Identifier {
+internal fun name(value: String): Identifier {
     return Identifier(
         value = value,
         span = anySpan,
     )
 }
 
-internal fun number(
-    value: String,
-): Expression {
+internal fun number(value: String): Expression {
     return NumberLiteralExpression(
         value = BigDecimal(value),
         span = anySpan,
     )
 }
 
-internal fun text(
-    value: String,
-): Expression {
+internal fun text(value: String): Expression {
     return StringLiteralExpression(
         value = value,
         quoteStyle = StringQuoteStyle.DOUBLE,
@@ -67,18 +61,13 @@ internal fun text(
     )
 }
 
-internal fun variable(
-    value: String,
-): Expression {
+internal fun variable(value: String): Expression {
     return IdentifierExpression(
         identifier = name(value),
     )
 }
 
-internal fun sum(
-    left: Expression,
-    right: Expression,
-): Expression {
+internal fun sum(left: Expression, right: Expression): Expression {
     return BinaryExpression(
         left = left,
         operator = BinaryOperator.ADD,
@@ -87,9 +76,7 @@ internal fun sum(
     )
 }
 
-internal fun negated(
-    operand: Expression,
-): Expression {
+internal fun negated(operand: Expression): Expression {
     return UnaryExpression(
         operator = UnaryOperator.MINUS,
         operatorSpan = anySpan,
@@ -97,20 +84,14 @@ internal fun negated(
     )
 }
 
-internal fun grouped(
-    expression: Expression,
-): Expression {
+internal fun grouped(expression: Expression): Expression {
     return GroupingExpression(
         expression = expression,
         span = anySpan,
     )
 }
 
-internal fun declare(
-    variableName: String,
-    type: DeclaredType,
-    initializer: Expression?,
-): Statement {
+internal fun declare(variableName: String, type: DeclaredType, initializer: Expression?): Statement {
     return VariableDeclarationStatement(
         identifier = name(variableName),
         declaredType = type,
@@ -119,10 +100,7 @@ internal fun declare(
     )
 }
 
-internal fun assign(
-    variableName: String,
-    expression: Expression,
-): Statement {
+internal fun assign(variableName: String, expression: Expression): Statement {
     return AssignmentStatement(
         target = name(variableName),
         expression = expression,
@@ -130,9 +108,7 @@ internal fun assign(
     )
 }
 
-internal fun printOf(
-    argument: Expression,
-): Statement {
+internal fun printOf(argument: Expression): Statement {
     return PrintlnStatement(
         argument = argument,
         span = anySpan,
@@ -233,9 +209,7 @@ internal fun printlnArgumentRule(): RuleConfiguration {
     )
 }
 
-internal fun linterWith(
-    vararg rules: RuleConfiguration,
-): Linter {
+internal fun linterWith(vararg rules: RuleConfiguration): Linter {
     return PrintScriptLinterFactory.createV1(
         configuration = LinterConfiguration(
             rules = rules.toList(),
@@ -252,9 +226,7 @@ internal fun DiagnosticSource.readAll(): List<Diagnostic> {
         .toList()
 }
 
-private fun continuationOf(
-    result: DiagnosticReadResult,
-): DiagnosticReadResult? {
+private fun continuationOf(result: DiagnosticReadResult): DiagnosticReadResult? {
     return when (result) {
         is DiagnosticReadResult.Success -> result.remainingSource.nextDiagnostic()
 
@@ -264,10 +236,7 @@ private fun continuationOf(
     }
 }
 
-internal fun diagnosticsOf(
-    linter: Linter,
-    vararg statements: Statement,
-): List<Diagnostic> {
+internal fun diagnosticsOf(linter: Linter, vararg statements: Statement): List<Diagnostic> {
     return linter.lint(
         source = ListStatementSource(statements.toList()),
     ).readAll()
@@ -284,9 +253,7 @@ internal fun List<Diagnostic>.assertNoDiagnostics() {
     )
 }
 
-internal fun List<Diagnostic>.assertNamingViolations(
-    vararg expectedNames: String,
-) {
+internal fun List<Diagnostic>.assertNamingViolations(vararg expectedNames: String) {
     assertEquals(
         expected = expectedNames.toList(),
         actual = map { diagnostic ->

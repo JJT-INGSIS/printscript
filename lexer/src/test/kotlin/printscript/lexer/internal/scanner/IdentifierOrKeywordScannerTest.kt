@@ -1,5 +1,6 @@
 package printscript.lexer.internal.scanner
 
+import printscript.lexer.assertEndOfInput
 import printscript.lexer.assertInitialSingleLineSpan
 import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
@@ -56,10 +57,7 @@ class IdentifierOrKeywordScannerTest {
 
     @Test
     fun `classifies configured lexemes as keyword tokens`() {
-        for (
-        (keywordLexeme, expectedTokenType)
-        in configuredKeywordTokenTypesByLexeme
-        ) {
+        for ((keywordLexeme, expectedTokenType) in configuredKeywordTokenTypesByLexeme) {
             assertScansLexemeAs(
                 lexeme = keywordLexeme,
                 expectedTokenType = expectedTokenType,
@@ -93,7 +91,57 @@ class IdentifierOrKeywordScannerTest {
         )
     }
 
-    private fun assertScansLexemeAs(lexeme: String, expectedTokenType: TokenType) {
+    @Test
+    fun `scans identifier ending at end of input`() {
+        val identifierLexeme = "identifier"
+        val cursor = cursorFor(identifierLexeme)
+
+        val scanResult = scanner.scan(
+            cursor = cursor,
+            startingCharacter = identifierLexeme.first(),
+        )
+
+        val scannedToken = scanResult.assertSuccessToken()
+
+        assertEquals(
+            expected = TokenType.IDENTIFIER,
+            actual = scannedToken.type,
+        )
+        assertEquals(
+            expected = identifierLexeme,
+            actual = scannedToken.lexeme,
+        )
+        assertInitialSingleLineSpan(
+            actualSpan = scannedToken.span,
+            consumedCharacterCount = identifierLexeme.length,
+        )
+        scanResult.resultingCursor.assertEndOfInput()
+    }
+
+    @Test
+    fun `keeps initial keyword configuration after input map is mutated`() {
+        val mutableKeywordTokenTypesByLexeme = mutableMapOf(
+            "reserved" to TokenType.LET,
+        )
+        val scannerWithMutableConfiguration =
+            IdentifierOrKeywordScanner(
+                mutableKeywordTokenTypesByLexeme,
+            )
+
+        mutableKeywordTokenTypesByLexeme.clear()
+
+        assertScansLexemeAs(
+            lexeme = "reserved",
+            expectedTokenType = TokenType.LET,
+            scanner = scannerWithMutableConfiguration,
+        )
+    }
+
+    private fun assertScansLexemeAs(
+        lexeme: String,
+        expectedTokenType: TokenType,
+        scanner: IdentifierOrKeywordScanner = this.scanner,
+    ) {
         val followingCharacter = '+'
         val sourceText = "$lexeme$followingCharacter"
         val cursor = cursorFor(sourceText)

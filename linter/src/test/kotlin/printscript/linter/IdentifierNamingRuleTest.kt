@@ -7,9 +7,7 @@ import kotlin.test.assertIs
 
 class IdentifierNamingRuleTest {
 
-    private fun linterFor(
-        convention: NamingConvention,
-    ): Linter {
+    private fun linterFor(convention: NamingConvention): Linter {
         return linterWith(
             RuleConfiguration.IdentifierNaming(convention),
         )

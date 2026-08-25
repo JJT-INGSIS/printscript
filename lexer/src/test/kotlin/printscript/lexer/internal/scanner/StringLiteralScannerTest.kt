@@ -1,12 +1,12 @@
 package printscript.lexer.internal.scanner
 
 import printscript.lexer.assertEndOfInput
+import printscript.lexer.assertInitialSingleLineSpan
 import printscript.lexer.assertLexicalError
 import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
-import printscript.model.source.SourcePosition
-import printscript.model.source.SourceSpan
+import printscript.lexer.cursorForChunks
 import printscript.token.LexicalError
 import printscript.token.TokenType
 import kotlin.test.Test
@@ -16,16 +16,18 @@ import kotlin.test.assertTrue
 
 class StringLiteralScannerTest {
 
-    private val scanner = StringLiteralScanner()
+    private val supportedQuoteDelimiters = setOf(
+        '"',
+        '\'',
+    )
+
+    private val scanner = StringLiteralScanner(
+        supportedQuoteDelimiters,
+    )
 
     @Test
     fun `accepts single and double quotes as opening delimiters`() {
-        val supportedOpeningQuotes = listOf(
-            '"',
-            '\'',
-        )
-
-        for (openingQuote in supportedOpeningQuotes) {
+        for (openingQuote in supportedQuoteDelimiters) {
             assertTrue(
                 actual = scanner.canStartWith(openingQuote),
                 message = "Scanner should accept '$openingQuote'",
@@ -81,7 +83,7 @@ class StringLiteralScannerTest {
                 actual = token.lexeme,
             )
 
-            assertSingleLineSpan(
+            assertInitialSingleLineSpan(
                 actualSpan = token.span,
                 consumedCharacterCount = stringLiteral.length,
             )
@@ -113,7 +115,7 @@ class StringLiteralScannerTest {
             actual = token.lexeme,
         )
 
-        assertSingleLineSpan(
+        assertInitialSingleLineSpan(
             actualSpan = token.span,
             consumedCharacterCount = expectedStringLexeme.length,
         )
@@ -145,7 +147,7 @@ class StringLiteralScannerTest {
                 actual = error.openingQuote,
             )
 
-            assertSingleLineSpan(
+            assertInitialSingleLineSpan(
                 actualSpan = error.span,
                 consumedCharacterCount = sourceText.length,
             )
@@ -184,10 +186,11 @@ class StringLiteralScannerTest {
                 actual = error.openingQuote,
             )
 
-            assertSingleLineSpan(
+            assertInitialSingleLineSpan(
                 actualSpan = error.span,
-                consumedCharacterCount =
-                case.sourceText.indexOf(case.expectedLineBreak),
+                consumedCharacterCount = case.sourceText.indexOf(
+                    case.expectedLineBreak,
+                ),
             )
 
             scanResult.resultingCursor.assertNextCharacter(
@@ -196,21 +199,48 @@ class StringLiteralScannerTest {
         }
     }
 
-    private fun assertSingleLineSpan(actualSpan: SourceSpan, consumedCharacterCount: Int) {
+    @Test
+    fun `scans string literal across source chunks`() {
+        val expectedStringLexeme = "\"hello world\""
+        val cursor = cursorForChunks(
+            "\"hello",
+            " world\"remaining",
+        )
+
+        val scanResult = scanner.scan(
+            cursor = cursor,
+            startingCharacter = expectedStringLexeme.first(),
+        )
+
+        val token = scanResult.assertSuccessToken()
+
         assertEquals(
-            expected = SourceSpan(
-                start = SourcePosition(
-                    line = 1,
-                    column = 1,
-                    offset = 0,
-                ),
-                end = SourcePosition(
-                    line = 1,
-                    column = consumedCharacterCount + 1,
-                    offset = consumedCharacterCount.toLong(),
-                ),
-            ),
-            actual = actualSpan,
+            expected = TokenType.STRING_LITERAL,
+            actual = token.type,
+        )
+        assertEquals(
+            expected = expectedStringLexeme,
+            actual = token.lexeme,
+        )
+        assertInitialSingleLineSpan(
+            actualSpan = token.span,
+            consumedCharacterCount = expectedStringLexeme.length,
+        )
+        scanResult.resultingCursor.assertNextCharacter('r')
+    }
+
+    @Test
+    fun `keeps initial quote configuration after input set is mutated`() {
+        val mutableSupportedQuoteDelimiters = mutableSetOf('"')
+        val scannerWithMutableConfiguration =
+            StringLiteralScanner(
+                mutableSupportedQuoteDelimiters,
+            )
+
+        mutableSupportedQuoteDelimiters.clear()
+
+        assertTrue(
+            scannerWithMutableConfiguration.canStartWith('"'),
         )
     }
 

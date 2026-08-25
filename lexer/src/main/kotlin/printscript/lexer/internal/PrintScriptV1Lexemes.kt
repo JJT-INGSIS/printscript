@@ -2,6 +2,12 @@ package printscript.lexer.internal
 
 import printscript.token.TokenType
 
+internal val printScriptV1StringQuoteDelimiters: Set<Char> =
+    setOf(
+        '\'',
+        '"',
+    )
+
 internal val printScriptV1KeywordTokenTypesByLexeme:
     Map<String, TokenType> = mapOf(
         "let" to TokenType.LET,

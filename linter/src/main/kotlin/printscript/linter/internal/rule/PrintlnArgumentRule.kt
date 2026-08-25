@@ -24,9 +24,7 @@ internal class PrintlnArgumentRule(
         }
     }
 
-    override fun inspect(
-        statement: Statement,
-    ): List<Diagnostic> {
+    override fun inspect(statement: Statement): List<Diagnostic> {
         return when (statement) {
             is PrintlnStatement -> inspectArgument(statement.argument)
 
@@ -36,9 +34,7 @@ internal class PrintlnArgumentRule(
         }
     }
 
-    private fun inspectArgument(
-        argument: Expression,
-    ): List<Diagnostic> {
+    private fun inspectArgument(argument: Expression): List<Diagnostic> {
         return when (acceptanceOf(argument)) {
             ArgumentAcceptance.ACCEPTED -> emptyList()
 
@@ -51,9 +47,7 @@ internal class PrintlnArgumentRule(
     /**
      * Total: el constructor ya garantizó que el mapa cubre toda clase.
      */
-    private fun acceptanceOf(
-        argument: Expression,
-    ): ArgumentAcceptance {
+    private fun acceptanceOf(argument: Expression): ArgumentAcceptance {
         return acceptanceByKind.getValue(
             ExpressionKind.of(argument),
         )
