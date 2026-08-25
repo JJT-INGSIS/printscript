@@ -2,27 +2,17 @@ package printscript.parser.internal.expression
 
 import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.Expression
+import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.expression.UnaryOperator
 import printscript.parser.internal.ParsingResult
 import printscript.parser.internal.context.ParsingContext
 import printscript.token.TokenType
 
-private val ADDITIVE_OPERATORS: Map<TokenType, BinaryOperator> = mapOf(
-    TokenType.PLUS to BinaryOperator.ADD,
-    TokenType.MINUS to BinaryOperator.SUBTRACT,
-)
-
-private val MULTIPLICATIVE_OPERATORS: Map<TokenType, BinaryOperator> = mapOf(
-    TokenType.STAR to BinaryOperator.MULTIPLY,
-    TokenType.SLASH to BinaryOperator.DIVIDE,
-)
-
-private val UNARY_OPERATORS: Map<TokenType, UnaryOperator> = mapOf(
-    TokenType.PLUS to UnaryOperator.PLUS,
-    TokenType.MINUS to UnaryOperator.MINUS,
-)
-
-internal class RecursiveDescentExpressionParser : ExpressionParser {
+internal class RecursiveDescentExpressionParser(
+    private val unaryOperators: Map<TokenType, UnaryOperator>,
+    private val binaryOperatorsByPrecedence: List<Map<TokenType, BinaryOperator>>,
+    private val quoteStyleByDelimiter: Map<Char, StringQuoteStyle>,
+) : ExpressionParser {
 
     private val topLevelParser: ExpressionParser = buildPrecedenceChain()
 
@@ -35,23 +25,23 @@ internal class RecursiveDescentExpressionParser : ExpressionParser {
         // adentro de "(...)" tienen que valer todas las precedencias.
         val primaryParser = PrimaryExpressionParser(
             parseNestedExpression = this::parseExpression,
+            quoteStyleByDelimiter = quoteStyleByDelimiter,
         )
 
-        val unaryParser = UnaryExpressionParser(
+        var parser: ExpressionParser = UnaryExpressionParser(
             operandParser = primaryParser,
-            operators = UNARY_OPERATORS,
+            operators = unaryOperators,
         )
 
-        val multiplicativeParser = LeftAssociativeBinaryExpressionParser(
-            operandParser = unaryParser,
-            operators = MULTIPLICATIVE_OPERATORS,
-        )
+        // La lista viene de mayor a menor precedencia: cada nivel toma como
+        // operandos al nivel anterior, así el último queda como tope.
+        for (operators in binaryOperatorsByPrecedence) {
+            parser = LeftAssociativeBinaryExpressionParser(
+                operandParser = parser,
+                operators = operators,
+            )
+        }
 
-        val additiveParser = LeftAssociativeBinaryExpressionParser(
-            operandParser = multiplicativeParser,
-            operators = ADDITIVE_OPERATORS,
-        )
-
-        return additiveParser
+        return parser
     }
 }

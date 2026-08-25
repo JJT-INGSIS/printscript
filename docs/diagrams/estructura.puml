@@ -1,0 +1,191 @@
+@startuml printscript-estructura
+title PrintScript — Qué expone y qué consume cada módulo
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam DefaultFontName Helvetica
+skinparam ClassAttributeIconSize 0
+skinparam ArrowFontSize 11
+skinparam PackageFontSize 15
+skinparam PackageTitleAlignment left
+skinparam PackageBorderColor #85929E
+skinparam PackageBackgroundColor #FDFEFE
+skinparam NoteBackgroundColor #FEF9E7
+skinparam NoteBorderColor #B7950B
+skinparam NoteFontSize 11
+
+hide empty members
+
+skinparam class {
+  FontColor #1B2631
+  BackgroundColor<<contrato>> #D6EAF8
+  BorderColor<<contrato>> #2471A3
+  BackgroundColor<<factory>> #E8DAEF
+  BorderColor<<factory>> #6C3483
+  BackgroundColor<<datos>> #EAEDED
+  BorderColor<<datos>> #566573
+  BackgroundColor<<config>> #D4EFDF
+  BorderColor<<config>> #1E8449
+}
+
+legend top right
+  |= Color |= Rol del tipo |
+  | <back:#D6EAF8>   </back> | contrato: la interfaz que cruza el límite del módulo |
+  | <back:#E8DAEF>   </back> | factory: el único modo de obtener una implementación |
+  | <back:#EAEDED>   </back> | datos que viajan por el contrato |
+  | <back:#D4EFDF>   </back> | configuración que aporta el cliente |
+  --
+  Cada **etapa** (naranja en el diagrama de módulos) consume un
+  contrato y produce otro. Nunca consume otra etapa.
+endlegend
+
+' ==================== ENTRADA ====================
+package "source-reader" {
+  interface SourceReader <<contrato>> {
+    +readChunk(): SourceChunkReadResult
+  }
+  class SourceReaderFactory <<factory>> {
+    +fromString(code: String): SourceReader
+  }
+  SourceReaderFactory ..> SourceReader : crea
+}
+
+' ==================== ETAPA 1 ====================
+package "lexer" {
+  interface Lexer <<contrato>> {
+    +tokenize(reader: SourceReader): TokenSource
+  }
+  class PrintScriptLexerFactory <<factory>> {
+    +createV1(): Lexer
+  }
+  PrintScriptLexerFactory ..> Lexer : crea
+}
+
+' ==================== CONTRATO 1 ====================
+package "token-source" {
+  interface TokenSource <<contrato>> {
+    +nextToken(): TokenReadResult
+  }
+  class "Token · TokenType\nLexicalError" as TOKENDATA <<datos>>
+  TokenSource ..> TOKENDATA
+}
+
+' ==================== ETAPA 2 ====================
+package "parser" {
+  interface Parser <<contrato>> {
+    +parse(tokens: TokenSource): StatementSource
+  }
+  class PrintScriptParserFactory <<factory>> {
+    +createV1(): Parser
+  }
+  PrintScriptParserFactory ..> Parser : crea
+}
+
+' ==================== CONTRATO 2 ====================
+package "statement-source" {
+  interface StatementSource <<contrato>> {
+    +nextStatement(): StatementReadResult
+  }
+  class "AST\nStatement · Expression\nIdentifier · DeclaredType" as AST <<datos>>
+  class ParseError <<datos>>
+  StatementSource ..> AST
+  StatementSource ..> ParseError
+}
+
+' ==================== ETAPA 3a ====================
+package "interpreter" {
+  interface Interpreter <<contrato>> {
+    +interpret(source: StatementSource): InterpretationResult
+  }
+  class PrintScriptInterpreterFactory <<factory>> {
+    +createV1(output: ProgramOutput): Interpreter
+  }
+  interface ProgramOutput <<config>> {
+    +writeLine(line: String)
+  }
+  class "InterpretationResult\nSuccess · ParseFailure\nSemanticFailure" as IRES <<datos>>
+  PrintScriptInterpreterFactory ..> Interpreter : crea
+  Interpreter ..> IRES : devuelve
+  Interpreter ..> ProgramOutput : escribe la salida
+}
+
+' ==================== ETAPA 3b ====================
+package "linter" {
+  interface Linter <<contrato>> {
+    +lint(source: StatementSource): DiagnosticSource
+  }
+  class PrintScriptLinterFactory <<factory>> {
+    +createV1(config: LinterConfiguration): Linter
+  }
+  interface DiagnosticSource <<contrato>> {
+    +nextDiagnostic(): DiagnosticReadResult
+  }
+  class "LinterConfiguration\nqué reglas y con qué política" as LCFG <<config>>
+  class Diagnostic <<datos>>
+  PrintScriptLinterFactory ..> Linter : crea
+  PrintScriptLinterFactory ..> LCFG : recibe
+  DiagnosticSource ..> Diagnostic
+}
+
+' ==================== BASE ====================
+package "common" {
+  class "SourcePosition · SourceSpan" as SPAN <<datos>>
+}
+
+' ============================================================
+'   Dependencias entre módulos: consume (arriba) / produce (abajo)
+' ============================================================
+
+SourceReader <.[#2471A3,bold]. Lexer : **consume**
+Lexer .[#C0392B,bold].> TokenSource : **produce**
+
+TokenSource <.[#2471A3,bold]. Parser : **consume**
+Parser .[#C0392B,bold].> StatementSource : **produce**
+
+StatementSource <.[#2471A3,bold]. Interpreter : **consume**
+StatementSource <.[#2471A3,bold]. Linter : **consume**
+Linter .[#C0392B,bold].> DiagnosticSource : **produce**
+
+IRES ..> ParseError : propaga el error\ndel parser
+
+' Todo error y todo nodo ubican su posición en el código fuente
+TOKENDATA ..> SPAN
+AST ..> SPAN
+Diagnostic ..> SPAN
+
+note as N1
+  **Las etapas no se conocen entre sí.**
+  `lexer` no depende de `parser`, ni `parser` de `interpreter`
+  o `linter`. El único acoplamiento es contra el contrato
+  intermedio, que vive en su propio módulo.
+  Cambiar la implementación de una etapa no recompila a las otras.
+end note
+N1 .. Parser
+
+note as N2
+  **Lo único público de cada etapa es la interfaz y la factory.**
+  Toda la implementación es `internal`: scanners, cursores,
+  parsers de precedencia, executors, reglas. Nadie de afuera
+  puede acoplarse a ellos, y por eso se pueden reescribir sin
+  romper a ningún consumidor.
+end note
+N2 .. PrintScriptLexerFactory
+
+note as N3
+  **`interpreter` y `linter` son intercambiables.**
+  Consumen exactamente el mismo `StatementSource` y no se
+  conocen entre ellos. El linter se agregó sin tocar ninguna
+  de las etapas anteriores.
+end note
+N3 .. Linter
+
+note as N4
+  **La política la pone el cliente.**
+  `ProgramOutput` decide a dónde va la salida (consola,
+  archivo, test) y `LinterConfiguration` qué reglas corren
+  y con qué convención. Ninguna de las dos decisiones está
+  quemada adentro del módulo.
+end note
+N4 .. LCFG
+
+@enduml

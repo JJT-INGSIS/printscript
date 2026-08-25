@@ -13,7 +13,7 @@ import printscript.token.TokenType
 
 internal class PrintlnParser(
     private val expressionParser: ExpressionParser,
-    override val startTokenType: TokenType = DEFAULT_START_TOKEN,
+    override val startTokenType: TokenType,
 ) : StatementParser {
 
     override fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
@@ -81,8 +81,4 @@ internal class PrintlnParser(
         val argument: Expression,
         val semicolonToken: Token,
     )
-
-    private companion object {
-        val DEFAULT_START_TOKEN = TokenType.PRINTLN
-    }
 }

@@ -17,6 +17,7 @@ import printscript.token.TokenType
 
 internal class PrimaryExpressionParser(
     private val parseNestedExpression: (ParsingContext) -> ParsingResult<Expression>,
+    private val quoteStyleByDelimiter: Map<Char, StringQuoteStyle>,
 ) : ExpressionParser {
 
     override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
@@ -72,7 +73,7 @@ internal class PrimaryExpressionParser(
         val openingQuote = token.lexeme.first()
         val closingQuote = token.lexeme.last()
 
-        val quoteStyle = QUOTE_STYLE_BY_DELIMITER[openingQuote]
+        val quoteStyle = quoteStyleByDelimiter[openingQuote]
             ?: return invalidLiteral(token)
 
         if (openingQuote != closingQuote) {
@@ -148,11 +149,6 @@ internal class PrimaryExpressionParser(
     private companion object {
         const val QUOTE_LENGTH = 1
         const val MINIMUM_QUOTED_LITERAL_LENGTH = QUOTE_LENGTH * 2
-
-        val QUOTE_STYLE_BY_DELIMITER = mapOf(
-            '\'' to StringQuoteStyle.SINGLE,
-            '"' to StringQuoteStyle.DOUBLE,
-        )
 
         val PRIMARY_START_TOKENS = setOf(
             TokenType.NUMBER_LITERAL,

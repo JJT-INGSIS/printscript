@@ -16,7 +16,7 @@ import printscript.token.TokenType
  */
 internal class IdentifierStatementParser(
     parsers: List<TargetedStatementParser>,
-    override val startTokenType: TokenType = DEFAULT_START_TOKEN,
+    override val startTokenType: TokenType,
 ) : StatementParser {
 
     private val parserByFollowingToken: Map<TokenType, TargetedStatementParser> =
@@ -58,9 +58,5 @@ internal class IdentifierStatementParser(
                 actual = token,
             ),
         )
-    }
-
-    private companion object {
-        val DEFAULT_START_TOKEN = TokenType.IDENTIFIER
     }
 }
