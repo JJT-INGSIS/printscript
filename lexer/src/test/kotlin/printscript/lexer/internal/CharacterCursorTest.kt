@@ -4,6 +4,8 @@ import printscript.lexer.assertEndOfInput
 import printscript.lexer.assertNextCharacter
 import printscript.lexer.cursorFor
 import printscript.lexer.cursorForChunks
+import printscript.lexer.scanning.ScannerCharacterReadResult
+import printscript.lexer.scanning.ScannerCursor
 import printscript.model.source.SourcePosition
 import printscript.source.SourceChunkReadResult
 import printscript.source.SourceReader
@@ -30,12 +32,12 @@ class CharacterCursorTest {
         val cursor = cursorFor("a")
 
         val firstResult =
-            assertIs<CharacterReadResult.Success>(
+            assertIs<ScannerCharacterReadResult.Success>(
                 cursor.peek(),
             )
 
         val secondResult =
-            assertIs<CharacterReadResult.Success>(
+            assertIs<ScannerCharacterReadResult.Success>(
                 cursor.peek(),
             )
 
@@ -62,7 +64,7 @@ class CharacterCursorTest {
         val initialCursor = cursorFor("ab")
 
         val firstResult =
-            assertIs<CharacterReadResult.Success>(
+            assertIs<ScannerCharacterReadResult.Success>(
                 initialCursor.advance(),
             )
 
@@ -79,7 +81,7 @@ class CharacterCursorTest {
         )
 
         val secondResult =
-            assertIs<CharacterReadResult.Success>(
+            assertIs<ScannerCharacterReadResult.Success>(
                 firstResult.resultingCursor.advance(),
             )
 
@@ -108,12 +110,12 @@ class CharacterCursorTest {
         val cursor = cursorFor("ab")
 
         val peekResult =
-            assertIs<CharacterReadResult.Success>(
+            assertIs<ScannerCharacterReadResult.Success>(
                 cursor.peek(),
             )
 
         val advanceResult =
-            assertIs<CharacterReadResult.Success>(
+            assertIs<ScannerCharacterReadResult.Success>(
                 peekResult.resultingCursor.advance(),
             )
 
@@ -130,14 +132,14 @@ class CharacterCursorTest {
         val cursor = cursorFor("")
 
         val firstResult =
-            assertIs<CharacterReadResult.EndOfInput>(
+            assertIs<ScannerCharacterReadResult.EndOfInput>(
                 cursor.peek(),
             )
 
         firstResult.resultingCursor.assertEndOfInput()
 
         val advanceResult =
-            assertIs<CharacterReadResult.EndOfInput>(
+            assertIs<ScannerCharacterReadResult.EndOfInput>(
                 firstResult.resultingCursor.advance(),
             )
 
@@ -155,11 +157,11 @@ class CharacterCursorTest {
         val initialCursor = CharacterCursor.initial(sourceReader)
 
         val firstEndOfInput =
-            assertIs<CharacterReadResult.EndOfInput>(
+            assertIs<ScannerCharacterReadResult.EndOfInput>(
                 initialCursor.peek(),
             )
 
-        assertIs<CharacterReadResult.EndOfInput>(
+        assertIs<ScannerCharacterReadResult.EndOfInput>(
             firstEndOfInput.resultingCursor.peek(),
         )
 
@@ -323,8 +325,8 @@ class CharacterCursorTest {
         afterSecondCharacter.assertEndOfInput()
     }
 
-    private fun advance(cursor: CharacterCursor, expectedCharacter: Char): CharacterCursor {
-        val result = assertIs<CharacterReadResult.Success>(
+    private fun advance(cursor: ScannerCursor, expectedCharacter: Char): ScannerCursor {
+        val result = assertIs<ScannerCharacterReadResult.Success>(
             cursor.advance(),
         )
 
@@ -337,7 +339,7 @@ class CharacterCursorTest {
     }
 
     private fun assertCursorPosition(
-        cursor: CharacterCursor,
+        cursor: ScannerCursor,
         expectedLine: Int,
         expectedColumn: Int,
         expectedOffset: Long,

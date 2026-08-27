@@ -31,6 +31,8 @@ internal class PrintlnArgumentRule(
             is VariableDeclarationStatement -> emptyList()
 
             is AssignmentStatement -> emptyList()
+
+            else -> emptyList()
         }
     }
 

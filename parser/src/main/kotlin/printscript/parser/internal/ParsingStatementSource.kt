@@ -1,6 +1,7 @@
 package printscript.parser.internal
 
-import printscript.parser.internal.context.ParsingContext
+import printscript.parser.ParsingContext
+import printscript.parser.ParsingResult
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import printscript.token.Token

@@ -5,5 +5,5 @@ plugins {
 dependencies {
     api(project(":source-reader"))
     api(project(":token-source"))
-    implementation(project(":common"))
+    api(project(":common"))
 }

@@ -1,9 +1,10 @@
 package printscript.parser.internal.context
 
 import printscript.ast.statement.Statement
-import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.orReturn
+import printscript.parser.ParsingContext
+import printscript.parser.ParsingResult
 import printscript.parser.internal.statement.StatementParserDispatcher
+import printscript.parser.orReturn
 import printscript.statement.ParseError
 import printscript.token.Token
 import printscript.token.TokenType

@@ -1,10 +1,10 @@
 package printscript.cli.internal.pipeline
 
 import printscript.cli.internal.arguments.LanguageVersion
-import printscript.lexer.PrintScriptLexerFactory
-import printscript.parser.PrintScriptParserFactory
 import printscript.source.SourceReader
 import printscript.statement.StatementSource
+import printscript.v1.lexer.PrintScriptV1LexerFactory
+import printscript.v1.parser.PrintScriptV1ParserFactory
 
 /**
  * Conecta lector, lexer y parser según la versión pedida.
@@ -23,8 +23,8 @@ internal class StatementSourcePipeline {
     }
 
     private fun v1StatementsFrom(sourceReader: SourceReader): StatementSource {
-        return PrintScriptParserFactory.createV1().parse(
-            tokens = PrintScriptLexerFactory.createV1().tokenize(
+        return PrintScriptV1ParserFactory.create().parse(
+            tokens = PrintScriptV1LexerFactory.create().tokenize(
                 sourceReader = sourceReader,
             ),
         )

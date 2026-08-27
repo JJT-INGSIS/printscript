@@ -5,4 +5,5 @@ plugins {
 dependencies {
     api(project(":statement-source"))
     api(project(":common"))
+    testImplementation(project(":printscript-v1"))
 }

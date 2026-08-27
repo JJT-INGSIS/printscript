@@ -53,11 +53,12 @@ resultados de dominio y no mediante excepciones.
 | `common` | Posiciones y rangos dentro del código fuente. |
 | `source-reader` | Contrato y lectura por bloques del código fuente. |
 | `token-source` | Tokens, errores léxicos y contrato entre lexer y parser. |
-| `lexer` | Reconocimiento lazy de tokens mediante scanners configurables. |
+| `lexer` | Motor lazy de tokenización y contratos públicos para scanners externos. |
 | `statement-source` | AST, errores sintácticos y contrato entre parser e interpreter. |
-| `parser` | Parser recursive descent y producción lazy de sentencias. |
+| `parser` | Motor lazy de parsing y contratos públicos para estrategias externas. |
 | `interpreter` | Evaluación del AST, validaciones semánticas y salida del programa. |
 | `formatter` | Reescritura del código con un estilo uniforme y configurable. |
+| `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript V1. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
 
 Los módulos se conectan mediante interfaces pequeñas. Las implementaciones
@@ -65,8 +66,8 @@ concretas son internas y cada versión se construye a través de una factory
 pública:
 
 ```kotlin
-PrintScriptLexerFactory.createV1()
-PrintScriptParserFactory.createV1()
+PrintScriptV1LexerFactory.create()
+PrintScriptV1ParserFactory.create()
 PrintScriptInterpreterFactory.createV1(output)
 ```
 
@@ -74,17 +75,23 @@ PrintScriptInterpreterFactory.createV1(output)
 
 ### Lectura y lexer
 
-El código fuente se procesa en bloques. El lexer mantiene un cursor inmutable y
-delega el reconocimiento de identificadores, literales y símbolos en scanners
-especializados. El siguiente token solamente se calcula cuando el consumidor lo
-solicita.
+El código fuente se procesa en bloques. El lexer core mantiene un cursor
+inmutable y delega el reconocimiento mediante contratos públicos para scanners.
+Las reglas concretas de identificadores, literales y símbolos de V1 viven en
+`printscript-v1`. El siguiente token solamente se calcula cuando el consumidor
+lo solicita.
 
 ### Parser
 
-El parser utiliza recursive descent por niveles de precedencia para las
-expresiones. Las sentencias se seleccionan mediante dispatchers según sus tokens
-iniciales, incluyendo un segundo nivel para las sentencias que comienzan con un
-identificador.
+El parser core coordina estrategias públicas de sentencias y ofrece un motor
+genérico de expresiones por niveles de precedencia. El tipo producido por ese
+motor es configurable; PrintScript V1 lo especializa con su jerarquía sellada
+`Expression` y mantiene su gramática concreta en `printscript-v1`.
+
+Las sentencias externas pueden implementar el contrato abierto `Statement`. El
+dispatcher conserva el orden configurado y da prioridad a la primera estrategia
+compatible. Reglas como `;`, paréntesis y tipos declarados pertenecen a los
+parsers concretos de V1, no al motor.
 
 Cada operación devuelve un nuevo contexto de parsing. Ante un error se entrega un
 resultado terminal y el consumidor debe detener la lectura.

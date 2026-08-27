@@ -5,5 +5,4 @@ plugins {
 dependencies {
     api(project(":token-source"))
     api(project(":statement-source"))
-    implementation(project(":common"))
 }

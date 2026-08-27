@@ -1,14 +1,16 @@
 package printscript.lexer.internal.scanner
 
+import printscript.lexer.TestTokenType
+import printscript.lexer.TestWordScanner
 import printscript.lexer.assertEndOfInput
 import printscript.lexer.assertLexicalError
 import printscript.lexer.assertNextCharacter
 import printscript.lexer.assertSuccessToken
 import printscript.lexer.cursorFor
+import printscript.lexer.scanning.TokenScanner
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
-import printscript.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -18,17 +20,11 @@ class TokenScannerDispatcherTest {
     fun `uses first scanner that accepts starting character`() {
         val dispatcher = TokenScannerDispatcher(
             scanners = listOf(
-                IdentifierOrKeywordScanner(
-                    keywordTokenTypesByLexeme = mapOf(
-                        "alias" to PrintScriptV1TokenType.LET,
-                    ),
-                    identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
+                TestWordScanner(
+                    tokenType = TestTokenType.FIRST_WORD,
                 ),
-                IdentifierOrKeywordScanner(
-                    keywordTokenTypesByLexeme = mapOf(
-                        "alias" to PrintScriptV1TokenType.PRINTLN,
-                    ),
-                    identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
+                TestWordScanner(
+                    tokenType = TestTokenType.SECOND_WORD,
                 ),
             ),
         )
@@ -43,7 +39,7 @@ class TokenScannerDispatcherTest {
         val token = scanResult.assertSuccessToken()
 
         assertEquals(
-            expected = PrintScriptV1TokenType.LET,
+            expected = TestTokenType.FIRST_WORD,
             actual = token.type,
         )
 
@@ -58,11 +54,8 @@ class TokenScannerDispatcherTest {
     @Test
     fun `scanner configuration cannot change after dispatcher creation`() {
         val scanners = mutableListOf<TokenScanner>(
-            IdentifierOrKeywordScanner(
-                keywordTokenTypesByLexeme = mapOf(
-                    "alias" to PrintScriptV1TokenType.LET,
-                ),
-                identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
+            TestWordScanner(
+                tokenType = TestTokenType.FIRST_WORD,
             ),
         )
         val dispatcher = TokenScannerDispatcher(
@@ -77,7 +70,7 @@ class TokenScannerDispatcherTest {
         )
 
         assertEquals(
-            expected = PrintScriptV1TokenType.LET,
+            expected = TestTokenType.FIRST_WORD,
             actual = scanResult.assertSuccessToken().type,
         )
     }

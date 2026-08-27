@@ -1,0 +1,105 @@
+package printscript.v1.parser
+
+import printscript.ast.expression.Expression
+import printscript.parser.Parser
+import printscript.parser.ParserFactory
+import printscript.parser.StatementParser
+import printscript.parser.expression.ExpressionParser
+import printscript.parser.expression.ExpressionParserFactory
+import printscript.v1.parser.internal.expression.PrintScriptV1PrimaryExpressionParser
+import printscript.v1.parser.internal.printScriptV1AdditiveExpressionBuildersByTokenType
+import printscript.v1.parser.internal.printScriptV1DeclaredTypesByTokenType
+import printscript.v1.parser.internal.printScriptV1MultiplicativeExpressionBuildersByTokenType
+import printscript.v1.parser.internal.printScriptV1QuoteStylesByDelimiter
+import printscript.v1.parser.internal.printScriptV1UnaryExpressionBuildersByTokenType
+import printscript.v1.parser.internal.statement.AssignmentParser
+import printscript.v1.parser.internal.statement.DeclarationParser
+import printscript.v1.parser.internal.statement.IdentifierStatementParser
+import printscript.v1.parser.internal.statement.PrintlnParser
+import printscript.v1.parser.internal.statement.StatementTerminator
+import printscript.v1.parser.internal.statement.TargetedStatementParser
+import printscript.v1.token.PrintScriptV1TokenType
+
+public object PrintScriptV1ParserFactory {
+
+    public fun defaultConfiguration(): PrintScriptV1ParserConfiguration {
+        return PrintScriptV1ParserConfiguration(
+            primaryExpressionParser = PrintScriptV1PrimaryExpressionParser(
+                quoteStyleByDelimiter = printScriptV1QuoteStylesByDelimiter,
+            ),
+            unaryExpressionBuildersByTokenType =
+            printScriptV1UnaryExpressionBuildersByTokenType,
+            binaryExpressionBuildersByPrecedence = listOf(
+                printScriptV1MultiplicativeExpressionBuildersByTokenType,
+                printScriptV1AdditiveExpressionBuildersByTokenType,
+            ),
+        )
+    }
+
+    /**
+     * Creates the V1 parser. Additional statement parsers are evaluated before
+     * the parsers included by V1, allowing callers to extend or override them.
+     */
+    public fun create(
+        configuration: PrintScriptV1ParserConfiguration = defaultConfiguration(),
+        additionalStatementParsers: List<StatementParser> = emptyList(),
+    ): Parser {
+        val expressionParser = expressionParserFor(configuration)
+
+        return ParserFactory.create(
+            endOfInputTokenType = PrintScriptV1TokenType.EOF,
+            statementParsers =
+            additionalStatementParsers +
+                printScriptV1StatementParsers(expressionParser),
+        )
+    }
+
+    private fun expressionParserFor(configuration: PrintScriptV1ParserConfiguration): ExpressionParser<Expression> {
+        return ExpressionParserFactory.create(
+            primaryExpressionParser = configuration.primaryExpressionParser,
+            unaryExpressionBuildersByTokenType = configuration.unaryExpressionBuildersByTokenType,
+            binaryExpressionBuildersByPrecedence = configuration.binaryExpressionBuildersByPrecedence,
+        )
+    }
+
+    private fun printScriptV1StatementParsers(expressionParser: ExpressionParser<Expression>): List<StatementParser> {
+        val statementTerminator = StatementTerminator(
+            tokenType = PrintScriptV1TokenType.SEMICOLON,
+        )
+
+        return listOf(
+            DeclarationParser(
+                expressionParser = expressionParser,
+                startTokenType = PrintScriptV1TokenType.LET,
+                initializerTokenType = PrintScriptV1TokenType.ASSIGN,
+                declaredTypeByToken = printScriptV1DeclaredTypesByTokenType,
+                statementTerminator = statementTerminator,
+            ),
+            PrintlnParser(
+                expressionParser = expressionParser,
+                startTokenType = PrintScriptV1TokenType.PRINTLN,
+                statementTerminator = statementTerminator,
+            ),
+            IdentifierStatementParser(
+                parsers = printScriptV1TargetedStatementParsers(
+                    expressionParser = expressionParser,
+                    statementTerminator = statementTerminator,
+                ),
+                startTokenType = PrintScriptV1TokenType.IDENTIFIER,
+            ),
+        )
+    }
+
+    private fun printScriptV1TargetedStatementParsers(
+        expressionParser: ExpressionParser<Expression>,
+        statementTerminator: StatementTerminator,
+    ): List<TargetedStatementParser> {
+        return listOf(
+            AssignmentParser(
+                expressionParser = expressionParser,
+                followingTokenType = PrintScriptV1TokenType.ASSIGN,
+                statementTerminator = statementTerminator,
+            ),
+        )
+    }
+}

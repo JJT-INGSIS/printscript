@@ -1,9 +1,11 @@
 package printscript.parser
 
-import printscript.ast.statement.AssignmentStatement
-import printscript.ast.statement.VariableDeclarationStatement
+import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
+import printscript.token.LexicalError
+import printscript.token.TokenReadResult
+import printscript.token.TokenSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -12,168 +14,134 @@ class ParserStreamingTest {
 
     @Test
     fun `empty input is end of input`() {
-        val result = parseFirst(
-            tokens {
-                eof()
-            },
+        val parser = parser()
+        val source = tokenSourceOf(TestTokenType.EOF to "")
+
+        assertEquals(
+            expected = StatementReadResult.EndOfInput,
+            actual = parser.parse(source).nextStatement(),
+        )
+    }
+
+    @Test
+    fun `streams statements without reading the following statement`() {
+        val countingSource = CountingTokenSource(
+            tokenSourceOf(
+                TestTokenType.WORD to "first",
+                TestTokenType.TERMINATOR to ";",
+                TestTokenType.WORD to "second",
+                TestTokenType.TERMINATOR to ";",
+                TestTokenType.EOF to "",
+            ),
+        )
+        val statements = parser().parse(countingSource)
+
+        val first = assertIs<StatementReadResult.Success>(statements.nextStatement())
+
+        assertEquals(
+            expected = 2,
+            actual = countingSource.readCount,
+        )
+
+        val second = assertIs<StatementReadResult.Success>(first.remainingSource.nextStatement())
+
+        assertEquals(
+            expected = 4,
+            actual = countingSource.readCount,
         )
 
         assertEquals(
             expected = StatementReadResult.EndOfInput,
-            actual = result,
-        )
-    }
-
-    @Test
-    fun `streams several statements in order`() {
-        val source = sourceOf(
-            tokens {
-                let()
-                id("a")
-                colon()
-                numberType()
-                semicolon()
-
-                id("a")
-                assign()
-                number("5")
-                semicolon()
-
-                eof()
-            },
-        )
-
-        val declaration = source.assertNextStatement()
-        assertIs<VariableDeclarationStatement>(declaration.statement)
-
-        val assignment = declaration.remainingSource.assertNextStatement()
-        assertIs<AssignmentStatement>(assignment.statement)
-
-        assignment.remainingSource.assertEndOfInput()
-    }
-
-    @Test
-    fun `surfaces lexical errors as parse errors`() {
-        val result = parseFirst(
-            tokens {
-                lexicalError()
-                eof()
-            },
-        )
-
-        result.assertParseError<ParseError.Lexical>()
-    }
-
-    @Test
-    fun `stops at the first error and ignores the rest`() {
-        val results = parseAll(
-            tokens {
-                let()
-                id("x")
-                colon()
-                numberType()
-                assign()
-                semicolon()
-
-                let()
-                id("z")
-                colon()
-                numberType()
-                assign()
-                number("5")
-                semicolon()
-
-                eof()
-            },
+            actual = second.remainingSource.nextStatement(),
         )
 
         assertEquals(
-            expected = 1,
-            actual = results.size,
+            expected = 5,
+            actual = countingSource.readCount,
         )
-
-        assertIs<StatementReadResult.Failure>(results.single())
     }
 
     @Test
-    fun `does not read tokens until the first statement is requested`() {
-        val countingTokenSource = CountingTokenSource(
-            source = FakeTokenSource(
-                results = tokens {
-                    let()
-                    id("a")
-                    colon()
-                    numberType()
-                    semicolon()
-                    eof()
-                },
+    fun `reports all configured statement starts when no parser matches`() {
+        val result = parser().parse(
+            tokenSourceOf(
+                TestTokenType.NUMBER to "1",
+                TestTokenType.EOF to "",
             ),
-        )
-
-        PrintScriptParserFactory.createV1().parse(
-            tokens = countingTokenSource,
+        ).nextStatement()
+        val error = assertIs<ParseError.UnexpectedToken>(
+            assertIs<StatementReadResult.Failure>(result).error,
         )
 
         assertEquals(
-            expected = 0,
-            actual = countingTokenSource.readCount,
+            expected = setOf(TestTokenType.WORD),
+            actual = error.expected,
+        )
+        assertEquals(
+            expected = TestTokenType.NUMBER,
+            actual = error.actual.type,
         )
     }
 
     @Test
-    fun `reads only the tokens each statement needs`() {
-        val firstStatementTokens = tokens {
-            let()
-            id("a")
-            colon()
-            numberType()
-            semicolon()
-        }
+    fun `converts lexical failures into parse failures`() {
+        val span = token(TestTokenType.WORD, "word").span
+        val lexicalError = LexicalError.UnexpectedCharacter(
+            character = '@',
+            span = span,
+        )
+        val result = parser().parse(
+            FailingTokenSource(lexicalError),
+        ).nextStatement()
+        val parseError = assertIs<ParseError.Lexical>(
+            assertIs<StatementReadResult.Failure>(result).error,
+        )
 
-        val secondStatementTokens = tokens {
-            id("a")
-            assign()
-            number("5")
-            semicolon()
-        }
+        assertEquals(
+            expected = lexicalError,
+            actual = parseError.error,
+        )
+    }
 
-        val endOfInputTokens = tokens {
-            eof()
-        }
+    private fun parser(): Parser {
+        return ParserFactory.create(
+            statementParsers = listOf(SimpleStatementParser()),
+            endOfInputTokenType = TestTokenType.EOF,
+        )
+    }
+}
 
-        val countingTokenSource = CountingTokenSource(
-            source = FakeTokenSource(
-                results = firstStatementTokens +
-                    secondStatementTokens +
-                    endOfInputTokens,
+private class SimpleStatementParser : StatementParser {
+
+    override val startTokenType = TestTokenType.WORD
+
+    override fun parseStatement(context: ParsingContext): ParsingResult<TestStatement> {
+        val word = context.expect(startTokenType)
+            .orReturn { return it }
+        val terminator = word.resultingContext.expect(TestTokenType.TERMINATOR)
+            .orReturn { return it }
+
+        return ParsingResult.Success(
+            value = TestStatement(
+                value = word.value.lexeme,
+                span = SourceSpan(
+                    start = word.value.span.start,
+                    end = terminator.value.span.end,
+                ),
             ),
+            resultingContext = terminator.resultingContext,
         )
+    }
+}
 
-        val statementSource = PrintScriptParserFactory.createV1().parse(
-            tokens = countingTokenSource,
-        )
+private data class FailingTokenSource(
+    private val error: LexicalError,
+) : TokenSource {
 
-        val declaration = statementSource.assertNextStatement()
-
-        assertEquals(
-            expected = firstStatementTokens.size,
-            actual = countingTokenSource.readCount,
-        )
-
-        val assignment = declaration.remainingSource.assertNextStatement()
-
-        assertEquals(
-            expected = firstStatementTokens.size + secondStatementTokens.size,
-            actual = countingTokenSource.readCount,
-        )
-
-        assignment.remainingSource.assertEndOfInput()
-
-        assertEquals(
-            expected = firstStatementTokens.size +
-                secondStatementTokens.size +
-                endOfInputTokens.size,
-            actual = countingTokenSource.readCount,
+    override fun nextToken(): TokenReadResult {
+        return TokenReadResult.Failure(
+            error = error,
+            remainingSource = this,
         )
     }
 }

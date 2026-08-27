@@ -1,15 +1,16 @@
 package printscript.lexer.internal
 
 import printscript.lexer.ExpectedToken
+import printscript.lexer.TestTokenType
+import printscript.lexer.TestWordScanner
 import printscript.lexer.assertLexicalError
 import printscript.lexer.assertNextToken
 import printscript.lexer.cursorFor
-import printscript.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.lexer.internal.scanner.TokenScannerDispatcher
+import printscript.lexer.scanning.IgnoredCharacterPolicy
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
-import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +23,7 @@ class ScanningTokenSourceTest {
 
         val eofResult = tokenSource.assertNextToken(
             ExpectedToken(
-                tokenType = PrintScriptV1TokenType.EOF,
+                tokenType = TestTokenType.END_OF_INPUT,
                 lexeme = "",
             ),
         )
@@ -41,7 +42,7 @@ class ScanningTokenSourceTest {
         val tokenSource = createTokenSourceFor("")
 
         val expectedEof = ExpectedToken(
-            tokenType = PrintScriptV1TokenType.EOF,
+            tokenType = TestTokenType.END_OF_INPUT,
             lexeme = "",
         )
 
@@ -64,7 +65,7 @@ class ScanningTokenSourceTest {
 
         val eofResult = tokenSource.assertNextToken(
             ExpectedToken(
-                tokenType = PrintScriptV1TokenType.EOF,
+                tokenType = TestTokenType.END_OF_INPUT,
                 lexeme = "",
             ),
         )
@@ -86,7 +87,7 @@ class ScanningTokenSourceTest {
 
         val firstTokenResult = tokenSource.assertNextToken(
             ExpectedToken(
-                tokenType = PrintScriptV1TokenType.IDENTIFIER,
+                tokenType = TestTokenType.FIRST_WORD,
                 lexeme = "token",
             ),
         )
@@ -102,7 +103,7 @@ class ScanningTokenSourceTest {
         val secondTokenResult =
             firstTokenResult.remainingSource.assertNextToken(
                 ExpectedToken(
-                    tokenType = PrintScriptV1TokenType.IDENTIFIER,
+                    tokenType = TestTokenType.FIRST_WORD,
                     lexeme = "next",
                 ),
             )
@@ -137,7 +138,7 @@ class ScanningTokenSourceTest {
         val followingTokenResult =
             failureResult.remainingSource.assertNextToken(
                 ExpectedToken(
-                    tokenType = PrintScriptV1TokenType.IDENTIFIER,
+                    tokenType = TestTokenType.FIRST_WORD,
                     lexeme = "token",
                 ),
             )
@@ -154,9 +155,8 @@ class ScanningTokenSourceTest {
     private fun createTokenSourceFor(sourceText: String): TokenSource {
         val tokenScannerDispatcher = TokenScannerDispatcher(
             scanners = listOf(
-                IdentifierOrKeywordScanner(
-                    keywordTokenTypesByLexeme = emptyMap(),
-                    identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
+                TestWordScanner(
+                    tokenType = TestTokenType.FIRST_WORD,
                 ),
             ),
         )
@@ -164,7 +164,11 @@ class ScanningTokenSourceTest {
         return ScanningTokenSource(
             characterCursor = cursorFor(sourceText),
             tokenScannerDispatcher = tokenScannerDispatcher,
-            endOfInputTokenType = PrintScriptV1TokenType.EOF,
+            ignoredCharacterPolicy =
+            IgnoredCharacterPolicy { character ->
+                character.isWhitespace()
+            },
+            endOfInputTokenType = TestTokenType.END_OF_INPUT,
         )
     }
 }
