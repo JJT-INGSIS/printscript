@@ -1,7 +1,10 @@
 package printscript.lexer.internal
 
-import printscript.lexer.internal.scanner.TokenScanResult
 import printscript.lexer.internal.scanner.TokenScannerDispatcher
+import printscript.lexer.scanning.IgnoredCharacterPolicy
+import printscript.lexer.scanning.ScannerCharacterReadResult
+import printscript.lexer.scanning.ScannerCursor
+import printscript.lexer.scanning.TokenScanResult
 import printscript.model.source.SourceSpan
 import printscript.token.Token
 import printscript.token.TokenReadResult
@@ -11,25 +14,26 @@ import printscript.token.TokenType
 private const val EOF_LEXEME = ""
 
 internal data class ScanningTokenSource(
-    private val characterCursor: CharacterCursor,
+    private val characterCursor: ScannerCursor,
     private val tokenScannerDispatcher: TokenScannerDispatcher,
+    private val ignoredCharacterPolicy: IgnoredCharacterPolicy,
     private val endOfInputTokenType: TokenType,
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
-        val cursorWithoutWhitespace =
-            consumeLeadingWhitespace(characterCursor)
+        val cursorAtNextRelevantCharacter =
+            consumeLeadingIgnoredCharacters(characterCursor)
         val nextCharacterResult =
-            cursorWithoutWhitespace.peek()
+            cursorAtNextRelevantCharacter.peek()
 
         return when (nextCharacterResult) {
-            is CharacterReadResult.EndOfInput -> {
+            is ScannerCharacterReadResult.EndOfInput -> {
                 createEndOfInputResult(
                     cursor = nextCharacterResult.resultingCursor,
                 )
             }
 
-            is CharacterReadResult.Success -> {
+            is ScannerCharacterReadResult.Success -> {
                 scanNextToken(
                     cursor = nextCharacterResult.resultingCursor,
                     startingCharacter = nextCharacterResult.character,
@@ -38,15 +42,15 @@ internal data class ScanningTokenSource(
         }
     }
 
-    private tailrec fun consumeLeadingWhitespace(cursor: CharacterCursor): CharacterCursor {
+    private tailrec fun consumeLeadingIgnoredCharacters(cursor: ScannerCursor): ScannerCursor {
         return when (val readResult = cursor.peek()) {
-            is CharacterReadResult.EndOfInput -> {
+            is ScannerCharacterReadResult.EndOfInput -> {
                 readResult.resultingCursor
             }
 
-            is CharacterReadResult.Success -> {
-                if (readResult.character.isWhitespace()) {
-                    consumeLeadingWhitespace(
+            is ScannerCharacterReadResult.Success -> {
+                if (ignoredCharacterPolicy.shouldIgnore(readResult.character)) {
+                    consumeLeadingIgnoredCharacters(
                         cursor =
                         readResult.resultingCursor
                             .advance()
@@ -59,7 +63,7 @@ internal data class ScanningTokenSource(
         }
     }
 
-    private fun scanNextToken(cursor: CharacterCursor, startingCharacter: Char): TokenReadResult {
+    private fun scanNextToken(cursor: ScannerCursor, startingCharacter: Char): TokenReadResult {
         val scanResult =
             tokenScannerDispatcher.scan(
                 cursor = cursor,
@@ -89,7 +93,7 @@ internal data class ScanningTokenSource(
         }
     }
 
-    private fun createEndOfInputResult(cursor: CharacterCursor): TokenReadResult.Success {
+    private fun createEndOfInputResult(cursor: ScannerCursor): TokenReadResult.Success {
         val endOfInputPosition = cursor.position
 
         return TokenReadResult.Success(
@@ -105,7 +109,7 @@ internal data class ScanningTokenSource(
         )
     }
 
-    private fun continuingFrom(cursor: CharacterCursor): ScanningTokenSource {
+    private fun continuingFrom(cursor: ScannerCursor): ScanningTokenSource {
         return copy(
             characterCursor = cursor,
         )

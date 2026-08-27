@@ -10,9 +10,10 @@ import printscript.model.source.SourceSpan
 import printscript.source.SourceAccessError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
-import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
 import printscript.token.TokenType
+import printscript.v1.lexer.PrintScriptV1LexicalError
+import printscript.v1.token.PrintScriptV1TokenType
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -63,8 +64,8 @@ class ErrorReporterTest {
     fun `describes every lexical error`() {
         val errors = listOf(
             LexicalError.UnexpectedCharacter(character = '@', span = anySpan),
-            LexicalError.UnterminatedString(openingQuote = '"', span = anySpan),
-            LexicalError.InvalidNumber(lexeme = "1..2", span = anySpan),
+            PrintScriptV1LexicalError.UnterminatedString(openingQuote = '"', span = anySpan),
+            PrintScriptV1LexicalError.InvalidNumber(lexeme = "1..2", span = anySpan),
         )
 
         for (error in errors) {
@@ -96,6 +97,14 @@ class ErrorReporterTest {
         )
 
         assertContains(message, "'1..2' no es válido")
+    }
+
+    @Test
+    fun `describes parse errors implemented by extensions`() {
+        val message = reporter.describe(ExtensionParseError(anySpan))
+
+        assertContains(message, "error sintáctico desconocido")
+        assertContains(message, "línea 3")
     }
 
     @Test
@@ -203,4 +212,8 @@ class ErrorReporterTest {
             return "EXTENSION_TOKEN"
         }
     }
+
+    private data class ExtensionParseError(
+        override val span: SourceSpan,
+    ) : ParseError
 }

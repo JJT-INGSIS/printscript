@@ -1,47 +1,57 @@
 package printscript.parser.internal.expression
 
-import printscript.ast.expression.BinaryOperator
-import printscript.ast.expression.Expression
-import printscript.ast.expression.StringQuoteStyle
-import printscript.ast.expression.UnaryOperator
-import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.context.ParsingContext
+import printscript.parser.ParsingContext
+import printscript.parser.ParsingResult
+import printscript.parser.expression.BinaryExpressionBuilder
+import printscript.parser.expression.ExpressionParser
+import printscript.parser.expression.PrimaryExpressionParser
+import printscript.parser.expression.UnaryExpressionBuilder
 import printscript.token.TokenType
 
-internal class RecursiveDescentExpressionParser(
-    private val unaryOperators: Map<TokenType, UnaryOperator>,
-    private val binaryOperatorsByPrecedence: List<Map<TokenType, BinaryOperator>>,
-    private val quoteStyleByDelimiter: Map<Char, StringQuoteStyle>,
-) : ExpressionParser {
+internal class RecursiveDescentExpressionParser<E>(
+    private val primaryExpressionParser: PrimaryExpressionParser<E>,
+    unaryExpressionBuildersByTokenType: Map<TokenType, UnaryExpressionBuilder<E>>,
+    binaryExpressionBuildersByPrecedence: List<Map<TokenType, BinaryExpressionBuilder<E>>>,
+) : ExpressionParser<E> {
 
-    private val topLevelParser: ExpressionParser = buildPrecedenceChain()
+    private val unaryExpressionBuildersByTokenType =
+        unaryExpressionBuildersByTokenType.toMap()
 
-    override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
+    private val binaryExpressionBuildersByPrecedence =
+        binaryExpressionBuildersByPrecedence.map { builders -> builders.toMap() }
+
+    private val topLevelParser: ExpressionParser<E> = buildPrecedenceChain()
+
+    override fun parseExpression(context: ParsingContext): ParsingResult<E> {
         return topLevelParser.parseExpression(context)
     }
 
-    private fun buildPrecedenceChain(): ExpressionParser {
-        // Los paréntesis vuelven al tope de la cadena, no a este nivel:
-        // adentro de "(...)" tienen que valer todas las precedencias.
-        val primaryParser = PrimaryExpressionParser(
-            parseNestedExpression = this::parseExpression,
-            quoteStyleByDelimiter = quoteStyleByDelimiter,
-        )
+    private fun buildPrecedenceChain(): ExpressionParser<E> {
+        val primaryParser = configuredPrimaryParser()
 
-        var parser: ExpressionParser = UnaryExpressionParser(
+        var parser: ExpressionParser<E> = UnaryExpressionParser(
             operandParser = primaryParser,
-            operators = unaryOperators,
+            expressionBuilders = unaryExpressionBuildersByTokenType,
         )
 
-        // La lista viene de mayor a menor precedencia: cada nivel toma como
-        // operandos al nivel anterior, así el último queda como tope.
-        for (operators in binaryOperatorsByPrecedence) {
+        for (expressionBuilders in binaryExpressionBuildersByPrecedence) {
             parser = LeftAssociativeBinaryExpressionParser(
                 operandParser = parser,
-                operators = operators,
+                expressionBuilders = expressionBuilders,
             )
         }
 
         return parser
+    }
+
+    private fun configuredPrimaryParser(): ExpressionParser<E> {
+        return object : ExpressionParser<E> {
+            override fun parseExpression(context: ParsingContext): ParsingResult<E> {
+                return primaryExpressionParser.parsePrimaryExpression(
+                    context = context,
+                    nestedExpressionParser = this@RecursiveDescentExpressionParser,
+                )
+            }
+        }
     }
 }

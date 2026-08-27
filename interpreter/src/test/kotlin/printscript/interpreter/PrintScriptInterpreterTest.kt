@@ -18,8 +18,8 @@ import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
-import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
+import printscript.v1.token.PrintScriptV1TokenType
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals

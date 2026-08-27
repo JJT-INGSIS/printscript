@@ -1,8 +1,10 @@
 package printscript.lexer
 
 import printscript.lexer.internal.CharacterCursor
-import printscript.lexer.internal.CharacterReadResult
-import printscript.lexer.internal.scanner.TokenScanResult
+import printscript.lexer.scanning.ScannerCharacterReadResult
+import printscript.lexer.scanning.ScannerCursor
+import printscript.lexer.scanning.TokenScanResult
+import printscript.lexer.scanning.TokenScanner
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.source.SourceChunk
@@ -25,6 +27,78 @@ internal data class ExpectedToken(
     val tokenType: TokenType,
     val lexeme: String,
 )
+
+internal enum class TestTokenType : TokenType {
+    FIRST_WORD,
+    SECOND_WORD,
+    END_OF_INPUT,
+}
+
+internal class TestWordScanner(
+    private val tokenType: TokenType,
+) : TokenScanner {
+
+    override fun canStartWith(character: Char): Boolean {
+        return character.isLetter()
+    }
+
+    override fun scan(cursor: ScannerCursor, startingCharacter: Char): TokenScanResult {
+        return consumeWord(
+            cursor = cursor.advance().resultingCursor,
+            lexeme = startingCharacter.toString(),
+            startPosition = cursor.position,
+        )
+    }
+
+    private tailrec fun consumeWord(
+        cursor: ScannerCursor,
+        lexeme: String,
+        startPosition: SourcePosition,
+    ): TokenScanResult.Success {
+        return when (val readResult = cursor.peek()) {
+            is ScannerCharacterReadResult.EndOfInput ->
+                createSuccess(
+                    cursor = readResult.resultingCursor,
+                    lexeme = lexeme,
+                    startPosition = startPosition,
+                )
+
+            is ScannerCharacterReadResult.Success -> {
+                if (!readResult.character.isLetter()) {
+                    return createSuccess(
+                        cursor = readResult.resultingCursor,
+                        lexeme = lexeme,
+                        startPosition = startPosition,
+                    )
+                }
+
+                consumeWord(
+                    cursor = readResult.resultingCursor.advance().resultingCursor,
+                    lexeme = lexeme + readResult.character,
+                    startPosition = startPosition,
+                )
+            }
+        }
+    }
+
+    private fun createSuccess(
+        cursor: ScannerCursor,
+        lexeme: String,
+        startPosition: SourcePosition,
+    ): TokenScanResult.Success {
+        return TokenScanResult.Success(
+            token = Token(
+                type = tokenType,
+                lexeme = lexeme,
+                span = SourceSpan(
+                    start = startPosition,
+                    end = cursor.position,
+                ),
+            ),
+            resultingCursor = cursor,
+        )
+    }
+}
 
 internal fun sourceReaderFor(sourceText: String): SourceReader {
     return SourceReaderFactory.fromString(sourceText)
@@ -100,8 +174,8 @@ internal tailrec fun TokenSource.assertProducesTokenSequence(
     )
 }
 
-internal fun CharacterCursor.assertNextCharacter(expectedCharacter: Char) {
-    val result = assertIs<CharacterReadResult.Success>(peek())
+internal fun ScannerCursor.assertNextCharacter(expectedCharacter: Char) {
+    val result = assertIs<ScannerCharacterReadResult.Success>(peek())
 
     assertEquals(
         expected = expectedCharacter,
@@ -109,8 +183,8 @@ internal fun CharacterCursor.assertNextCharacter(expectedCharacter: Char) {
     )
 }
 
-internal fun CharacterCursor.assertEndOfInput() {
-    assertIs<CharacterReadResult.EndOfInput>(peek())
+internal fun ScannerCursor.assertEndOfInput() {
+    assertIs<ScannerCharacterReadResult.EndOfInput>(peek())
 }
 
 internal fun assertInitialSingleLineSpan(actualSpan: SourceSpan, consumedCharacterCount: Int) {

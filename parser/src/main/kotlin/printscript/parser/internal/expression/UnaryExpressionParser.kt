@@ -1,32 +1,34 @@
 package printscript.parser.internal.expression
 
-import printscript.ast.expression.Expression
-import printscript.ast.expression.UnaryExpression
-import printscript.ast.expression.UnaryOperator
-import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.context.ParsingContext
-import printscript.parser.internal.orReturn
+import printscript.parser.ParsingContext
+import printscript.parser.ParsingResult
+import printscript.parser.expression.ExpressionParser
+import printscript.parser.expression.UnaryExpressionBuilder
+import printscript.parser.orReturn
 import printscript.token.TokenType
 
-internal class UnaryExpressionParser(
-    private val operandParser: ExpressionParser,
-    private val operators: Map<TokenType, UnaryOperator>,
-) : ExpressionParser {
+internal class UnaryExpressionParser<E>(
+    private val operandParser: ExpressionParser<E>,
+    private val expressionBuilders: Map<TokenType, UnaryExpressionBuilder<E>>,
+) : ExpressionParser<E> {
 
-    override fun parseExpression(context: ParsingContext): ParsingResult<Expression> {
+    override fun parseExpression(context: ParsingContext): ParsingResult<E> {
         val peeked = context.peek()
             .orReturn { return it }
 
-        val operator = operators[peeked.value.type]
+        val expressionBuilder = expressionBuilders[peeked.value.type]
             ?: return operandParser.parseExpression(peeked.resultingContext)
 
         return parseUnaryExpression(
-            operator = operator,
+            expressionBuilder = expressionBuilder,
             context = peeked.resultingContext,
         )
     }
 
-    private fun parseUnaryExpression(operator: UnaryOperator, context: ParsingContext): ParsingResult<Expression> {
+    private fun parseUnaryExpression(
+        expressionBuilder: UnaryExpressionBuilder<E>,
+        context: ParsingContext,
+    ): ParsingResult<E> {
         val operatorToken = context.consume()
             .orReturn { return it }
 
@@ -34,9 +36,8 @@ internal class UnaryExpressionParser(
             .orReturn { return it }
 
         return ParsingResult.Success(
-            value = UnaryExpression(
-                operator = operator,
-                operatorSpan = operatorToken.value.span,
+            value = expressionBuilder.build(
+                operatorToken = operatorToken.value,
                 operand = operand.value,
             ),
             resultingContext = operand.resultingContext,

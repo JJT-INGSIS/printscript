@@ -4,8 +4,8 @@ import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.UnaryOperator
 import printscript.linter.NamingConvention
-import printscript.token.PrintScriptV1TokenType
 import printscript.token.TokenType
+import printscript.v1.token.PrintScriptV1TokenType
 
 /**
  * Cómo se nombra cada elemento del lenguaje dentro de un mensaje.

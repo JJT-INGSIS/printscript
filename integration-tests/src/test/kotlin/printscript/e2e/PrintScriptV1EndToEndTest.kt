@@ -4,7 +4,7 @@ import printscript.interpreter.InterpretationResult
 import printscript.interpreter.SemanticError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
-import printscript.token.PrintScriptV1TokenType
+import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

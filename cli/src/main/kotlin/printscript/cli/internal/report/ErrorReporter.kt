@@ -6,6 +6,7 @@ import printscript.model.source.SourceSpan
 import printscript.source.SourceAccessError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
+import printscript.v1.lexer.PrintScriptV1LexicalError
 
 internal class ErrorReporter {
 
@@ -41,6 +42,9 @@ internal class ErrorReporter {
 
             is ParseError.InvalidLiteral ->
                 "el literal '${error.token.lexeme}' no es válido"
+
+            else ->
+                "error sintáctico desconocido"
         }
 
         return format(description, error.span)
@@ -98,11 +102,14 @@ internal class ErrorReporter {
             is LexicalError.UnexpectedCharacter ->
                 "el carácter '${error.character}' no pertenece al lenguaje"
 
-            is LexicalError.UnterminatedString ->
+            is PrintScriptV1LexicalError.UnterminatedString ->
                 "falta cerrar el texto abierto con ${error.openingQuote}"
 
-            is LexicalError.InvalidNumber ->
+            is PrintScriptV1LexicalError.InvalidNumber ->
                 "'${error.lexeme}' no es un número válido"
+
+            else ->
+                "error léxico desconocido"
         }
     }
 

@@ -11,8 +11,8 @@ import printscript.linter.internal.rule.CompositeRule
 import printscript.linter.internal.rule.LintRule
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
-import printscript.token.PrintScriptV1TokenType
 import printscript.token.Token
+import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -101,6 +101,16 @@ class PrintScriptLinterTest {
         val diagnostics = diagnosticsOf(linter, declaration, print)
 
         // then
+        diagnostics.assertNoDiagnostics()
+    }
+
+    @Test
+    fun `V1 rules ignore statements implemented by extensions`() {
+        val diagnostics = diagnosticsOf(
+            everyRule,
+            ExtensionStatement(anySpan),
+        )
+
         diagnostics.assertNoDiagnostics()
     }
 
@@ -239,3 +249,7 @@ private class AlwaysReportingRule(
         )
     }
 }
+
+private data class ExtensionStatement(
+    override val span: SourceSpan,
+) : Statement

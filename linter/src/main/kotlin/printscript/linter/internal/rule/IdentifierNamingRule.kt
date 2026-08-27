@@ -29,6 +29,8 @@ internal class IdentifierNamingRule(
             is AssignmentStatement -> emptyList()
 
             is PrintlnStatement -> emptyList()
+
+            else -> emptyList()
         }
     }
 

@@ -27,4 +27,5 @@ include(
     "cli",
     "integration-tests",
     "formatter",
+    "printscript-v1",
 )

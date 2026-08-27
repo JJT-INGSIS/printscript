@@ -1,9 +1,10 @@
 package printscript.parser.internal.statement
 
 import printscript.ast.statement.Statement
-import printscript.parser.internal.ParsingResult
-import printscript.parser.internal.context.ParsingContext
-import printscript.parser.internal.orReturn
+import printscript.parser.ParsingContext
+import printscript.parser.ParsingResult
+import printscript.parser.StatementParser
+import printscript.parser.orReturn
 import printscript.statement.ParseError
 import printscript.token.Token
 import printscript.token.TokenType
@@ -12,14 +13,20 @@ internal class StatementParserDispatcher(
     parsers: List<StatementParser>,
 ) {
 
-    private val parserByStartToken: Map<TokenType, StatementParser> =
-        parsers.associateBy { it.startTokenType }
+    private val parsers: List<StatementParser> = parsers.toList()
+
+    private val expectedStartTokenTypes: Set<TokenType> =
+        this.parsers
+            .map { parser -> parser.startTokenType }
+            .toSet()
 
     fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
         val peeked = context.peek()
             .orReturn { return it }
 
-        val parser = parserByStartToken[peeked.value.type]
+        val parser = parsers.firstOrNull { parser ->
+            parser.startTokenType == peeked.value.type
+        }
             ?: return unrecognizedStatement(peeked.value)
 
         return parser.parseStatement(peeked.resultingContext)
@@ -28,7 +35,7 @@ internal class StatementParserDispatcher(
     private fun unrecognizedStatement(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
-                expected = parserByStartToken.keys,
+                expected = expectedStartTokenTypes,
                 actual = token,
             ),
         )

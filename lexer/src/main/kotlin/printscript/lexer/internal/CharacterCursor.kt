@@ -1,5 +1,7 @@
 package printscript.lexer.internal
 
+import printscript.lexer.scanning.ScannerCharacterReadResult
+import printscript.lexer.scanning.ScannerCursor
 import printscript.model.source.SourcePosition
 import printscript.source.SourceChunk
 import printscript.source.SourceChunkReadResult
@@ -13,9 +15,9 @@ internal data class CharacterCursor(
     private val indexInChunk: Int,
     private val remainingSourceReader: SourceReader?,
     private val sourceLocation: SourceLocation,
-) {
+) : ScannerCursor {
 
-    val position: SourcePosition
+    override val position: SourcePosition
         get() = sourceLocation.position
 
     /**
@@ -23,28 +25,28 @@ internal data class CharacterCursor(
      * may contain a newly read source chunk and must be used for subsequent
      * operations.
      */
-    fun peek(): CharacterReadResult {
-        return readNextAvailableCharacter(this)
+    override fun peek(): ScannerCharacterReadResult {
+        return readNextAvailableCharacter(this).toReadResult()
     }
 
-    fun advance(): CharacterReadResult {
-        return when (val readResult = peek()) {
-            is CharacterReadResult.Success ->
-                consumeCharacter(readResult)
+    override fun advance(): ScannerCharacterReadResult {
+        return when (val availableCharacter = readNextAvailableCharacter(this)) {
+            is AvailableCharacter.Success -> {
+                ScannerCharacterReadResult.Success(
+                    character = availableCharacter.character,
+                    resultingCursor =
+                    availableCharacter.cursor.afterConsuming(
+                        availableCharacter.character,
+                    ),
+                )
+            }
 
-            is CharacterReadResult.EndOfInput ->
-                readResult
+            is AvailableCharacter.EndOfInput -> {
+                ScannerCharacterReadResult.EndOfInput(
+                    resultingCursor = availableCharacter.cursor,
+                )
+            }
         }
-    }
-
-    private fun consumeCharacter(readResult: CharacterReadResult.Success): CharacterReadResult.Success {
-        return CharacterReadResult.Success(
-            character = readResult.character,
-            resultingCursor =
-            readResult.resultingCursor.afterConsuming(
-                readResult.character,
-            ),
-        )
     }
 
     private fun afterConsuming(character: Char): CharacterCursor {
@@ -55,20 +57,20 @@ internal data class CharacterCursor(
         )
     }
 
-    private tailrec fun readNextAvailableCharacter(cursor: CharacterCursor): CharacterReadResult {
+    private tailrec fun readNextAvailableCharacter(cursor: CharacterCursor): AvailableCharacter {
         val currentCharacter =
             cursor.currentCharacterOrNull()
 
         if (currentCharacter != null) {
-            return CharacterReadResult.Success(
+            return AvailableCharacter.Success(
                 character = currentCharacter,
-                resultingCursor = cursor,
+                cursor = cursor,
             )
         }
 
         val sourceReader = cursor.remainingSourceReader
-            ?: return CharacterReadResult.EndOfInput(
-                resultingCursor = cursor,
+            ?: return AvailableCharacter.EndOfInput(
+                cursor = cursor,
             )
 
         val chunkReadResult =
@@ -82,8 +84,25 @@ internal data class CharacterCursor(
             }
 
             SourceChunkReadResult.EndOfInput -> {
-                CharacterReadResult.EndOfInput(
-                    resultingCursor = cursor.atEndOfInput(),
+                AvailableCharacter.EndOfInput(
+                    cursor = cursor.atEndOfInput(),
+                )
+            }
+        }
+    }
+
+    private fun AvailableCharacter.toReadResult(): ScannerCharacterReadResult {
+        return when (this) {
+            is AvailableCharacter.Success -> {
+                ScannerCharacterReadResult.Success(
+                    character = character,
+                    resultingCursor = cursor,
+                )
+            }
+
+            is AvailableCharacter.EndOfInput -> {
+                ScannerCharacterReadResult.EndOfInput(
+                    resultingCursor = cursor,
                 )
             }
         }
@@ -127,4 +146,16 @@ internal data class CharacterCursor(
             )
         }
     }
+}
+
+private sealed interface AvailableCharacter {
+
+    data class Success(
+        val character: Char,
+        val cursor: CharacterCursor,
+    ) : AvailableCharacter
+
+    data class EndOfInput(
+        val cursor: CharacterCursor,
+    ) : AvailableCharacter
 }

@@ -2,15 +2,15 @@ package printscript.e2e
 
 import printscript.interpreter.PrintScriptInterpreterFactory
 import printscript.interpreter.output.ProgramOutput
-import printscript.lexer.PrintScriptLexerFactory
-import printscript.parser.PrintScriptParserFactory
 import printscript.source.SourceReaderFactory
+import printscript.v1.lexer.PrintScriptV1LexerFactory
+import printscript.v1.parser.PrintScriptV1ParserFactory
 
 internal fun runV1Script(sourceCode: String): ProgramExecution {
     val output = RecordingProgramOutput()
 
-    val lexer = PrintScriptLexerFactory.createV1()
-    val parser = PrintScriptParserFactory.createV1()
+    val lexer = PrintScriptV1LexerFactory.create()
+    val parser = PrintScriptV1ParserFactory.create()
     val interpreter =
         PrintScriptInterpreterFactory.createV1(
             output = output,
