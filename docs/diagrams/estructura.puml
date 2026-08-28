@@ -97,16 +97,30 @@ package "interpreter" {
   interface Interpreter <<contrato>> {
     +interpret(source: StatementSource): InterpretationResult
   }
-  class PrintScriptInterpreterFactory <<factory>> {
-    +createV1(output: ProgramOutput): Interpreter
+  interface "StatementExecutor<S>" as StatementExecutor <<contrato>> {
+    +supportsStatement(statement: Statement): Boolean
+    +executeStatement(statement: Statement, state: S): ExecutionResult<S>
   }
-  interface ProgramOutput <<config>> {
+  class InterpreterFactory <<factory>> {
+    +create<S>(initialState: S, executors: List<StatementExecutor<S>>): Interpreter
+  }
+  class "InterpretationResult\nExecutionResult<S>\nSemanticError" as IRES <<datos>>
+  InterpreterFactory ..> Interpreter : crea
+  InterpreterFactory ..> StatementExecutor : configura
+  Interpreter ..> IRES : devuelve
+}
+
+package "printscript-v1 / interpreter" {
+  class PrintScriptV1InterpreterFactory <<factory>> {
+    +create(output, additionalExecutors): Interpreter
+  }
+  interface PrintScriptV1ProgramOutput <<config>> {
     +writeLine(line: String)
   }
-  class "InterpretationResult\nSuccess · ParseFailure\nSemanticFailure" as IRES <<datos>>
-  PrintScriptInterpreterFactory ..> Interpreter : crea
-  Interpreter ..> IRES : devuelve
-  Interpreter ..> ProgramOutput : escribe la salida
+  class "PrintScriptV1Environment\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError" as V1INTERPRETER <<datos>>
+  PrintScriptV1InterpreterFactory ..> Interpreter : compone
+  PrintScriptV1InterpreterFactory ..> PrintScriptV1ProgramOutput : configura
+  PrintScriptV1InterpreterFactory ..> V1INTERPRETER
 }
 
 ' ==================== ETAPA 3b ====================
@@ -163,11 +177,9 @@ end note
 N1 .. Parser
 
 note as N2
-  **Lo único público de cada etapa es la interfaz y la factory.**
-  Toda la implementación es `internal`: scanners, cursores,
-  parsers de precedencia, executors, reglas. Nadie de afuera
-  puede acoplarse a ellos, y por eso se pueden reescribir sin
-  romper a ningún consumidor.
+  **El motor se obtiene mediante una factory pública.**
+  Los contratos de variación son públicos para estrategias externas;
+  dispatchers, cursores y coordinación permanecen `internal`.
 end note
 N2 .. PrintScriptLexerFactory
 
@@ -181,7 +193,7 @@ N3 .. Linter
 
 note as N4
   **La política la pone el cliente.**
-  `ProgramOutput` decide a dónde va la salida (consola,
+  `PrintScriptV1ProgramOutput` decide a dónde va la salida (consola,
   archivo, test) y `LinterConfiguration` qué reglas corren
   y con qué convención. Ninguna de las dos decisiones está
   quemada adentro del módulo.

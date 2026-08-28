@@ -1,12 +1,13 @@
 package printscript.interpreter
 
-internal sealed interface ExecutionResult<out T> {
+/** Result of an interpreter strategy operation. */
+public sealed interface ExecutionResult<out T> {
 
-    data class Success<T>(
-        val value: T,
+    public data class Success<T>(
+        public val value: T,
     ) : ExecutionResult<T>
 
-    data class Failure(
-        val error: SemanticError,
+    public data class Failure(
+        public val error: SemanticError,
     ) : ExecutionResult<Nothing>
 }

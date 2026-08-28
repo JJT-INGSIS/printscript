@@ -1,9 +1,9 @@
 package printscript.e2e
 
 import printscript.interpreter.InterpretationResult
-import printscript.interpreter.SemanticError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
+import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -201,7 +201,7 @@ class PrintScriptV1EndToEndTest {
             )
 
         val semanticError =
-            assertIs<SemanticError.UndeclaredVariable>(
+            assertIs<PrintScriptV1SemanticError.UndeclaredVariable>(
                 interpretationFailure.error,
             )
 

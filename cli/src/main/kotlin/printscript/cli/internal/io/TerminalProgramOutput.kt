@@ -1,10 +1,10 @@
 package printscript.cli.internal.io
 
-import printscript.interpreter.output.ProgramOutput
+import printscript.v1.interpreter.PrintScriptV1ProgramOutput
 
 internal class TerminalProgramOutput(
     private val terminal: Terminal,
-) : ProgramOutput {
+) : PrintScriptV1ProgramOutput {
 
     override fun writeLine(line: String) {
         terminal.writeLine(line)
