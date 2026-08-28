@@ -1,31 +1,16 @@
 package printscript.linter
 
-import printscript.ast.DeclaredType
-import printscript.ast.Identifier
-import printscript.ast.expression.BinaryExpression
-import printscript.ast.expression.BinaryOperator
-import printscript.ast.expression.Expression
-import printscript.ast.expression.GroupingExpression
-import printscript.ast.expression.IdentifierExpression
-import printscript.ast.expression.NumberLiteralExpression
-import printscript.ast.expression.StringLiteralExpression
-import printscript.ast.expression.StringQuoteStyle
-import printscript.ast.expression.UnaryExpression
-import printscript.ast.expression.UnaryOperator
-import printscript.ast.statement.AssignmentStatement
-import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
-import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
-import java.math.BigDecimal
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
+import printscript.token.Token
+import printscript.token.TokenType
 
 private const val CONSUMED_STATEMENT_COUNT = 1
+private const val SINGLE_DIAGNOSTIC = 1
 private const val FIRST_LINE = 1
 private const val FIRST_COLUMN = 1
 private const val FIRST_OFFSET = 0L
@@ -36,83 +21,96 @@ internal val anySpan: SourceSpan = SourceSpan(
 )
 
 // --------------------------------------------------------------------
-// Construcción del AST
+// Vocabulario propio del motor
+//
+// El núcleo no conoce ninguna versión del lenguaje: sus pruebas tampoco.
 // --------------------------------------------------------------------
 
-internal fun name(value: String): Identifier {
-    return Identifier(
-        value = value,
-        span = anySpan,
+internal data class TestStatement(
+    val name: String,
+    override val span: SourceSpan = anySpan,
+) : Statement
+
+internal data class TestDiagnostic(
+    val label: String,
+    override val span: SourceSpan = anySpan,
+) : Diagnostic
+
+internal data object TestTokenType : TokenType
+
+internal fun unexpectedTokenError(): ParseError {
+    return ParseError.UnexpectedToken(
+        expected = setOf(TestTokenType),
+        actual = Token(
+            type = TestTokenType,
+            lexeme = "",
+            span = anySpan,
+        ),
     )
 }
 
-internal fun number(value: String): Expression {
-    return NumberLiteralExpression(
-        value = BigDecimal(value),
-        span = anySpan,
-    )
+// --------------------------------------------------------------------
+// Reglas de prueba
+// --------------------------------------------------------------------
+
+/**
+ * Observa las sentencias que nombra, tantas veces como se le pida.
+ */
+internal class NameReportingRule(
+    private val label: String,
+    private val reportedNames: Set<String>,
+    private val reportCount: Int = SINGLE_DIAGNOSTIC,
+) : StatelessLintRule() {
+
+    protected override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
+        return statement
+            .takeIf { candidate -> nameOf(candidate) in reportedNames }
+            ?.let { reported -> diagnosticsFor(reported) }
+            ?: emptyList()
+    }
+
+    private fun diagnosticsFor(statement: Statement): List<Diagnostic> {
+        return List(reportCount) {
+            TestDiagnostic(
+                label = label,
+                span = statement.span,
+            )
+        }
+    }
 }
 
-internal fun text(value: String): Expression {
-    return StringLiteralExpression(
-        value = value,
-        quoteStyle = StringQuoteStyle.DOUBLE,
-        span = anySpan,
-    )
+/**
+ * Observa toda repetición de un nombre.
+ *
+ * Solo puede hacerlo acordándose de lo ya leído, así que ejercita la
+ * regla con memoria: cada inspección devuelve su sucesora con un nombre
+ * más.
+ */
+internal class RepeatedNameRule(
+    private val seenNames: Set<String>,
+) : LintRule {
+
+    constructor() : this(seenNames = emptySet())
+
+    override fun inspect(statement: Statement): RuleInspection {
+        val name = nameOf(statement)
+
+        return RuleInspection(
+            diagnostics = repetitionsOf(name, statement),
+            resultingRule = RepeatedNameRule(seenNames = seenNames + name),
+        )
+    }
+
+    private fun repetitionsOf(name: String, statement: Statement): List<Diagnostic> {
+        return name
+            .takeIf { candidate -> candidate in seenNames }
+            ?.let { repeated -> listOf(TestDiagnostic(label = repeated, span = statement.span)) }
+            ?: emptyList()
+    }
 }
 
-internal fun variable(value: String): Expression {
-    return IdentifierExpression(
-        identifier = name(value),
-    )
-}
-
-internal fun sum(left: Expression, right: Expression): Expression {
-    return BinaryExpression(
-        left = left,
-        operator = BinaryOperator.ADD,
-        operatorSpan = anySpan,
-        right = right,
-    )
-}
-
-internal fun negated(operand: Expression): Expression {
-    return UnaryExpression(
-        operator = UnaryOperator.MINUS,
-        operatorSpan = anySpan,
-        operand = operand,
-    )
-}
-
-internal fun grouped(expression: Expression): Expression {
-    return GroupingExpression(
-        expression = expression,
-        span = anySpan,
-    )
-}
-
-internal fun declare(variableName: String, type: DeclaredType, initializer: Expression?): Statement {
-    return VariableDeclarationStatement(
-        identifier = name(variableName),
-        declaredType = type,
-        initializer = initializer,
-        span = anySpan,
-    )
-}
-
-internal fun assign(variableName: String, expression: Expression): Statement {
-    return AssignmentStatement(
-        target = name(variableName),
-        expression = expression,
-        span = anySpan,
-    )
-}
-
-internal fun printOf(argument: Expression): Statement {
-    return PrintlnStatement(
-        argument = argument,
-        span = anySpan,
-    )
+private fun nameOf(statement: Statement): String {
+    return (statement as TestStatement).name
 }
 
 // --------------------------------------------------------------------
@@ -196,24 +194,9 @@ private class ReadCounter {
 // Construcción del sujeto bajo prueba
 // --------------------------------------------------------------------
 
-/**
- * La política de `println` de PrintScript 1.0: variable o literal.
- */
-internal fun printlnArgumentRule(): RuleConfiguration {
-    return RuleConfiguration.PrintlnArgument(
-        acceptanceByKind = mapOf(
-            ExpressionKind.LITERAL to ArgumentAcceptance.ACCEPTED,
-            ExpressionKind.VARIABLE to ArgumentAcceptance.ACCEPTED,
-            ExpressionKind.COMPOSED to ArgumentAcceptance.REJECTED,
-        ),
-    )
-}
-
-internal fun linterWith(vararg rules: RuleConfiguration): Linter {
-    return PrintScriptLinterFactory.createV1(
-        configuration = LinterConfiguration(
-            rules = rules.toList(),
-        ),
+internal fun statementsNamed(vararg names: String): StatementSource {
+    return ListStatementSource(
+        statements = names.map { name -> TestStatement(name) },
     )
 }
 
@@ -236,30 +219,6 @@ private fun continuationOf(result: DiagnosticReadResult): DiagnosticReadResult? 
     }
 }
 
-internal fun diagnosticsOf(linter: Linter, vararg statements: Statement): List<Diagnostic> {
-    return linter.lint(
-        source = ListStatementSource(statements.toList()),
-    ).readAll()
-}
-
-// --------------------------------------------------------------------
-// Aserciones sobre resultados
-// --------------------------------------------------------------------
-
-internal fun List<Diagnostic>.assertNoDiagnostics() {
-    assertEquals(
-        expected = emptyList(),
-        actual = this,
-    )
-}
-
-internal fun List<Diagnostic>.assertNamingViolations(vararg expectedNames: String) {
-    assertEquals(
-        expected = expectedNames.toList(),
-        actual = map { diagnostic ->
-            assertIs<Diagnostic.NamingConventionViolation>(diagnostic)
-                .identifier
-                .value
-        },
-    )
+internal fun List<Diagnostic>.labels(): List<String> {
+    return map { diagnostic -> (diagnostic as TestDiagnostic).label }
 }

@@ -1,22 +1,23 @@
-package printscript.linter
+package printscript.v1.linter
 
 import printscript.ast.DeclaredType
+import printscript.linter.Linter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-class IdentifierNamingRuleTest {
+class PrintScriptV1IdentifierNamingRuleTest {
 
-    private fun linterFor(convention: NamingConvention): Linter {
+    private fun linterFor(convention: PrintScriptV1NamingConvention): Linter {
         return linterWith(
-            RuleConfiguration.IdentifierNaming(convention),
+            PrintScriptV1RuleConfiguration.IdentifierNaming(convention),
         )
     }
 
     @Test
     fun `accepts a declaration written in camel case`() {
         // given
-        val linter = linterFor(NamingConvention.CAMEL_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.CAMEL_CASE)
         val declaration = declare(
             variableName = "myVariable",
             type = DeclaredType.NUMBER,
@@ -33,7 +34,7 @@ class IdentifierNamingRuleTest {
     @Test
     fun `reports a snake case declaration when camel case is expected`() {
         // given
-        val linter = linterFor(NamingConvention.CAMEL_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.CAMEL_CASE)
         val declaration = declare(
             variableName = "my_variable",
             type = DeclaredType.NUMBER,
@@ -50,7 +51,7 @@ class IdentifierNamingRuleTest {
     @Test
     fun `accepts a declaration written in snake case`() {
         // given
-        val linter = linterFor(NamingConvention.SNAKE_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.SNAKE_CASE)
         val declaration = declare(
             variableName = "my_variable",
             type = DeclaredType.NUMBER,
@@ -67,7 +68,7 @@ class IdentifierNamingRuleTest {
     @Test
     fun `reports a camel case declaration when snake case is expected`() {
         // given
-        val linter = linterFor(NamingConvention.SNAKE_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.SNAKE_CASE)
         val declaration = declare(
             variableName = "myVariable",
             type = DeclaredType.NUMBER,
@@ -84,7 +85,7 @@ class IdentifierNamingRuleTest {
     @Test
     fun `reports every offending declaration in order`() {
         // given
-        val linter = linterFor(NamingConvention.CAMEL_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.CAMEL_CASE)
 
         // when
         val diagnostics = diagnosticsOf(
@@ -105,7 +106,7 @@ class IdentifierNamingRuleTest {
     @Test
     fun `ignores identifiers outside their declaration`() {
         // given
-        val linter = linterFor(NamingConvention.CAMEL_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.CAMEL_CASE)
 
         // when
         val diagnostics = diagnosticsOf(
@@ -121,7 +122,7 @@ class IdentifierNamingRuleTest {
     @Test
     fun `reports which convention was expected`() {
         // given
-        val linter = linterFor(NamingConvention.SNAKE_CASE)
+        val linter = linterFor(PrintScriptV1NamingConvention.SNAKE_CASE)
         val declaration = declare(
             variableName = "myVariable",
             type = DeclaredType.NUMBER,
@@ -132,12 +133,12 @@ class IdentifierNamingRuleTest {
         val diagnostics = diagnosticsOf(linter, declaration)
 
         // then
-        val violation = assertIs<Diagnostic.NamingConventionViolation>(
+        val violation = assertIs<PrintScriptV1Diagnostic.NamingConventionViolation>(
             diagnostics.single(),
         )
 
         assertEquals(
-            expected = NamingConvention.SNAKE_CASE,
+            expected = PrintScriptV1NamingConvention.SNAKE_CASE,
             actual = violation.expectedConvention,
         )
     }
