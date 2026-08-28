@@ -1,25 +1,16 @@
 package printscript.linter
 
-import printscript.ast.Identifier
-import printscript.ast.expression.Expression
 import printscript.model.source.SourceSpan
 
-public sealed interface Diagnostic {
+/**
+ * Contrato de diagnóstico. Cada regla aporta los suyos: el motor los
+ * transporta y nunca los interpreta.
+ *
+ * A diferencia de LexicalError o SemanticError, acá el núcleo no trae
+ * ningún caso propio: el linter no despacha, hace fan-out, así que no
+ * existe la sentencia que ninguna regla supo mirar.
+ */
+public interface Diagnostic {
 
     public val span: SourceSpan
-
-    public data class NamingConventionViolation(
-        public val identifier: Identifier,
-        public val expectedConvention: NamingConvention,
-    ) : Diagnostic {
-
-        override val span: SourceSpan = identifier.span
-    }
-
-    public data class UnsupportedPrintlnArgument(
-        public val argument: Expression,
-    ) : Diagnostic {
-
-        override val span: SourceSpan = argument.span
-    }
 }

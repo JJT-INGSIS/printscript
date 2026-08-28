@@ -1,4 +1,4 @@
-package printscript.linter
+package printscript.v1.linter
 
 import printscript.ast.expression.BinaryExpression
 import printscript.ast.expression.Expression
@@ -12,7 +12,7 @@ import printscript.ast.expression.UnaryExpression
  * Clasifica una expresión sin decidir nada sobre ella: qué se acepta y
  * qué no es política, y vive en la configuración.
  */
-public enum class ExpressionKind {
+public enum class PrintScriptV1ExpressionKind {
     LITERAL,
     VARIABLE,
     COMPOSED,
@@ -20,7 +20,7 @@ public enum class ExpressionKind {
 
     public companion object {
 
-        public fun of(expression: Expression): ExpressionKind {
+        public fun of(expression: Expression): PrintScriptV1ExpressionKind {
             return when (expression) {
                 is NumberLiteralExpression -> LITERAL
 
