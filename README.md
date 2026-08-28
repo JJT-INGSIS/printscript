@@ -57,7 +57,7 @@ resultados de dominio y no mediante excepciones.
 | `statement-source` | AST, errores sintácticos y contrato entre parser e interpreter. |
 | `parser` | Motor lazy de parsing y contratos públicos para estrategias externas. |
 | `interpreter` | Evaluación del AST, validaciones semánticas y salida del programa. |
-| `formatter` | Reescritura del código con un estilo uniforme y configurable. |
+| `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
 | `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript V1. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
 
@@ -68,6 +68,7 @@ pública:
 ```kotlin
 PrintScriptV1LexerFactory.create()
 PrintScriptV1ParserFactory.create()
+PrintScriptV1FormatterFactory.create()
 PrintScriptInterpreterFactory.createV1(output)
 ```
 
@@ -95,6 +96,19 @@ parsers concretos de V1, no al motor.
 
 Cada operación devuelve un nuevo contexto de parsing. Ante un error se entrega un
 resultado terminal y el consumidor debe detener la lectura.
+
+### Formatter
+
+El formatter core consume `StatementSource` de forma lazy y coordina estrategias
+públicas de formateo. El primer `StatementFormatter` compatible tiene prioridad,
+por lo que un consumidor puede extender o reemplazar reglas sin modificar el
+motor. `StatementSeparationPolicy` decide solamente qué texto insertar antes de
+cada sentencia.
+
+La configuración de espacios, los formatters de declaraciones, asignaciones,
+`println` y expresiones, y la política concreta de separación pertenecen a
+`printscript-v1`. La jerarquía `Expression` permanece sellada y no forma parte de
+los contratos extensibles del formatter core.
 
 ### Interpreter
 

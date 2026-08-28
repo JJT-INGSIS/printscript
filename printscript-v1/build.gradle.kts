@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(project(":lexer"))
     api(project(":parser"))
+    api(project(":formatter"))
 
     api(project(":token-source"))
     api(project(":statement-source"))

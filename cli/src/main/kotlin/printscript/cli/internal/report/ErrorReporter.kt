@@ -94,6 +94,9 @@ internal class ErrorReporter {
 
             is FormattingError.UnsupportedStatement ->
                 format("esta sentencia no se puede formatear en esta versión", error.span)
+
+            else ->
+                format("error de formateo desconocido", error.span)
         }
     }
 

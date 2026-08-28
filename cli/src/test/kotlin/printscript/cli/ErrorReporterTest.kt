@@ -4,6 +4,7 @@ import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.UnaryOperator
 import printscript.cli.internal.report.ErrorReporter
+import printscript.formatter.FormattingError
 import printscript.interpreter.SemanticError
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
@@ -206,6 +207,14 @@ class ErrorReporterTest {
         }
     }
 
+    @Test
+    fun `describes formatting errors implemented by extensions`() {
+        val message = reporter.describe(ExtensionFormattingError(anySpan))
+
+        assertContains(message, "error de formateo desconocido")
+        assertContains(message, "línea 3")
+    }
+
     private object ExtensionTokenType : TokenType {
 
         override fun toString(): String {
@@ -216,4 +225,8 @@ class ErrorReporterTest {
     private data class ExtensionParseError(
         override val span: SourceSpan,
     ) : ParseError
+
+    private data class ExtensionFormattingError(
+        override val span: SourceSpan,
+    ) : FormattingError
 }

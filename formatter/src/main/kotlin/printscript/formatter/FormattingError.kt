@@ -3,7 +3,11 @@ package printscript.formatter
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 
-public sealed interface FormattingError {
+/**
+ * A formatting error. This contract is open so external formatter strategies
+ * can report their own domain failures.
+ */
+public interface FormattingError {
 
     public val span: SourceSpan
 
