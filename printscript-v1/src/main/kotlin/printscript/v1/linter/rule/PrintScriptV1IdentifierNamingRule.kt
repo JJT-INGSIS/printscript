@@ -1,4 +1,4 @@
-package printscript.linter.internal.rule
+package printscript.v1.linter.rule
 
 import printscript.ast.Identifier
 import printscript.ast.statement.AssignmentStatement
@@ -6,13 +6,20 @@ import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
-import printscript.linter.NamingConvention
+import printscript.linter.StatelessLintRule
+import printscript.v1.linter.PrintScriptV1Diagnostic
+import printscript.v1.linter.PrintScriptV1NamingConvention
 
-internal class IdentifierNamingRule(
-    private val convention: NamingConvention,
-) : LintRule {
+/**
+ * Exige que los nombres declarados sigan una convención.
+ *
+ * No recuerda nada entre sentencias: alcanza con mirar la declaración.
+ */
+public class PrintScriptV1IdentifierNamingRule(
+    private val convention: PrintScriptV1NamingConvention,
+) : StatelessLintRule() {
 
-    override fun inspect(statement: Statement): List<Diagnostic> {
+    protected override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return declaredIdentifiersOf(statement)
             .filterNot { identifier -> convention.matches(identifier.value) }
             .map { identifier -> violationOf(identifier) }
@@ -35,7 +42,7 @@ internal class IdentifierNamingRule(
     }
 
     private fun violationOf(identifier: Identifier): Diagnostic {
-        return Diagnostic.NamingConventionViolation(
+        return PrintScriptV1Diagnostic.NamingConventionViolation(
             identifier = identifier,
             expectedConvention = convention,
         )

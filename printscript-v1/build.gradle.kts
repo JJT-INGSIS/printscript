@@ -7,6 +7,7 @@ dependencies {
     api(project(":lexer"))
     api(project(":parser"))
     api(project(":formatter"))
+    api(project(":linter"))
 
     api(project(":token-source"))
     api(project(":statement-source"))

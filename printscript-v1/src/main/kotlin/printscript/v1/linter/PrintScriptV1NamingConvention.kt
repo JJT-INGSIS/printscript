@@ -1,6 +1,9 @@
-package printscript.linter
+package printscript.v1.linter
 
-public enum class NamingConvention(
+/**
+ * Una convención es su patrón: no hay tabla al lado que las asocie.
+ */
+public enum class PrintScriptV1NamingConvention(
     private val pattern: Regex,
 ) {
     CAMEL_CASE(Regex("[a-z]+(?:[A-Z][a-z0-9]*)*")),
