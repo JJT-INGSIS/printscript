@@ -1,9 +1,9 @@
-package printscript.formatter.internal.separation
+package printscript.v1.formatter.internal.separation
 
 import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.Statement
-
-private const val LINE_BREAK = "\n"
+import printscript.formatter.StatementSeparationPolicy
+import printscript.v1.formatter.internal.LINE_BREAK
 
 internal class PrintScriptV1StatementSeparationPolicy(
     private val defaultLineBreakCountBetweenStatements: UInt,
@@ -15,10 +15,9 @@ internal class PrintScriptV1StatementSeparationPolicy(
             return ""
         }
 
-        val lineBreakCount =
-            lineBreakCountBeforeStatement(statement)
-
-        return LINE_BREAK.repeat(lineBreakCount.toInt())
+        return LINE_BREAK.repeat(
+            lineBreakCountBeforeStatement(statement).toInt(),
+        )
     }
 
     private fun lineBreakCountBeforeStatement(statement: Statement): UInt {

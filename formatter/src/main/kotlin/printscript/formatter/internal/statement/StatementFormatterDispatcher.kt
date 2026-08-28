@@ -1,6 +1,9 @@
 package printscript.formatter.internal.statement
 
 import printscript.ast.statement.Statement
+import printscript.formatter.FormattingError
+import printscript.formatter.StatementFormatter
+import printscript.formatter.StatementFormattingResult
 
 internal class StatementFormatterDispatcher(
     statementFormatters: List<StatementFormatter>,
@@ -16,6 +19,10 @@ internal class StatementFormatterDispatcher(
             }
         }
 
-        return createUnsupportedStatementFailure(statement)
+        return StatementFormattingResult.Failure(
+            error = FormattingError.UnsupportedStatement(
+                span = statement.span,
+            ),
+        )
     }
 }

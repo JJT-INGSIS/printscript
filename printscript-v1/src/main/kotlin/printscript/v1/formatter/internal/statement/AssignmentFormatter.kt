@@ -1,8 +1,13 @@
-package printscript.formatter.internal.statement
+package printscript.v1.formatter.internal.statement
 
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.Statement
-import printscript.formatter.internal.expression.ExpressionFormatter
+import printscript.formatter.StatementFormatter
+import printscript.formatter.StatementFormattingResult
+import printscript.v1.formatter.internal.ASSIGNMENT_OPERATOR
+import printscript.v1.formatter.internal.SEMICOLON
+import printscript.v1.formatter.internal.expression.ExpressionFormatter
+import printscript.v1.formatter.internal.spaceIfEnabled
 
 internal class AssignmentFormatter(
     private val expressionFormatter: ExpressionFormatter,
@@ -15,7 +20,7 @@ internal class AssignmentFormatter(
 
     override fun formatStatement(statement: Statement): StatementFormattingResult {
         if (statement !is AssignmentStatement) {
-            return createUnsupportedStatementFailure(statement)
+            return unsupportedStatementFailure(statement)
         }
 
         return StatementFormattingResult.Success(
@@ -24,23 +29,11 @@ internal class AssignmentFormatter(
     }
 
     private fun formatAssignment(statement: AssignmentStatement): String {
-        val formattedExpression =
-            expressionFormatter.formatExpression(
-                statement.expression,
-            )
-        val equalsOperatorSpacing =
-            spaceIfEnabled(insertSpaceAroundEqualsOperator)
+        val formattedExpression = expressionFormatter.formatExpression(statement.expression)
+        val operatorSpacing = spaceIfEnabled(insertSpaceAroundEqualsOperator)
 
         return statement.target.value +
-            "$equalsOperatorSpacing=" +
-            "$equalsOperatorSpacing$formattedExpression;"
-    }
-
-    private fun spaceIfEnabled(enabled: Boolean): String {
-        return if (enabled) {
-            " "
-        } else {
-            ""
-        }
+            "$operatorSpacing$ASSIGNMENT_OPERATOR" +
+            "$operatorSpacing$formattedExpression$SEMICOLON"
     }
 }

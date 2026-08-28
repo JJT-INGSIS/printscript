@@ -6,16 +6,20 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.formatter.FormattedSource
 import printscript.formatter.FormattedStatementReadResult
 import printscript.formatter.Formatter
-import printscript.formatter.FormatterConfiguration
-import printscript.formatter.PrintScriptFormatterFactory
 import printscript.statement.StatementSource
+import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.PrintScriptV1FormatterFactory
 
 internal class FormattingCommand(
     private val errorReporter: ErrorReporter,
-    private val configuration: FormatterConfiguration =
-        PrintScriptFormatterFactory.defaultV1Configuration(),
-    private val createFormatter: (FormatterConfiguration) -> Formatter =
-        PrintScriptFormatterFactory::createV1,
+    private val configuration: PrintScriptV1FormatterConfiguration =
+        PrintScriptV1FormatterFactory.defaultConfiguration(),
+    private val createFormatter: (PrintScriptV1FormatterConfiguration) -> Formatter =
+        { formatterConfiguration ->
+            PrintScriptV1FormatterFactory.create(
+                configuration = formatterConfiguration,
+            )
+        },
 ) : CliCommand {
 
     override val operationName: String = "formatting"
