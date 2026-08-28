@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    api(project(":interpreter"))
     api(project(":lexer"))
     api(project(":parser"))
     api(project(":formatter"))

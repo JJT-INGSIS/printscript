@@ -13,6 +13,7 @@ import printscript.statement.ParseError
 import printscript.token.LexicalError
 import printscript.token.Token
 import printscript.token.TokenType
+import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
 import printscript.v1.token.PrintScriptV1TokenType
 import java.nio.file.Path
@@ -125,28 +126,28 @@ class ErrorReporterTest {
     @Test
     fun `describes every semantic error with its position`() {
         val errors = listOf(
-            SemanticError.UndeclaredVariable(name = "x", span = anySpan),
-            SemanticError.UninitializedVariable(name = "x", span = anySpan),
-            SemanticError.AlreadyDeclaredVariable(name = "x", span = anySpan),
-            SemanticError.TypeMismatch(
+            PrintScriptV1SemanticError.UndeclaredVariable(name = "x", span = anySpan),
+            PrintScriptV1SemanticError.UninitializedVariable(name = "x", span = anySpan),
+            PrintScriptV1SemanticError.AlreadyDeclaredVariable(name = "x", span = anySpan),
+            PrintScriptV1SemanticError.TypeMismatch(
                 name = "x",
                 expected = DeclaredType.NUMBER,
                 actual = DeclaredType.STRING,
                 span = anySpan,
             ),
-            SemanticError.InvalidBinaryOperands(
+            PrintScriptV1SemanticError.InvalidBinaryOperands(
                 operator = BinaryOperator.SUBTRACT,
                 left = DeclaredType.STRING,
                 right = DeclaredType.STRING,
                 span = anySpan,
             ),
-            SemanticError.InvalidUnaryOperand(
+            PrintScriptV1SemanticError.InvalidUnaryOperand(
                 operator = UnaryOperator.MINUS,
                 operand = DeclaredType.STRING,
                 span = anySpan,
             ),
-            SemanticError.DivisionByZero(span = anySpan),
-            SemanticError.UnsupportedBinaryOperator(
+            PrintScriptV1SemanticError.DivisionByZero(span = anySpan),
+            PrintScriptV1SemanticError.UnsupportedBinaryOperator(
                 operator = BinaryOperator.MULTIPLY,
                 span = anySpan,
             ),
@@ -164,7 +165,7 @@ class ErrorReporterTest {
     @Test
     fun `describes both operand types on a binary mismatch`() {
         val message = reporter.describe(
-            SemanticError.InvalidBinaryOperands(
+            PrintScriptV1SemanticError.InvalidBinaryOperands(
                 operator = BinaryOperator.DIVIDE,
                 left = DeclaredType.STRING,
                 right = DeclaredType.NUMBER,
@@ -182,7 +183,7 @@ class ErrorReporterTest {
 
         for (operator in operators) {
             val message = reporter.describe(
-                SemanticError.InvalidUnaryOperand(
+                PrintScriptV1SemanticError.InvalidUnaryOperand(
                     operator = operator,
                     operand = DeclaredType.STRING,
                     span = anySpan,
@@ -197,7 +198,7 @@ class ErrorReporterTest {
     fun `describes every binary operator`() {
         for (operator in BinaryOperator.entries) {
             val message = reporter.describe(
-                SemanticError.UnsupportedBinaryOperator(
+                PrintScriptV1SemanticError.UnsupportedBinaryOperator(
                     operator = operator,
                     span = anySpan,
                 ),
@@ -205,6 +206,14 @@ class ErrorReporterTest {
 
             assertContains(message, "no está soportado")
         }
+    }
+
+    @Test
+    fun `describes semantic errors implemented by extensions`() {
+        val message = reporter.describe(ExtensionSemanticError(anySpan))
+
+        assertContains(message, "error semántico desconocido")
+        assertContains(message, "línea 3")
     }
 
     @Test
@@ -229,4 +238,8 @@ class ErrorReporterTest {
     private data class ExtensionFormattingError(
         override val span: SourceSpan,
     ) : FormattingError
+
+    private data class ExtensionSemanticError(
+        override val span: SourceSpan,
+    ) : SemanticError
 }

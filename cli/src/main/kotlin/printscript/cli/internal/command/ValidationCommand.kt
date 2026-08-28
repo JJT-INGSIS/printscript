@@ -6,14 +6,15 @@ import printscript.cli.internal.io.Terminal
 import printscript.cli.internal.report.ErrorReporter
 import printscript.interpreter.InterpretationResult
 import printscript.interpreter.Interpreter
-import printscript.interpreter.PrintScriptInterpreterFactory
-import printscript.interpreter.output.ProgramOutput
 import printscript.statement.StatementSource
+import printscript.v1.interpreter.PrintScriptV1InterpreterFactory
+import printscript.v1.interpreter.PrintScriptV1ProgramOutput
 
 internal class ValidationCommand(
     private val errorReporter: ErrorReporter,
-    private val createInterpreter: (ProgramOutput) -> Interpreter =
-        PrintScriptInterpreterFactory::createV1,
+    private val createInterpreter: (PrintScriptV1ProgramOutput) -> Interpreter = { output ->
+        PrintScriptV1InterpreterFactory.create(output)
+    },
 ) : CliCommand {
 
     override val operationName: String = "validation"

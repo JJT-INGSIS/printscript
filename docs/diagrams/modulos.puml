@@ -29,8 +29,12 @@ package "Verificación" {
 package "Etapas del pipeline — implementaciones (internal)" {
   rectangle "**lexer**\n\nLexer\nPrintScriptLexerFactory.createV1()\n--\ninternal: ScanningTokenSource,\nCharacterCursor, TokenScanner*,\nTokenScannerDispatcher" as lexer <<etapa>>
   rectangle "**parser**\n\nParser\nPrintScriptParserFactory.createV1()\n--\ninternal: ParsingStatementSource,\nParsingContext / TokenCursor,\nStatementParser*, ExpressionParser*" as parser <<etapa>>
-  rectangle "**interpreter**\n\nInterpreter, InterpretationResult\nSemanticError, ProgramOutput\nPrintScriptInterpreterFactory.createV1()\n--\ninternal: Environment, RuntimeValue,\nStatementExecutor*, BinaryOperation*" as interpreter <<etapa>>
+  rectangle "**interpreter**\n\nInterpreter, InterpreterFactory\nStatementExecutor<S>, ExecutionResult\nSemanticError\n--\ninternal: ConfigurableInterpreter,\nStatementExecutorDispatcher" as interpreter <<etapa>>
   rectangle "**linter**\n\nLinter, DiagnosticSource\nDiagnostic, LinterConfiguration\nPrintScriptLinterFactory.createV1()\n--\ninternal: LintingSource,\nDiagnosticSearch, LintRule*, RuleSet" as linter <<etapa>>
+}
+
+package "Implementación de lenguaje" {
+  rectangle "**printscript-v1 / interpreter**\n\nPrintScriptV1InterpreterFactory\nPrintScriptV1Environment\nPrintScriptV1ExpressionEvaluator\nPrintScriptV1ProgramOutput\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError\n--\ninternal: executors, default evaluator,\nBinaryOperation" as interpreterv1 <<etapa>>
 }
 
 package "Contratos y modelo — API pública compartida" {
@@ -51,6 +55,8 @@ parser       -[#2E86C1,bold]-> tokensource    : api
 parser       -[#2E86C1,bold]-> statementsource: api
 interpreter  -[#2E86C1,bold]-> statementsource: api
 interpreter  -[#2E86C1,bold]-> common         : api
+interpreterv1 -[#2E86C1,bold]-> interpreter   : api
+interpreterv1 -[#2E86C1,bold]-> statementsource: api
 linter       -[#2E86C1,bold]-> statementsource: api
 linter       -[#2E86C1,bold]-> common         : api
 statementsource -[#2E86C1,bold]-> tokensource : api
@@ -65,6 +71,7 @@ parser  .[#7F8C8D].> common : implementation
 tests .[#17A589].> lexer       : testImplementation
 tests .[#17A589].> parser      : testImplementation
 tests .[#17A589].> interpreter : testImplementation
+tests .[#17A589].> interpreterv1 : testImplementation
 
 note right of parser
   **Las etapas no se conocen entre sí.**

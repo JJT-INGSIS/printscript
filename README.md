@@ -56,7 +56,7 @@ resultados de dominio y no mediante excepciones.
 | `lexer` | Motor lazy de tokenización y contratos públicos para scanners externos. |
 | `statement-source` | AST, errores sintácticos y contrato entre parser e interpreter. |
 | `parser` | Motor lazy de parsing y contratos públicos para estrategias externas. |
-| `interpreter` | Evaluación del AST, validaciones semánticas y salida del programa. |
+| `interpreter` | Motor de interpretación y contratos públicos para executors externos. |
 | `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
 | `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript V1. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
@@ -69,7 +69,7 @@ pública:
 PrintScriptV1LexerFactory.create()
 PrintScriptV1ParserFactory.create()
 PrintScriptV1FormatterFactory.create()
-PrintScriptInterpreterFactory.createV1(output)
+PrintScriptV1InterpreterFactory.create(output)
 ```
 
 ## Decisiones de diseño
@@ -112,12 +112,18 @@ los contratos extensibles del formatter core.
 
 ### Interpreter
 
-El interpreter despacha cada tipo de sentencia a su executor correspondiente. El
-entorno de variables es inmutable: cada ejecución exitosa produce un entorno
-nuevo que se utiliza para la siguiente sentencia.
+El interpreter core consume `StatementSource` de forma lazy y coordina
+`StatementExecutor<S>` públicos. El estado es genérico únicamente en este punto
+de variación: todos los executors configurados deben aceptar y producir el mismo
+tipo, por lo que el compilador impide mezclar estrategias de lenguajes distintos.
+El `Interpreter` que usa la CLI permanece no genérico.
 
-La salida se abstrae mediante `ProgramOutput`, por lo que el módulo no depende de
-la consola ni de archivos.
+El dispatcher conserva el orden configurado y da prioridad al primer executor
+compatible. Los executors, el environment inmutable, los valores runtime, la
+evaluación de expresiones, los errores semánticos concretos y la salida de
+`println` pertenecen a `printscript-v1`. La salida se abstrae mediante
+`PrintScriptV1ProgramOutput`, por lo que tampoco depende de la consola ni de
+archivos.
 
 ## Gramática de PrintScript 1.0
 

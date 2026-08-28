@@ -6,6 +6,7 @@ import printscript.model.source.SourceSpan
 import printscript.source.SourceAccessError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
+import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
 
 internal class ErrorReporter {
@@ -52,37 +53,40 @@ internal class ErrorReporter {
 
     fun describe(error: SemanticError): String {
         val description = when (error) {
-            is SemanticError.UndeclaredVariable ->
+            is PrintScriptV1SemanticError.UndeclaredVariable ->
                 "la variable '${error.name}' no fue declarada"
 
-            is SemanticError.UninitializedVariable ->
+            is PrintScriptV1SemanticError.UninitializedVariable ->
                 "la variable '${error.name}' se usa sin haber recibido un valor"
 
-            is SemanticError.AlreadyDeclaredVariable ->
+            is PrintScriptV1SemanticError.AlreadyDeclaredVariable ->
                 "la variable '${error.name}' ya fue declarada"
 
-            is SemanticError.TypeMismatch ->
+            is PrintScriptV1SemanticError.TypeMismatch ->
                 "'${error.name}' es de tipo ${PrintScriptWording.describe(error.expected)} " +
                     "y se le intentó asignar un ${PrintScriptWording.describe(error.actual)}"
 
-            is SemanticError.InvalidBinaryOperands ->
+            is PrintScriptV1SemanticError.InvalidBinaryOperands ->
                 "el operador '${PrintScriptWording.describe(error.operator)}' no se puede " +
                     "aplicar entre ${PrintScriptWording.describe(error.left)} " +
                     "y ${PrintScriptWording.describe(error.right)}"
 
-            is SemanticError.InvalidUnaryOperand ->
+            is PrintScriptV1SemanticError.InvalidUnaryOperand ->
                 "el operador '${PrintScriptWording.describe(error.operator)}' no se puede " +
                     "aplicar a un ${PrintScriptWording.describe(error.operand)}"
 
-            is SemanticError.DivisionByZero ->
+            is PrintScriptV1SemanticError.DivisionByZero ->
                 "división por cero"
 
-            is SemanticError.UnsupportedBinaryOperator ->
+            is PrintScriptV1SemanticError.UnsupportedBinaryOperator ->
                 "el operador '${PrintScriptWording.describe(error.operator)}' no está " +
                     "soportado en esta versión"
 
             is SemanticError.UnsupportedStatement ->
                 "esta sentencia no está soportada en esta versión"
+
+            else ->
+                "error semántico desconocido"
         }
 
         return format(description, error.span)
