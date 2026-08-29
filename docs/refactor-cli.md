@@ -1,7 +1,7 @@
 # Refactor del CLI — de parseo propio a librería
 
 > Documento para revisión del equipo.
-> Estado: **Fase 1 terminada** (rama `refactor/cli`). Fases 2 a 7 pendientes de aprobación.
+> Estado: **refactor completo** en la rama `refactor/cli`. Falta aprobación de las decisiones de la sección 8.
 
 ---
 
@@ -247,11 +247,15 @@ Con subcomandos sería: `printscript <operación> <archivo> [--version 1.0] [--c
 
 Mientras tanto, el plan aísla la sintaxis: los nombres de subcomandos, los flags y el orden viven **solo** en las cuatro clases `*Command` y en la clase base. Cambiarla después cuesta esos archivos y nada más.
 
-### ④ Los códigos de salida
+### ④ Los códigos de salida — resuelto, conservamos tres de cuatro
 
-Tenemos cuatro propios: `SUCCESS(0)`, `SOURCE_ERROR(1)`, `USAGE_ERROR(2)`, `FINDINGS(3)`.
+Teníamos cuatro propios: `SUCCESS(0)`, `SOURCE_ERROR(1)`, `USAGE_ERROR(2)`, `FINDINGS(3)`.
 
-Clikt tiene sus propias convenciones (`UsageError` sale con 1). **Propongo mantener los nuestros**, porque `FINDINGS(3)` distingue "el linter encontró problemas" de "el archivo está roto", y eso es información real que un CI podría usar.
+**`USAGE_ERROR(2)` se perdió.** Clikt reporta los errores de uso él mismo, y su `UsageError` sale con `statusCode = 1` por defecto. Desde que se borró `CliApplication`, nadie produce el 2 — quedó como constante muerta y la sacamos del enum.
+
+Los otros tres se conservan. `FINDINGS(3)` era el importante: distingue "el linter encontró problemas" de "el archivo está roto", y eso es información real que un CI puede usar.
+
+Es el ejemplo más concreto de lo que dice la sección 7: **heredás el vocabulario de la librería**. Si el equipo quiere recuperar el 2, hay que atrapar `UsageError` y relanzarlo con otro código — cuesta otra excepción y otra clase. Mi recomendación es no hacerlo.
 
 ### ⑤ La validación del archivo — propongo rechazar lo que ofrece Clikt
 
@@ -323,16 +327,17 @@ Funciona, pero si algún día `statement-source` cambia esa línea a `implementa
 
 **Arreglo:** agregar `api(project(":common"))`. Queda igual que `linter`, que ya lo tiene bien.
 
-### ⑤ Los diagramas `.puml` están incompletos y desactualizados
+### ⑤ Los diagramas `.puml` — resuelto
 
-Los diagramas de `docs/diagrams/` están muy bien hechos, pero:
+Los diagramas de `docs/diagrams/` estaban muy bien hechos pero les faltaban cosas. Los actualicé los dos:
 
-- **`cli` no aparece en ninguno de los dos.**
-- **`formatter` tampoco.**
-- `modulos.puml` menciona `PrintScriptLexerFactory.createV1()` y `PrintScriptParserFactory.createV1()`, **que están borradas** desde el refactor de motores.
-- `estructura.puml` muestra `SourceReaderFactory.fromString` sin el `fromPath` que agregamos.
+- Se agregó **`cli`** como paquete propio, con sus flechas `implementation` y una nota explicando que Clikt queda contenido ahí.
+- Se agregó **`formatter`**, que no aparecía en ninguno.
+- Se corrigieron `PrintScriptLexerFactory.createV1()` y `PrintScriptParserFactory.createV1()`, **que están borradas** desde el refactor de motores, por `LexerFactory` / `ParserFactory` y las factories de `printscript-v1`.
+- Se agregó `SourceReaderFactory.fromPath` y `SourceAccessError`.
+- En `estructura.puml` se agregó la relación *"V1 configura cada motor"*, que es lo que explica el patrón de todo el proyecto.
 
-Me ofrezco a agregar `cli` a los dos cuando termine el refactor.
+**Revísenlos** — toqué archivos que escribió otro, y puede que haya interpretado mal alguna intención del diseño original.
 
 ---
 

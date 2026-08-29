@@ -24,6 +24,48 @@ Después de clonar el repositorio, una sola vez:
 Eso instala el hook de pre-commit versionado en `.githooks/`. Ver
 [Herramientas de desarrollo](#herramientas-de-desarrollo).
 
+## Uso
+
+```bash
+./gradlew :cli:installDist
+```
+
+El ejecutable queda en `cli/build/install/printscript/bin/printscript`.
+
+```bash
+printscript validation ejemplo.ps   # ¿el archivo es válido?
+printscript execution  ejemplo.ps   # correlo
+printscript formatting ejemplo.ps   # reescribilo con el formato configurado
+printscript analyzing  ejemplo.ps   # reportá problemas de estilo
+```
+
+Las cuatro operaciones aceptan las mismas opciones:
+
+| Opción | Qué hace |
+|---|---|
+| `--version` | Versión del lenguaje. Hoy solo `1.0`, que es el default. |
+| `--config` | Archivo de configuración. Se acepta pero **todavía no tiene efecto**. |
+| `--help` | Ayuda. Disponible también por operación: `printscript formatting --help`. |
+
+### Códigos de salida
+
+| Código | Significado |
+|---|---|
+| `0` | La operación terminó bien. |
+| `1` | El archivo no se pudo leer, o tiene un error léxico, sintáctico o semántico. También los errores de uso. |
+| `3` | El análisis encontró problemas de estilo. El archivo es válido. |
+
+El `3` está separado del `1` a propósito: permite que un CI distinga *"el código
+está roto"* de *"el código funciona pero no respeta las convenciones"*.
+
+### Dependencias externas
+
+`cli` es el único módulo que depende de una librería de terceros:
+[Clikt 5.1.0](https://github.com/ajalt/clikt), que resuelve el parseo de
+argumentos, la generación del `--help` y el autocompletado de shell. Entra como
+`implementation`, así que no se propaga: los módulos motor siguen sin
+dependencias externas.
+
 ## Pipeline
 
 ```text
@@ -32,15 +74,17 @@ código fuente
     ▼
 SourceReader → Lexer → TokenSource → Parser → StatementSource → Interpreter → ProgramOutput
                                                              ├→ Formatter
-                                                             └→ Analyzer
+                                                             └→ Linter
 ```
 
 - `SourceReader` entrega el código en bloques.
 - `TokenSource` produce un token por solicitud.
 - `StatementSource` produce una sentencia por solicitud.
 - El interpreter consume y ejecuta las sentencias en orden.
-- El formatter y el analyzer consumen la misma `StatementSource`: son
+- El formatter y el linter consumen la misma `StatementSource`: son
   consumidores alternativos del mismo pipeline, no etapas nuevas.
+- La CLI arma el pipeline, elige el consumidor según la operación pedida y
+  traduce el resultado a un código de salida.
 
 Los resultados exitosos transportan la fuente restante en lugar de modificar la
 fuente actual. Los errores léxicos, sintácticos y semánticos se representan como
@@ -58,7 +102,9 @@ resultados de dominio y no mediante excepciones.
 | `parser` | Motor lazy de parsing y contratos públicos para estrategias externas. |
 | `interpreter` | Motor de interpretación y contratos públicos para executors externos. |
 | `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
+| `linter` | Motor lazy de análisis de estilo y contratos públicos para reglas externas. |
 | `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript V1. |
+| `cli` | Aplicación de línea de comandos. Único módulo con dependencias externas. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
 
 Los módulos se conectan mediante interfaces pequeñas. Las implementaciones
@@ -124,6 +170,32 @@ evaluación de expresiones, los errores semánticos concretos y la salida de
 `println` pertenecen a `printscript-v1`. La salida se abstrae mediante
 `PrintScriptV1ProgramOutput`, por lo que tampoco depende de la consola ni de
 archivos.
+
+### CLI
+
+La CLI está partida en dos capas. El **dominio** —`SourceOperation` y sus cuatro
+implementaciones, `SourceOperationRunner`, los reporters— recibe sentencias y
+una terminal, y devuelve un `OperationOutcome`; no conoce `argv`, ni los flags,
+ni la consola. El **adaptador** es todo Clikt: `SourceFileOperationCommand`
+declara el argumento y las opciones compartidas, y cada subcomando concreto solo
+aporta qué operación montar (Template Method).
+
+Esa frontera es la que permite que el parseo de argumentos sea una librería en
+lugar de código propio, y que las cuatro operaciones se testeen sin línea de
+comandos.
+
+Dos decisiones deliberadas en contra de lo que ofrece la librería:
+
+- **No usamos la validación de archivos de Clikt** (`path(mustExist = true)`).
+  La existencia y los permisos los sigue verificando `SourceReaderFactory`, para
+  conservar los mensajes de error en castellano y con la posición en el código.
+- **El único `throw` del módulo vive en `ProgramTermination`.** Clikt señaliza
+  el código de salida lanzando `ProgramResult`: es su protocolo, no manejo de
+  errores. El dominio sigue devolviendo resultados y nunca lanza ni atrapa.
+
+`Terminal` abstrae la salida: `EchoTerminal` la manda a Clikt en producción y
+`DiscardedProgramOutput` la descarta cuando `validation` corre el programa sin
+mostrar lo que imprimiría.
 
 ## Gramática de PrintScript 1.0
 
