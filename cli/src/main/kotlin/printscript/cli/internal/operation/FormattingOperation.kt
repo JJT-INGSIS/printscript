@@ -1,6 +1,5 @@
-package printscript.cli.internal.command
+package printscript.cli.internal.operation
 
-import printscript.cli.internal.arguments.CliArguments
 import printscript.cli.internal.io.Terminal
 import printscript.cli.internal.report.ErrorReporter
 import printscript.formatter.FormattedSource
@@ -10,7 +9,7 @@ import printscript.statement.StatementSource
 import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
 import printscript.v1.formatter.PrintScriptV1FormatterFactory
 
-internal class FormattingCommand(
+internal class FormattingOperation(
     private val errorReporter: ErrorReporter,
     private val configuration: PrintScriptV1FormatterConfiguration =
         PrintScriptV1FormatterFactory.defaultConfiguration(),
@@ -20,15 +19,9 @@ internal class FormattingCommand(
                 configuration = formatterConfiguration,
             )
         },
-) : CliCommand {
+) : SourceOperation {
 
-    override val operationName: String = "formatting"
-
-    override fun runOperation(
-        arguments: CliArguments,
-        statements: StatementSource,
-        terminal: Terminal,
-    ): CommandOutcome {
+    override fun outcomeFor(statements: StatementSource, terminal: Terminal): OperationOutcome {
         return writeRemainingFormattedStatements(
             source = createFormatter(configuration).format(statements),
             terminal = terminal,
@@ -38,12 +31,12 @@ internal class FormattingCommand(
     private tailrec fun writeRemainingFormattedStatements(
         source: FormattedSource,
         terminal: Terminal,
-    ): CommandOutcome {
+    ): OperationOutcome {
         return when (val readResult = source.nextFormattedStatement()) {
-            FormattedStatementReadResult.EndOfInput -> CommandOutcome.Success
+            FormattedStatementReadResult.EndOfInput -> OperationOutcome.Success
 
             is FormattedStatementReadResult.Failure ->
-                CommandOutcome.Failure(
+                OperationOutcome.Failure(
                     errorReporter.describe(readResult.error),
                 )
 

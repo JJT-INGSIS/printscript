@@ -2,10 +2,11 @@ package printscript.cli
 
 import printscript.cli.internal.CliApplication
 import printscript.cli.internal.ExitCode
+import printscript.cli.internal.SourceOperationRunner
 import printscript.cli.internal.arguments.CliArgumentsParser
-import printscript.cli.internal.command.AnalysisCommand
-import printscript.cli.internal.command.CommandDispatcher
-import printscript.cli.internal.command.FormattingCommand
+import printscript.cli.internal.operation.AnalysisOperation
+import printscript.cli.internal.operation.FormattingOperation
+import printscript.cli.internal.operation.SourceOperationRegistry
 import printscript.cli.internal.pipeline.StatementSourcePipeline
 import printscript.cli.internal.report.DiagnosticReporter
 import printscript.cli.internal.report.ErrorReporter
@@ -22,13 +23,16 @@ class FormattingAndAnalysisTest {
     private val application = CliApplication(
         terminal = terminal,
         argumentsParser = CliArgumentsParser(),
-        pipeline = StatementSourcePipeline(),
-        errorReporter = ErrorReporter(),
-        commandDispatcher = CommandDispatcher(
-            commands = listOf(
-                FormattingCommand(ErrorReporter()),
-                AnalysisCommand(ErrorReporter(), DiagnosticReporter()),
+        operations = SourceOperationRegistry(
+            operationsByName = mapOf(
+                "formatting" to FormattingOperation(ErrorReporter()),
+                "analyzing" to AnalysisOperation(ErrorReporter(), DiagnosticReporter()),
             ),
+        ),
+        runner = SourceOperationRunner(
+            terminal = terminal,
+            pipeline = StatementSourcePipeline(),
+            errorReporter = ErrorReporter(),
         ),
     )
 

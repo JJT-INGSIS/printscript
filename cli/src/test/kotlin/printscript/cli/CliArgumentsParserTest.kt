@@ -2,7 +2,7 @@ package printscript.cli
 
 import printscript.cli.internal.arguments.ArgumentsParsingResult
 import printscript.cli.internal.arguments.CliArgumentsParser
-import printscript.cli.internal.arguments.LanguageVersion
+import printscript.cli.internal.operation.LanguageVersion
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ class CliArgumentsParserTest {
 
     private fun parseSuccessfully(vararg arguments: String) = assertIs<ArgumentsParsingResult.Success>(
         parser.parseArguments(arguments.toList()),
-    ).arguments
+    )
 
     private fun parseFailure(vararg arguments: String) = assertIs<ArgumentsParsingResult.Failure>(
         parser.parseArguments(arguments.toList()),
@@ -23,26 +23,26 @@ class CliArgumentsParserTest {
 
     @Test
     fun `reads the operation and the source file`() {
-        val arguments = parseSuccessfully("validation", "archivo.ps")
+        val parsing = parseSuccessfully("validation", "archivo.ps")
 
-        assertEquals(expected = "validation", actual = arguments.operationName)
-        assertEquals(expected = Path.of("archivo.ps"), actual = arguments.sourceFilePath)
+        assertEquals(expected = "validation", actual = parsing.operationName)
+        assertEquals(expected = Path.of("archivo.ps"), actual = parsing.request.sourceFilePath)
     }
 
     @Test
     fun `defaults to the only supported version`() {
         assertEquals(
             expected = LanguageVersion.V1_0,
-            actual = parseSuccessfully("execution", "archivo.ps").version,
+            actual = parseSuccessfully("execution", "archivo.ps").request.version,
         )
     }
 
     @Test
     fun `accepts a configuration file without forcing an explicit version`() {
-        val arguments = parseSuccessfully("formatting", "archivo.ps", "reglas.json")
+        val request = parseSuccessfully("formatting", "archivo.ps", "reglas.json").request
 
-        assertEquals(expected = LanguageVersion.V1_0, actual = arguments.version)
-        assertEquals(expected = "reglas.json", actual = arguments.configurationFilePath)
+        assertEquals(expected = LanguageVersion.V1_0, actual = request.version)
+        assertEquals(expected = "reglas.json", actual = request.configurationFilePath)
     }
 
     @Test
@@ -55,7 +55,7 @@ class CliArgumentsParserTest {
 
     @Test
     fun `has no configuration file when none is given`() {
-        assertNull(parseSuccessfully("validation", "archivo.ps").configurationFilePath)
+        assertNull(parseSuccessfully("validation", "archivo.ps").request.configurationFilePath)
     }
 
     @Test

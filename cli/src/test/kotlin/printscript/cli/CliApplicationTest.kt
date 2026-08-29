@@ -2,10 +2,11 @@ package printscript.cli
 
 import printscript.cli.internal.CliApplication
 import printscript.cli.internal.ExitCode
+import printscript.cli.internal.SourceOperationRunner
 import printscript.cli.internal.arguments.CliArgumentsParser
-import printscript.cli.internal.command.CommandDispatcher
-import printscript.cli.internal.command.ExecutionCommand
-import printscript.cli.internal.command.ValidationCommand
+import printscript.cli.internal.operation.ExecutionOperation
+import printscript.cli.internal.operation.SourceOperationRegistry
+import printscript.cli.internal.operation.ValidationOperation
 import printscript.cli.internal.pipeline.StatementSourcePipeline
 import printscript.cli.internal.report.ErrorReporter
 import java.nio.file.Files
@@ -21,13 +22,16 @@ class CliApplicationTest {
     private val application = CliApplication(
         terminal = terminal,
         argumentsParser = CliArgumentsParser(),
-        pipeline = StatementSourcePipeline(),
-        errorReporter = ErrorReporter(),
-        commandDispatcher = CommandDispatcher(
-            commands = listOf(
-                ValidationCommand(ErrorReporter()),
-                ExecutionCommand(ErrorReporter()),
+        operations = SourceOperationRegistry(
+            operationsByName = mapOf(
+                "validation" to ValidationOperation(ErrorReporter()),
+                "execution" to ExecutionOperation(ErrorReporter()),
             ),
+        ),
+        runner = SourceOperationRunner(
+            terminal = terminal,
+            pipeline = StatementSourcePipeline(),
+            errorReporter = ErrorReporter(),
         ),
     )
 

@@ -1,5 +1,7 @@
 package printscript.cli.internal.arguments
 
+import printscript.cli.internal.operation.LanguageVersion
+import printscript.cli.internal.operation.SourceOperationRequest
 import java.nio.file.Path
 
 private const val OPERATION_INDEX = 0
@@ -7,20 +9,6 @@ private const val SOURCE_FILE_INDEX = 1
 private const val REQUIRED_ARGUMENT_COUNT = 2
 private const val MAXIMUM_OPTIONAL_ARGUMENT_COUNT = 2
 
-/**
- * Traduce los argumentos crudos del proceso a un objeto tipado.
- *
- * Los dos primeros son posicionales y obligatorios: la operación y el
- * archivo. Los que siguen son opcionales y se reconocen por su forma —
- * si coincide con una versión conocida es la versión, si no es el archivo
- * de configuración. Eso evita obligar al usuario a escribir la versión
- * solo para poder pasar una configuración.
- *
- * También es el único lugar donde una ruta escrita a mano se convierte en
- * [Path]: de acá para adentro nadie manipula rutas como texto.
- *
- * No lanza excepciones: los errores de uso son un valor más.
- */
 internal class CliArgumentsParser {
 
     fun parseArguments(commandLineArguments: List<String>): ArgumentsParsingResult {
@@ -74,8 +62,8 @@ internal class CliArgumentsParser {
         }
 
         return ArgumentsParsingResult.Success(
-            CliArguments(
-                operationName = operationName,
+            operationName = operationName,
+            request = SourceOperationRequest(
                 sourceFilePath = sourceFilePath,
                 version = versions.firstOrNull() ?: LanguageVersion.DEFAULT,
                 configurationFilePath = configurationFilePaths.firstOrNull(),
