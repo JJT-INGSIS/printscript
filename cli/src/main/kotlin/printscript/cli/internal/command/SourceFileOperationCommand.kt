@@ -14,19 +14,9 @@ import printscript.cli.internal.pipeline.StatementSourcePipeline
 import printscript.cli.internal.report.ErrorReporter
 import java.nio.file.Path
 
-/**
- * Molde de todo subcomando que corre una operación sobre un archivo
- * fuente. Aplica **Template Method**: acá vive lo que comparten las
- * cuatro operaciones, y cada subcomando concreto solo aporta cuál
- * [SourceOperation] montar.
- *
- * [operationFor] recibe el request y no es una propiedad a propósito: una
- * propiedad se evaluaría sin ver los argumentos, y el formateo necesita
- * `--config` para armar su operación con la configuración ya cargada.
- */
 internal abstract class SourceFileOperationCommand(
     name: String,
-    private val errorReporter: ErrorReporter = ErrorReporter(),
+    protected val errorReporter: ErrorReporter = ErrorReporter(),
     private val pipeline: StatementSourcePipeline = StatementSourcePipeline(),
 ) : CliktCommand(name = name) {
 

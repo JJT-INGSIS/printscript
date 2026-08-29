@@ -4,6 +4,8 @@ plugins {
 
 application {
     mainClass.set("printscript.cli.MainKt")
+    applicationName = "printscript"
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
 }
 
 dependencies {
