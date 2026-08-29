@@ -187,9 +187,34 @@ Hasta hoy los módulos motor no dependen de nada de terceros. Eso es parte del v
 
 **Propuesta:** Clikt va `implementation` y **solo en `:cli`**. Los módulos `lexer`, `parser`, `formatter`, `interpreter`, `linter` y los de contrato siguen limpios. En la Fase 2 se verifica explícitamente que no se filtró.
 
-### ⚠️ Clikt arrastra Mordant
+### ⚠️ Clikt arrastra Mordant — verificado
 
-Mordant es su librería de terminal (colores, detección de TTY). Viene como dependencia transitiva. Hay que confirmar que no aparece en el classpath de otros módulos.
+Mordant es su librería de terminal (colores, detección de TTY). Viene como dependencia transitiva, junto con Colormath y tres backends de JVM (`jna`, `ffm`, `graal-ffi`) que Mordant usa para detectar el tipo de terminal. Son unos 8 artefactos.
+
+**Ya lo verificamos en la Fase 2:**
+
+```
+./gradlew :cli:dependencies --configuration runtimeClasspath
+\--- com.github.ajalt.clikt:clikt:5.1.0
+     \--- com.github.ajalt.clikt:clikt-jvm:5.1.0
+          +--- com.github.ajalt.clikt:clikt-core:5.1.0
+          +--- com.github.ajalt.mordant:mordant:3.0.2
+               \--- com.github.ajalt.colormath:colormath:3.6.0
+               +--- mordant-jvm-jna / mordant-jvm-ffm / mordant-jvm-graal-ffi
+```
+
+Y el chequeo de que **no se filtró a ningún módulo motor** da limpio:
+
+```bash
+./gradlew :common:dependencies :source-reader:dependencies :token-source:dependencies \
+          :statement-source:dependencies :lexer:dependencies :parser:dependencies \
+          :formatter:dependencies :interpreter:dependencies :linter:dependencies \
+          :printscript-v1:dependencies --configuration runtimeClasspath \
+  | grep -i -E "clikt|mordant" \
+  || echo "OK — ningún módulo motor ve Clikt"
+```
+
+No nos molesta porque `cli` es una aplicación, no una librería que alguien más vaya a consumir. Pero conviene tenerlo escrito.
 
 ### ⚠️ Cobertura JaCoCo
 

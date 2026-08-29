@@ -15,4 +15,6 @@ dependencies {
     implementation(project(":formatter"))
     implementation(project(":linter"))
     implementation(project(":printscript-v1"))
+
+    implementation("com.github.ajalt.clikt:clikt:5.1.0")
 }
