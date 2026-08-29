@@ -21,28 +21,47 @@ internal class SourceOperationRunner(
 ) {
 
     fun exitCodeFor(operation: SourceOperation, request: SourceOperationRequest): ExitCode {
-        val sourceReader = when (
+        val outcome = outcomeOf(operation, request)
+
+        reportOutcome(outcome)
+
+        return exitCodeOf(outcome)
+    }
+
+    private fun outcomeOf(operation: SourceOperation, request: SourceOperationRequest): OperationOutcome {
+        return when (
             val creation = SourceReaderFactory.fromPath(request.sourceFilePath)
         ) {
             is SourceReaderCreationResult.Failure ->
-                return reportSourceError(errorReporter.describe(creation.error))
+                OperationOutcome.Failure(
+                    errorReporter.describe(creation.error),
+                )
 
-            is SourceReaderCreationResult.Success -> creation.reader
+            is SourceReaderCreationResult.Success ->
+                operation.outcomeFor(
+                    statements = progressReportingStatementsOf(creation.reader, request),
+                    terminal = terminal,
+                )
         }
-
-        return exitCodeFor(
-            outcome = operation.outcomeFor(
-                statements = progressReportingStatementsOf(sourceReader, request),
-                terminal = terminal,
-            ),
-        )
     }
 
-    private fun exitCodeFor(outcome: OperationOutcome): ExitCode {
+    private fun reportOutcome(outcome: OperationOutcome) {
+        when (outcome) {
+            OperationOutcome.Success -> Unit
+
+            is OperationOutcome.CompletedWithFindings -> terminal.writeLine(outcome.message)
+
+            is OperationOutcome.Failure -> terminal.writeErrorLine(outcome.message)
+        }
+    }
+
+    private fun exitCodeOf(outcome: OperationOutcome): ExitCode {
         return when (outcome) {
             OperationOutcome.Success -> ExitCode.SUCCESS
-            is OperationOutcome.CompletedWithFindings -> reportFindings(outcome.message)
-            is OperationOutcome.Failure -> reportSourceError(outcome.message)
+
+            is OperationOutcome.CompletedWithFindings -> ExitCode.FINDINGS
+
+            is OperationOutcome.Failure -> ExitCode.SOURCE_ERROR
         }
     }
 
@@ -64,17 +83,5 @@ internal class SourceOperationRunner(
 
     private fun sourceSizeOf(sourceFilePath: Path): Long {
         return runCatching { Files.size(sourceFilePath) }.getOrDefault(0L)
-    }
-
-    private fun reportFindings(message: String): ExitCode {
-        terminal.writeLine(message)
-
-        return ExitCode.FINDINGS
-    }
-
-    private fun reportSourceError(message: String): ExitCode {
-        terminal.writeErrorLine(message)
-
-        return ExitCode.SOURCE_ERROR
     }
 }
