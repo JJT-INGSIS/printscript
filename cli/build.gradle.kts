@@ -4,6 +4,8 @@ plugins {
 
 application {
     mainClass.set("printscript.cli.MainKt")
+    applicationName = "printscript"
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
 }
 
 dependencies {
@@ -15,4 +17,6 @@ dependencies {
     implementation(project(":formatter"))
     implementation(project(":linter"))
     implementation(project(":printscript-v1"))
+
+    implementation("com.github.ajalt.clikt:clikt:5.1.0")
 }

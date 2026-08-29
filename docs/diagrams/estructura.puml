@@ -26,6 +26,8 @@ skinparam class {
   BorderColor<<datos>> #566573
   BackgroundColor<<config>> #D4EFDF
   BorderColor<<config>> #1E8449
+  BackgroundColor<<app>> #FADBD8
+  BorderColor<<app>> #A93226
 }
 
 legend top right
@@ -34,10 +36,29 @@ legend top right
   | <back:#E8DAEF>   </back> | factory: el único modo de obtener una implementación |
   | <back:#EAEDED>   </back> | datos que viajan por el contrato |
   | <back:#D4EFDF>   </back> | configuración que aporta el cliente |
+  | <back:#FADBD8>   </back> | aplicación: el que cablea todo |
   --
-  Cada **etapa** (naranja en el diagrama de módulos) consume un
-  contrato y produce otro. Nunca consume otra etapa.
+  Cada **motor** consume un contrato y produce otro.
+  Nunca consume otro motor.
 endlegend
+
+' ==================== APLICACIÓN ====================
+package "cli" {
+  class PrintScriptCommandGroup <<app>> {
+    +subcommands(validation, execution, formatting, analyzing)
+  }
+  abstract class SourceFileOperationCommand <<app>> {
+    #operationFor(request): SourceOperation
+    +run()
+  }
+  interface SourceOperation <<contrato>> {
+    +outcomeFor(statements, terminal): OperationOutcome
+  }
+  class "ExitCode\n0 ok · 1 error · 3 hallazgos" as EXIT <<datos>>
+  PrintScriptCommandGroup ..> SourceFileOperationCommand : agrupa
+  SourceFileOperationCommand ..> SourceOperation : monta
+  SourceFileOperationCommand ..> EXIT : traduce a
+}
 
 ' ==================== ENTRADA ====================
 package "source-reader" {
@@ -46,8 +67,11 @@ package "source-reader" {
   }
   class SourceReaderFactory <<factory>> {
     +fromString(code: String): SourceReader
+    +fromPath(path: Path): SourceReaderCreationResult
   }
+  class SourceAccessError <<datos>>
   SourceReaderFactory ..> SourceReader : crea
+  SourceReaderFactory ..> SourceAccessError : reporta
 }
 
 ' ==================== ETAPA 1 ====================
@@ -55,10 +79,14 @@ package "lexer" {
   interface Lexer <<contrato>> {
     +tokenize(reader: SourceReader): TokenSource
   }
-  class PrintScriptLexerFactory <<factory>> {
-    +createV1(): Lexer
+  interface TokenScanner <<contrato>> {
+    +scanToken(cursor): TokenScanResult
   }
-  PrintScriptLexerFactory ..> Lexer : crea
+  class LexerFactory <<factory>> {
+    +create(scanners, ignoredPolicy, endOfInput): Lexer
+  }
+  LexerFactory ..> Lexer : crea
+  LexerFactory ..> TokenScanner : configura
 }
 
 ' ==================== CONTRATO 1 ====================
@@ -75,10 +103,14 @@ package "parser" {
   interface Parser <<contrato>> {
     +parse(tokens: TokenSource): StatementSource
   }
-  class PrintScriptParserFactory <<factory>> {
-    +createV1(): Parser
+  interface StatementParser <<contrato>> {
+    +parseStatement(context): ParsingResult
   }
-  PrintScriptParserFactory ..> Parser : crea
+  class ParserFactory <<factory>> {
+    +create(statementParsers, endOfInput): Parser
+  }
+  ParserFactory ..> Parser : crea
+  ParserFactory ..> StatementParser : configura
 }
 
 ' ==================== CONTRATO 2 ====================
@@ -98,11 +130,11 @@ package "interpreter" {
     +interpret(source: StatementSource): InterpretationResult
   }
   interface "StatementExecutor<S>" as StatementExecutor <<contrato>> {
-    +supportsStatement(statement: Statement): Boolean
-    +executeStatement(statement: Statement, state: S): ExecutionResult<S>
+    +supportsStatement(statement): Boolean
+    +executeStatement(statement, state: S): ExecutionResult<S>
   }
   class InterpreterFactory <<factory>> {
-    +create<S>(initialState: S, executors: List<StatementExecutor<S>>): Interpreter
+    +create<S>(initialState, executors): Interpreter
   }
   class "InterpretationResult\nExecutionResult<S>\nSemanticError" as IRES <<datos>>
   InterpreterFactory ..> Interpreter : crea
@@ -110,29 +142,35 @@ package "interpreter" {
   Interpreter ..> IRES : devuelve
 }
 
-package "printscript-v1 / interpreter" {
-  class PrintScriptV1InterpreterFactory <<factory>> {
-    +create(output, additionalExecutors): Interpreter
+' ==================== ETAPA 3b ====================
+package "formatter" {
+  interface Formatter <<contrato>> {
+    +format(source: StatementSource): FormattedSource
   }
-  interface PrintScriptV1ProgramOutput <<config>> {
-    +writeLine(line: String)
+  interface StatementFormatter <<contrato>> {
+    +formatStatement(statement): StatementFormattingResult
   }
-  class "PrintScriptV1Environment\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError" as V1INTERPRETER <<datos>>
-  PrintScriptV1InterpreterFactory ..> Interpreter : compone
-  PrintScriptV1InterpreterFactory ..> PrintScriptV1ProgramOutput : configura
-  PrintScriptV1InterpreterFactory ..> V1INTERPRETER
+  interface StatementSeparationPolicy <<config>> {
+    +separationBefore(statement): String
+  }
+  class FormatterFactory <<factory>> {
+    +create(formatters, separationPolicy): Formatter
+  }
+  FormatterFactory ..> Formatter : crea
+  FormatterFactory ..> StatementFormatter : configura
+  FormatterFactory ..> StatementSeparationPolicy : recibe
 }
 
-' ==================== ETAPA 3b ====================
+' ==================== ETAPA 3c ====================
 package "linter" {
   interface Linter <<contrato>> {
     +lint(source: StatementSource): DiagnosticSource
   }
-  class PrintScriptLinterFactory <<factory>> {
-    +createV1(config: LinterConfiguration): Linter
-  }
   interface DiagnosticSource <<contrato>> {
     +nextDiagnostic(): DiagnosticReadResult
+  }
+  class PrintScriptLinterFactory <<factory>> {
+    +createV1(config: LinterConfiguration): Linter
   }
   class "LinterConfiguration\nqué reglas y con qué política" as LCFG <<config>>
   class Diagnostic <<datos>>
@@ -141,9 +179,15 @@ package "linter" {
   DiagnosticSource ..> Diagnostic
 }
 
-' ==================== BASE ====================
-package "common" {
-  class "SourcePosition · SourceSpan" as SPAN <<datos>>
+' ==================== IMPLEMENTACIÓN DE LENGUAJE ====================
+package "printscript-v1" {
+  class "PrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory" as V1FACTORIES <<factory>>
+  interface PrintScriptV1ProgramOutput <<config>> {
+    +writeLine(line: String)
+  }
+  class "PrintScriptV1TokenType\nPrintScriptV1Environment\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError\nPrintScriptV1LexicalError" as V1DATA <<datos>>
+  V1FACTORIES ..> PrintScriptV1ProgramOutput : configura
+  V1FACTORIES ..> V1DATA
 }
 
 ' ============================================================
@@ -157,47 +201,63 @@ TokenSource <.[#2471A3,bold]. Parser : **consume**
 Parser .[#C0392B,bold].> StatementSource : **produce**
 
 StatementSource <.[#2471A3,bold]. Interpreter : **consume**
+StatementSource <.[#2471A3,bold]. Formatter : **consume**
 StatementSource <.[#2471A3,bold]. Linter : **consume**
 Linter .[#C0392B,bold].> DiagnosticSource : **produce**
 
 IRES ..> ParseError : propaga el error\ndel parser
 
-' Todo error y todo nodo ubican su posición en el código fuente
-TOKENDATA ..> SPAN
-AST ..> SPAN
-Diagnostic ..> SPAN
+' El cli cablea las factories concretas y elige el consumidor
+SourceFileOperationCommand ..> V1FACTORIES : cablea
+SourceFileOperationCommand ..> SourceReaderFactory : abre el archivo
+
+' V1 rellena los puntos de variación de cada motor
+V1FACTORIES ..> LexerFactory : configura
+V1FACTORIES ..> ParserFactory : configura
+V1FACTORIES ..> FormatterFactory : configura
+V1FACTORIES ..> InterpreterFactory : configura
 
 note as N1
   **Las etapas no se conocen entre sí.**
-  `lexer` no depende de `parser`, ni `parser` de `interpreter`
-  o `linter`. El único acoplamiento es contra el contrato
-  intermedio, que vive en su propio módulo.
+  `lexer` no depende de `parser`, ni `parser` de `interpreter`,
+  `formatter` o `linter`. El único acoplamiento es contra el
+  contrato intermedio, que vive en su propio módulo.
   Cambiar la implementación de una etapa no recompila a las otras.
 end note
 N1 .. Parser
 
 note as N2
-  **El motor se obtiene mediante una factory pública.**
-  Los contratos de variación son públicos para estrategias externas;
-  dispatchers, cursores y coordinación permanecen `internal`.
+  **El motor es genérico, la configuración es de V1.**
+  Los motores reciben estrategias (`TokenScanner`, `StatementParser`,
+  `StatementFormatter`, `StatementExecutor<S>`) y no saben nada de
+  PrintScript. `printscript-v1` es quien las aporta.
+  Agregar PrintScript 2.0 es un módulo nuevo, no editar los motores.
 end note
-N2 .. PrintScriptLexerFactory
+N2 .. V1FACTORIES
 
 note as N3
-  **`interpreter` y `linter` son intercambiables.**
-  Consumen exactamente el mismo `StatementSource` y no se
-  conocen entre ellos. El linter se agregó sin tocar ninguna
-  de las etapas anteriores.
+  **`interpreter`, `formatter` y `linter` son intercambiables.**
+  Consumen exactamente la misma `StatementSource` y no se conocen
+  entre ellos. Cada uno se agregó sin tocar las etapas anteriores.
 end note
-N3 .. Linter
+N3 .. Formatter
 
 note as N4
+  **El CLI es el único que conoce a todos.**
+  Es la raíz de composición: elige la versión, arma el pipeline,
+  elige el consumidor según la operación pedida y traduce el
+  resultado a un código de salida. Es también el único módulo con
+  una dependencia externa (Clikt).
+end note
+N4 .. PrintScriptCommandGroup
+
+note as N5
   **La política la pone el cliente.**
   `PrintScriptV1ProgramOutput` decide a dónde va la salida (consola,
-  archivo, test) y `LinterConfiguration` qué reglas corren
-  y con qué convención. Ninguna de las dos decisiones está
-  quemada adentro del módulo.
+  descarte, test), `LinterConfiguration` qué reglas corren y
+  `StatementSeparationPolicy` cómo se separan las sentencias.
+  Ninguna de esas decisiones está quemada adentro de un motor.
 end note
-N4 .. LCFG
+N5 .. LCFG
 
 @enduml

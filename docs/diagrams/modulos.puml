@@ -18,73 +18,90 @@ skinparam rectangle {
   BackgroundColor<<etapa>> #FDEBD0
   BorderColor<<test>> #17A589
   BackgroundColor<<test>> #E8F8F5
-  BorderColor<<build>> #7D3C98
-  BackgroundColor<<build>> #F4ECF7
+  BorderColor<<app>> #A93226
+  BackgroundColor<<app>> #FADBD8
+}
+
+package "Aplicación" {
+  rectangle "**cli**\n\nMain, PrintScriptCommandGroup\nSourceFileOperationCommand\n{Validation,Execution,Formatting,Analysis}Command\n--\ninternal: SourceOperationRunner,\nSourceOperation*, ErrorReporter,\nEchoTerminal, ProgramTermination\n--\n**Clikt 5.1.0** (única dependencia externa)" as cli <<app>>
 }
 
 package "Verificación" {
   rectangle "**integration-tests**\n\nPrintScriptV1EndToEndTest\nEndToEndTestSupport\n(caja negra del pipeline)" as tests <<test>>
 }
 
-package "Etapas del pipeline — implementaciones (internal)" {
-  rectangle "**lexer**\n\nLexer\nPrintScriptLexerFactory.createV1()\n--\ninternal: ScanningTokenSource,\nCharacterCursor, TokenScanner*,\nTokenScannerDispatcher" as lexer <<etapa>>
-  rectangle "**parser**\n\nParser\nPrintScriptParserFactory.createV1()\n--\ninternal: ParsingStatementSource,\nParsingContext / TokenCursor,\nStatementParser*, ExpressionParser*" as parser <<etapa>>
+package "Etapas del pipeline — motores genéricos (internal)" {
+  rectangle "**lexer**\n\nLexer, LexerFactory\nTokenScanner, ScannerCursor\nIgnoredCharacterPolicy\n--\ninternal: ScanningLexer,\nScanningTokenSource, CharacterCursor" as lexer <<etapa>>
+  rectangle "**parser**\n\nParser, ParserFactory\nStatementParser, ExpressionParser\nParsingContext, ParsingResult\n--\ninternal: ConfigurableParser,\nParsingStatementSource" as parser <<etapa>>
   rectangle "**interpreter**\n\nInterpreter, InterpreterFactory\nStatementExecutor<S>, ExecutionResult\nSemanticError\n--\ninternal: ConfigurableInterpreter,\nStatementExecutorDispatcher" as interpreter <<etapa>>
+  rectangle "**formatter**\n\nFormatter, FormatterFactory\nStatementFormatter\nStatementSeparationPolicy\n--\ninternal: ConfigurableFormatter,\nLazyFormattedSource" as formatter <<etapa>>
   rectangle "**linter**\n\nLinter, DiagnosticSource\nDiagnostic, LinterConfiguration\nPrintScriptLinterFactory.createV1()\n--\ninternal: LintingSource,\nDiagnosticSearch, LintRule*, RuleSet" as linter <<etapa>>
 }
 
 package "Implementación de lenguaje" {
-  rectangle "**printscript-v1 / interpreter**\n\nPrintScriptV1InterpreterFactory\nPrintScriptV1Environment\nPrintScriptV1ExpressionEvaluator\nPrintScriptV1ProgramOutput\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError\n--\ninternal: executors, default evaluator,\nBinaryOperation" as interpreterv1 <<etapa>>
+  rectangle "**printscript-v1**\n\nPrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory\nPrintScriptV1TokenType\nPrintScriptV1Environment\nPrintScriptV1SemanticError\n--\ninternal: scanners, gramática,\nexecutors, formatters, operaciones" as v1 <<etapa>>
 }
 
 package "Contratos y modelo — API pública compartida" {
-  rectangle "**source-reader**\n\nSourceReader\nSourceChunk\nSourceChunkReadResult\nSourceReaderFactory" as sourcereader <<contrato>>
+  rectangle "**source-reader**\n\nSourceReader\nSourceChunkReadResult\nSourceReaderFactory\nSourceAccessError" as sourcereader <<contrato>>
   rectangle "**token-source**\n\nTokenSource\nToken / TokenType\nTokenReadResult\nLexicalError" as tokensource <<contrato>>
   rectangle "**statement-source**\n\nStatementSource\nStatementReadResult\nParseError\nAST: printscript.ast.*" as statementsource <<contrato>>
   rectangle "**common**\n\nSourcePosition\nSourceSpan" as common <<contrato>>
 }
 
-package "Build" {
-  rectangle "**buildSrc**\n\nconvention plugin\nprintscript.kotlin-library\n(Kotlin 2.4 / Java 21 / explicit API)" as buildsrc <<build>>
-}
-
 ' ---- api: la dependencia se re-expone a los consumidores ----
 lexer        -[#2E86C1,bold]-> sourcereader   : api
 lexer        -[#2E86C1,bold]-> tokensource    : api
+lexer        -[#2E86C1,bold]-> common         : api
 parser       -[#2E86C1,bold]-> tokensource    : api
 parser       -[#2E86C1,bold]-> statementsource: api
 interpreter  -[#2E86C1,bold]-> statementsource: api
 interpreter  -[#2E86C1,bold]-> common         : api
-interpreterv1 -[#2E86C1,bold]-> interpreter   : api
-interpreterv1 -[#2E86C1,bold]-> statementsource: api
+formatter    -[#2E86C1,bold]-> statementsource: api
 linter       -[#2E86C1,bold]-> statementsource: api
 linter       -[#2E86C1,bold]-> common         : api
 statementsource -[#2E86C1,bold]-> tokensource : api
 statementsource -[#2E86C1,bold]-> common      : api
 tokensource  -[#2E86C1,bold]-> common         : api
 
+v1 -[#2E86C1,bold]-> lexer       : api
+v1 -[#2E86C1,bold]-> parser      : api
+v1 -[#2E86C1,bold]-> formatter   : api
+v1 -[#2E86C1,bold]-> interpreter : api
+
 ' ---- implementation: detalle interno, no se propaga ----
-lexer   .[#7F8C8D].> common : implementation
-parser  .[#7F8C8D].> common : implementation
+cli .[#7F8C8D].> v1           : implementation
+cli .[#7F8C8D].> interpreter  : implementation
+cli .[#7F8C8D].> formatter    : implementation
+cli .[#7F8C8D].> linter       : implementation
+cli .[#7F8C8D].> sourcereader : implementation
 
 ' ---- testImplementation ----
 tests .[#17A589].> lexer       : testImplementation
 tests .[#17A589].> parser      : testImplementation
 tests .[#17A589].> interpreter : testImplementation
-tests .[#17A589].> interpreterv1 : testImplementation
+tests .[#17A589].> v1          : testImplementation
 
 note right of parser
   **Las etapas no se conocen entre sí.**
   lexer no depende de parser, ni parser de
-  interpreter o linter: se acoplan solo a través
-  de los módulos de contrato (`token-source`,
-  `statement-source`). El cableado lo hace el
-  cliente con las factories.
+  interpreter, formatter o linter: se acoplan solo
+  a través de los módulos de contrato
+  (`token-source`, `statement-source`).
+  El cableado concreto lo hace `printscript-v1`.
 end note
 
-note bottom of linter
-  `interpreter` y `linter` son consumidores
-  **intercambiables** de la misma
+note right of cli
+  **Clikt queda contenido acá.**
+  Entra como `implementation`, así que ningún
+  módulo motor lo ve en su classpath. El CLI
+  traduce `argv` a una operación de dominio y
+  devuelve un código de salida.
+end note
+
+note bottom of formatter
+  `interpreter`, `formatter` y `linter` son
+  consumidores **intercambiables** de la misma
   `StatementSource`: mismas dependencias,
   ninguna relación entre ellos.
 end note
@@ -100,6 +117,10 @@ legend bottom
   | <color:#2E86C1>——▶</color> | `api` — el tipo aparece en la firma pública y se re-expone |
   | <color:#7F8C8D>- - ▶</color> | `implementation` — uso interno, no se propaga al consumidor |
   | <color:#17A589>- - ▶</color> | `testImplementation` — solo en el classpath de tests |
+  --
+  El `cli` declara además `common`, `token-source`, `statement-source`,
+  `lexer` y `parser`, que no se dibujan: le llegan igual por el `api`
+  de `printscript-v1` y solo agregarían cruces.
 endlegend
 
 @enduml
