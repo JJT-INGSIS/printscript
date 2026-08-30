@@ -3,8 +3,8 @@ package printscript.cli.internal.report
 import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryOperator
 import printscript.ast.expression.UnaryOperator
-import printscript.linter.NamingConvention
 import printscript.token.TokenType
+import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.token.PrintScriptV1TokenType
 
 /**
@@ -77,10 +77,10 @@ internal object PrintScriptWording {
         }
     }
 
-    fun describe(convention: NamingConvention): String {
+    fun describe(convention: PrintScriptV1NamingConvention): String {
         return when (convention) {
-            NamingConvention.CAMEL_CASE -> "camelCase"
-            NamingConvention.SNAKE_CASE -> "snake_case"
+            PrintScriptV1NamingConvention.CAMEL_CASE -> "camelCase"
+            PrintScriptV1NamingConvention.SNAKE_CASE -> "snake_case"
         }
     }
 }

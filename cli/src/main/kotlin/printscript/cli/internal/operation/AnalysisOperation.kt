@@ -6,17 +6,21 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.linter.DiagnosticReadResult
 import printscript.linter.DiagnosticSource
 import printscript.linter.Linter
-import printscript.linter.LinterConfiguration
-import printscript.linter.PrintScriptLinterFactory
 import printscript.statement.StatementSource
+import printscript.v1.linter.PrintScriptV1LinterConfiguration
+import printscript.v1.linter.PrintScriptV1LinterFactory
 
 internal class AnalysisOperation(
     private val errorReporter: ErrorReporter,
     private val diagnosticReporter: DiagnosticReporter,
-    private val configuration: LinterConfiguration =
-        PrintScriptLinterFactory.defaultV1Configuration(),
-    private val createLinter: (LinterConfiguration) -> Linter =
-        PrintScriptLinterFactory::createV1,
+    private val configuration: PrintScriptV1LinterConfiguration =
+        PrintScriptV1LinterFactory.defaultConfiguration(),
+    private val createLinter: (PrintScriptV1LinterConfiguration) -> Linter =
+        { linterConfiguration ->
+            PrintScriptV1LinterFactory.create(
+                configuration = linterConfiguration,
+            )
+        },
 ) : SourceOperation {
 
     override fun outcomeFor(statements: StatementSource, terminal: Terminal): OperationOutcome {
