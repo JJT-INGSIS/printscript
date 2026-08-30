@@ -1,6 +1,6 @@
 package printscript.formatter
 
-import printscript.ast.statement.Statement
+import printscript.statement.Statement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

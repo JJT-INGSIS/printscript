@@ -1,8 +1,8 @@
 package printscript.parser
 
-import printscript.ast.statement.Statement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource

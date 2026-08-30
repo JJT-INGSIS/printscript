@@ -14,7 +14,6 @@ import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.DiagnosticReadResult
@@ -22,6 +21,7 @@ import printscript.linter.DiagnosticSource
 import printscript.linter.Linter
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import java.math.BigDecimal

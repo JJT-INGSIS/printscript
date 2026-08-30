@@ -115,13 +115,20 @@ package "parser" {
 
 ' ==================== CONTRATO 2 ====================
 package "statement-source" {
+  interface Statement <<contrato>> {
+    +span: SourceSpan
+  }
   interface StatementSource <<contrato>> {
     +nextStatement(): StatementReadResult
   }
-  class "AST\nStatement · Expression\nIdentifier · DeclaredType" as AST <<datos>>
   class ParseError <<datos>>
-  StatementSource ..> AST
+  StatementSource ..> Statement
   StatementSource ..> ParseError
+}
+
+package "printscript-ast" {
+  class "AST oficial compartido\nExpression (sealed)\nIdentifier · DeclaredType\nstatements concretos" as AST <<datos>>
+  AST ..|> Statement
 }
 
 ' ==================== ETAPA 3a ====================
@@ -169,25 +176,28 @@ package "linter" {
   interface DiagnosticSource <<contrato>> {
     +nextDiagnostic(): DiagnosticReadResult
   }
-  class PrintScriptLinterFactory <<factory>> {
-    +createV1(config: LinterConfiguration): Linter
+  interface LintRule <<contrato>> {
+    +inspect(statement): RuleInspection
   }
-  class "LinterConfiguration\nqué reglas y con qué política" as LCFG <<config>>
+  class LinterFactory <<factory>> {
+    +create(rules): Linter
+  }
   class Diagnostic <<datos>>
-  PrintScriptLinterFactory ..> Linter : crea
-  PrintScriptLinterFactory ..> LCFG : recibe
+  LinterFactory ..> Linter : crea
+  LinterFactory ..> LintRule : configura
   DiagnosticSource ..> Diagnostic
 }
 
 ' ==================== IMPLEMENTACIÓN DE LENGUAJE ====================
 package "printscript-v1" {
-  class "PrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory" as V1FACTORIES <<factory>>
+  class "PrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory\nPrintScriptV1LinterFactory" as V1FACTORIES <<factory>>
   interface PrintScriptV1ProgramOutput <<config>> {
     +writeLine(line: String)
   }
   class "PrintScriptV1TokenType\nPrintScriptV1Environment\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError\nPrintScriptV1LexicalError" as V1DATA <<datos>>
   V1FACTORIES ..> PrintScriptV1ProgramOutput : configura
   V1FACTORIES ..> V1DATA
+  V1FACTORIES ..> AST : construye y consume
 }
 
 ' ============================================================
@@ -216,6 +226,7 @@ V1FACTORIES ..> LexerFactory : configura
 V1FACTORIES ..> ParserFactory : configura
 V1FACTORIES ..> FormatterFactory : configura
 V1FACTORIES ..> InterpreterFactory : configura
+V1FACTORIES ..> LinterFactory : configura
 
 note as N1
   **Las etapas no se conocen entre sí.**
@@ -230,8 +241,9 @@ note as N2
   **El motor es genérico, la configuración es de V1.**
   Los motores reciben estrategias (`TokenScanner`, `StatementParser`,
   `StatementFormatter`, `StatementExecutor<S>`) y no saben nada de
-  PrintScript. `printscript-v1` es quien las aporta.
-  Agregar PrintScript 2.0 es un módulo nuevo, no editar los motores.
+  PrintScript. Las factories de versión son quienes las aportan.
+  Una versión nueva compone capacidades y comparte el AST oficial;
+  los motores permanecen sin cambios.
 end note
 N2 .. V1FACTORIES
 

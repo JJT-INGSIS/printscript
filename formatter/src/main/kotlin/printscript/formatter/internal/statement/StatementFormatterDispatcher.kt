@@ -1,9 +1,9 @@
 package printscript.formatter.internal.statement
 
-import printscript.ast.statement.Statement
 import printscript.formatter.FormattingError
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
+import printscript.statement.Statement
 
 internal class StatementFormatterDispatcher(
     statementFormatters: List<StatementFormatter>,

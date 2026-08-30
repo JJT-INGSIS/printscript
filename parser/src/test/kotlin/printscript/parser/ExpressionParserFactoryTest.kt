@@ -1,6 +1,5 @@
 package printscript.parser
 
-import printscript.ast.statement.Statement
 import printscript.model.source.SourceSpan
 import printscript.parser.expression.BinaryExpressionBuilder
 import printscript.parser.expression.ExpressionParser
@@ -8,6 +7,7 @@ import printscript.parser.expression.ExpressionParserFactory
 import printscript.parser.expression.PrimaryExpressionParser
 import printscript.parser.expression.UnaryExpressionBuilder
 import printscript.statement.ParseError
+import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.token.TokenType
 import kotlin.test.Test

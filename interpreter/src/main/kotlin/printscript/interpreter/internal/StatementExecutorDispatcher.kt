@@ -1,9 +1,9 @@
 package printscript.interpreter.internal
 
-import printscript.ast.statement.Statement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutor
+import printscript.statement.Statement
 
 internal class StatementExecutorDispatcher<S>(
     statementExecutors: List<StatementExecutor<S>>,

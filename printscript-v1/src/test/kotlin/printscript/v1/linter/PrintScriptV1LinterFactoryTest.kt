@@ -1,13 +1,13 @@
 package printscript.v1.linter
 
 import printscript.ast.DeclaredType
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.LintRule
 import printscript.linter.RuleInspection
 import printscript.linter.StatelessLintRule
 import printscript.model.source.SourceSpan
+import printscript.statement.Statement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

@@ -4,6 +4,7 @@ import printscript.ast.DeclaredType
 import printscript.ast.Identifier
 import printscript.ast.expression.Expression
 import printscript.model.source.SourceSpan
+import printscript.statement.Statement
 
 public data class VariableDeclarationStatement(
     public val identifier: Identifier,

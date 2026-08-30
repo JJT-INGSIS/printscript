@@ -1,9 +1,9 @@
 package printscript.v1.parser.internal.statement
 
 import printscript.ast.Identifier
-import printscript.ast.statement.Statement
 import printscript.parser.ParsingContext
 import printscript.parser.ParsingResult
+import printscript.statement.Statement
 import printscript.token.TokenType
 
 internal interface TargetedStatementParser {

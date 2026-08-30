@@ -1,8 +1,8 @@
 package printscript.v1.formatter.internal.separation
 
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.Statement
 import printscript.formatter.StatementSeparationPolicy
+import printscript.statement.Statement
 import printscript.v1.formatter.internal.LINE_BREAK
 
 internal class PrintScriptV1StatementSeparationPolicy(

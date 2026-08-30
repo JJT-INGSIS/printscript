@@ -3,10 +3,10 @@ package printscript.v1.linter.rule
 import printscript.ast.Identifier
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.StatelessLintRule
+import printscript.statement.Statement
 import printscript.v1.linter.PrintScriptV1Diagnostic
 import printscript.v1.linter.PrintScriptV1NamingConvention
 

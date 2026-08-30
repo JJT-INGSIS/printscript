@@ -1,6 +1,6 @@
 package printscript.interpreter
 
-import printscript.ast.statement.Statement
+import printscript.statement.Statement
 
 /** Executes one supported statement and returns the next immutable state. */
 public interface StatementExecutor<S> {

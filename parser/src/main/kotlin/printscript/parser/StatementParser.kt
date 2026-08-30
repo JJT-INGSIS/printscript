@@ -1,6 +1,6 @@
 package printscript.parser
 
-import printscript.ast.statement.Statement
+import printscript.statement.Statement
 import printscript.token.TokenType
 
 /**

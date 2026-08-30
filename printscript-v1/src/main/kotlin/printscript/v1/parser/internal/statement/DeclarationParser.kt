@@ -3,7 +3,6 @@ package printscript.v1.parser.internal.statement
 import printscript.ast.DeclaredType
 import printscript.ast.Identifier
 import printscript.ast.expression.Expression
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.model.source.SourceSpan
 import printscript.parser.ParsingContext
@@ -12,6 +11,7 @@ import printscript.parser.StatementParser
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.orReturn
 import printscript.statement.ParseError
+import printscript.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenType
 import printscript.v1.token.PrintScriptV1TokenType

@@ -1,12 +1,12 @@
 package printscript.formatter.internal
 
-import printscript.ast.statement.Statement
 import printscript.formatter.FormattedSource
 import printscript.formatter.FormattedStatementReadResult
 import printscript.formatter.FormattingError
 import printscript.formatter.StatementFormattingResult
 import printscript.formatter.StatementSeparationPolicy
 import printscript.formatter.internal.statement.StatementFormatterDispatcher
+import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 

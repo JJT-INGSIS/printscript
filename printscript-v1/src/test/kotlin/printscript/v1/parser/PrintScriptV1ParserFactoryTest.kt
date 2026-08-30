@@ -1,13 +1,13 @@
 package printscript.v1.parser
 
 import printscript.ast.expression.Expression
-import printscript.ast.statement.Statement
 import printscript.model.source.SourceSpan
 import printscript.parser.ParsingContext
 import printscript.parser.ParsingResult
 import printscript.parser.StatementParser
 import printscript.parser.expression.BinaryExpressionBuilder
 import printscript.parser.orReturn
+import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.token.TokenType
 import printscript.v1.token.PrintScriptV1TokenType

@@ -28,4 +28,5 @@ include(
     "integration-tests",
     "formatter",
     "printscript-v1",
+    "printscript-ast",
 )

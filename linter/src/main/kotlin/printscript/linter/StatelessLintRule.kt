@@ -1,6 +1,6 @@
 package printscript.linter
 
-import printscript.ast.statement.Statement
+import printscript.statement.Statement
 
 /**
  * Regla sin memoria: su sucesora es ella misma.

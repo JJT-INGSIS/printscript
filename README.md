@@ -98,7 +98,8 @@ resultados de dominio y no mediante excepciones.
 | `source-reader` | Contrato y lectura por bloques del código fuente. |
 | `token-source` | Tokens, errores léxicos y contrato entre lexer y parser. |
 | `lexer` | Motor lazy de tokenización y contratos públicos para scanners externos. |
-| `statement-source` | AST, errores sintácticos y contrato entre parser e interpreter. |
+| `statement-source` | Contrato abierto de sentencia, errores sintácticos y fuente lazy entre parser y consumidores. |
+| `printscript-ast` | AST oficial e inmutable compartido por las versiones de PrintScript. |
 | `parser` | Motor lazy de parsing y contratos públicos para estrategias externas. |
 | `interpreter` | Motor de interpretación y contratos públicos para executors externos. |
 | `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
@@ -116,6 +117,7 @@ PrintScriptV1LexerFactory.create()
 PrintScriptV1ParserFactory.create()
 PrintScriptV1FormatterFactory.create()
 PrintScriptV1InterpreterFactory.create(output)
+PrintScriptV1LinterFactory.create()
 ```
 
 ## Decisiones de diseño
@@ -132,13 +134,21 @@ lo solicita.
 
 El parser core coordina estrategias públicas de sentencias y ofrece un motor
 genérico de expresiones por niveles de precedencia. El tipo producido por ese
-motor es configurable; PrintScript V1 lo especializa con su jerarquía sellada
-`Expression` y mantiene su gramática concreta en `printscript-v1`.
+motor es configurable; PrintScript V1 lo especializa con la jerarquía sellada
+`Expression` de `printscript-ast` y mantiene su gramática concreta en
+`printscript-v1`.
 
 Las sentencias externas pueden implementar el contrato abierto `Statement`. El
 dispatcher conserva el orden configurado y da prioridad a la primera estrategia
 compatible. Reglas como `;`, paréntesis y tipos declarados pertenecen a los
 parsers concretos de V1, no al motor.
+
+El contrato `Statement` permanece abierto en `statement-source` para que un
+consumidor externo pueda aportar sentencias propias. Los nodos oficiales de
+PrintScript viven en `printscript-ast` y se comparten entre versiones. Una
+factory de versión decide qué subconjunto puede construir; el AST no conoce la
+versión. `Expression` permanece sellada para que agregar una expresión oficial
+obligue al compilador a señalar todos los consumidores exhaustivos.
 
 Cada operación devuelve un nuevo contexto de parsing. Ante un error se entrega un
 resultado terminal y el consumidor debe detener la lectura.
@@ -153,8 +163,8 @@ cada sentencia.
 
 La configuración de espacios, los formatters de declaraciones, asignaciones,
 `println` y expresiones, y la política concreta de separación pertenecen a
-`printscript-v1`. La jerarquía `Expression` permanece sellada y no forma parte de
-los contratos extensibles del formatter core.
+`printscript-v1`. La jerarquía `Expression` de `printscript-ast` permanece
+sellada y no forma parte de los contratos extensibles del formatter core.
 
 ### Interpreter
 
