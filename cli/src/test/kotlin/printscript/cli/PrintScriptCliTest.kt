@@ -43,7 +43,7 @@ class PrintScriptCliTest {
             """.trimIndent(),
         )
 
-        val result = printScriptCli().test("execution $file")
+        val result = printScriptCli().test(listOf("execution", file))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "Joe Doe")
@@ -53,14 +53,14 @@ class PrintScriptCliTest {
     fun `evaluates arithmetic respecting precedence`() {
         val file = scriptFile("println(2 + 3 * 4);")
 
-        assertContains(printScriptCli().test("execution $file").stdout, "14")
+        assertContains(printScriptCli().test(listOf("execution", file)).stdout, "14")
     }
 
     @Test
     fun `reports division by zero`() {
         val file = scriptFile("println(1 / 0);")
 
-        val result = printScriptCli().test("execution $file")
+        val result = printScriptCli().test(listOf("execution", file))
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "división por cero")
@@ -72,7 +72,7 @@ class PrintScriptCliTest {
     fun `validation accepts a well formed program`() {
         val file = scriptFile("let a: number = 5;")
 
-        val result = printScriptCli().test("validation $file")
+        val result = printScriptCli().test(listOf("validation", file))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "El archivo es válido.")
@@ -82,7 +82,7 @@ class PrintScriptCliTest {
     fun `validation does not print what the program would print`() {
         val file = scriptFile("""println("no deberia verse");""")
 
-        val result = printScriptCli().test("validation $file")
+        val result = printScriptCli().test(listOf("validation", file))
 
         assertTrue(!result.stdout.contains("no deberia verse"))
     }
@@ -91,7 +91,7 @@ class PrintScriptCliTest {
     fun `validation rejects an undeclared variable`() {
         val file = scriptFile("println(inexistente);")
 
-        val result = printScriptCli().test("validation $file")
+        val result = printScriptCli().test(listOf("validation", file))
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "'inexistente' no fue declarada")
@@ -101,7 +101,7 @@ class PrintScriptCliTest {
     fun `reports a syntax error with its position`() {
         val file = scriptFile("let a: number = 5")
 
-        val result = printScriptCli().test("validation $file")
+        val result = printScriptCli().test(listOf("validation", file))
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "línea 1")
@@ -113,7 +113,7 @@ class PrintScriptCliTest {
     fun `normalizes spacing in a declaration`() {
         val file = scriptFile("let    a:number   =   5;")
 
-        val result = printScriptCli().test("formatting $file")
+        val result = printScriptCli().test(listOf("formatting", file))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "let a: number = 5;")
@@ -125,7 +125,7 @@ class PrintScriptCliTest {
     fun `accepts a program that respects the conventions`() {
         val file = scriptFile("let miVariable: number = 5;")
 
-        val result = printScriptCli().test("analyzing $file")
+        val result = printScriptCli().test(listOf("analyzing", file))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "No se encontraron problemas.")
@@ -135,7 +135,7 @@ class PrintScriptCliTest {
     fun `reports an identifier that is not camel case`() {
         val file = scriptFile("let mi_variable: number = 5;")
 
-        val result = printScriptCli().test("analyzing $file")
+        val result = printScriptCli().test(listOf("analyzing", file))
 
         assertEquals(expected = 3, actual = result.statusCode)
         assertContains(result.stdout, "camelCase")
@@ -148,12 +148,12 @@ class PrintScriptCliTest {
 
         assertEquals(
             expected = 3,
-            actual = printScriptCli().test("analyzing $withFindings").statusCode,
+            actual = printScriptCli().test(listOf("analyzing", withFindings)).statusCode,
         )
 
         assertEquals(
             expected = 1,
-            actual = printScriptCli().test("analyzing $broken").statusCode,
+            actual = printScriptCli().test(listOf("analyzing", broken)).statusCode,
         )
     }
 

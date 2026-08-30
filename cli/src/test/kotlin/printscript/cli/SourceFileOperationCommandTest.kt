@@ -56,7 +56,15 @@ class SourceFileOperationCommandTest {
         val command = ProbeCommand()
         val file = scriptFile()
 
-        command.test("$file --version 1.0 --config reglas.json")
+        command.test(
+            listOf(
+                file,
+                "--version",
+                "1.0",
+                "--config",
+                "reglas.json",
+            ),
+        )
 
         val request = assertNotNull(command.receivedRequest)
 
@@ -69,7 +77,7 @@ class SourceFileOperationCommandTest {
     fun `defaults the version when it is not given`() {
         val command = ProbeCommand()
 
-        command.test(scriptFile())
+        command.test(listOf(scriptFile()))
 
         assertEquals(
             expected = LanguageVersion.DEFAULT,
@@ -81,7 +89,7 @@ class SourceFileOperationCommandTest {
     fun `has no configuration file when none is given`() {
         val command = ProbeCommand()
 
-        command.test(scriptFile())
+        command.test(listOf(scriptFile()))
 
         assertNull(assertNotNull(command.receivedRequest).configurationFilePath)
     }
@@ -90,7 +98,7 @@ class SourceFileOperationCommandTest {
     fun `rejects an unsupported version before running the operation`() {
         val command = ProbeCommand()
 
-        val result = command.test("${scriptFile()} --version 9.9")
+        val result = command.test(listOf(scriptFile(), "--version", "9.9"))
 
         assertEquals(expected = false, actual = result.statusCode == 0)
         assertNull(command.receivedRequest)
@@ -100,7 +108,7 @@ class SourceFileOperationCommandTest {
 
     @Test
     fun `exits with zero when the operation succeeds`() {
-        val result = ProbeCommand(OperationOutcome.Success).test(scriptFile())
+        val result = ProbeCommand(OperationOutcome.Success).test(listOf(scriptFile()))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "operación ejecutada")
@@ -110,7 +118,7 @@ class SourceFileOperationCommandTest {
     fun `exits with three when the operation reports findings`() {
         val result = ProbeCommand(
             OperationOutcome.CompletedWithFindings("Se encontraron 2 problemas."),
-        ).test(scriptFile())
+        ).test(listOf(scriptFile()))
 
         assertEquals(expected = 3, actual = result.statusCode)
         assertContains(result.stdout, "Se encontraron 2 problemas.")
@@ -120,7 +128,7 @@ class SourceFileOperationCommandTest {
     fun `exits with one when the operation fails`() {
         val result = ProbeCommand(
             OperationOutcome.Failure("error: algo salió mal"),
-        ).test(scriptFile())
+        ).test(listOf(scriptFile()))
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "algo salió mal")
