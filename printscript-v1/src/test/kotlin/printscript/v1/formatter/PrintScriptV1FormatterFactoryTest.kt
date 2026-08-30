@@ -12,13 +12,13 @@ import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.formatter.FormattedStatementReadResult
 import printscript.formatter.Formatter
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
 import printscript.formatter.StatementSeparationPolicy
+import printscript.statement.Statement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

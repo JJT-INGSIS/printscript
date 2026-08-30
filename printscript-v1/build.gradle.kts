@@ -11,5 +11,6 @@ dependencies {
 
     api(project(":token-source"))
     api(project(":statement-source"))
+    api(project(":printscript-ast"))
     api(project(":common"))
 }

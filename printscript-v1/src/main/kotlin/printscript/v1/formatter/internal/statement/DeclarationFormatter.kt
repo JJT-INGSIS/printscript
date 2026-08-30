@@ -2,10 +2,10 @@ package printscript.v1.formatter.internal.statement
 
 import printscript.ast.DeclaredType
 import printscript.ast.expression.Expression
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
+import printscript.statement.Statement
 import printscript.v1.formatter.internal.ASSIGNMENT_OPERATOR
 import printscript.v1.formatter.internal.COLON
 import printscript.v1.formatter.internal.DECLARATION_KEYWORD

@@ -1,8 +1,8 @@
 package printscript.linter.internal.rule
 
-import printscript.ast.statement.Statement
 import printscript.linter.LintRule
 import printscript.linter.RuleInspection
+import printscript.statement.Statement
 
 /**
  * Varias reglas vistas como una. Toda regla mira toda sentencia: no hay

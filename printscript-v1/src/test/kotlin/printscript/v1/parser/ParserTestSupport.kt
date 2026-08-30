@@ -2,10 +2,10 @@ package printscript.v1.parser
 
 import printscript.ast.expression.Expression
 import printscript.ast.statement.AssignmentStatement
-import printscript.ast.statement.Statement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
+import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import printscript.token.LexicalError

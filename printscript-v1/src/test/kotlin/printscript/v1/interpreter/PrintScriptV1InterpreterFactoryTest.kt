@@ -13,7 +13,6 @@ import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.InterpretationResult
@@ -23,6 +22,7 @@ import printscript.interpreter.StatementExecutor
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
+import printscript.statement.Statement
 import printscript.token.Token
 import printscript.v1.token.PrintScriptV1TokenType
 import java.math.BigDecimal

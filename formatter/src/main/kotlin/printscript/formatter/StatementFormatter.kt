@@ -1,6 +1,6 @@
 package printscript.formatter
 
-import printscript.ast.statement.Statement
+import printscript.statement.Statement
 
 /**
  * Formats one supported statement without deciding its separation from other

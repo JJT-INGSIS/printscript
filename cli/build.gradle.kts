@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":source-reader"))
     implementation(project(":token-source"))
     implementation(project(":statement-source"))
+    implementation(project(":printscript-ast"))
     implementation(project(":interpreter"))
     implementation(project(":formatter"))
     implementation(project(":linter"))

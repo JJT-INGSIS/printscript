@@ -1,9 +1,9 @@
 package printscript.v1.formatter.internal.statement
 
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.Statement
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
+import printscript.statement.Statement
 import printscript.v1.formatter.internal.LEFT_PARENTHESIS
 import printscript.v1.formatter.internal.OUTPUT_FUNCTION_NAME
 import printscript.v1.formatter.internal.RIGHT_PARENTHESIS

@@ -35,17 +35,18 @@ package "Etapas del pipeline — motores genéricos (internal)" {
   rectangle "**parser**\n\nParser, ParserFactory\nStatementParser, ExpressionParser\nParsingContext, ParsingResult\n--\ninternal: ConfigurableParser,\nParsingStatementSource" as parser <<etapa>>
   rectangle "**interpreter**\n\nInterpreter, InterpreterFactory\nStatementExecutor<S>, ExecutionResult\nSemanticError\n--\ninternal: ConfigurableInterpreter,\nStatementExecutorDispatcher" as interpreter <<etapa>>
   rectangle "**formatter**\n\nFormatter, FormatterFactory\nStatementFormatter\nStatementSeparationPolicy\n--\ninternal: ConfigurableFormatter,\nLazyFormattedSource" as formatter <<etapa>>
-  rectangle "**linter**\n\nLinter, DiagnosticSource\nDiagnostic, LinterConfiguration\nPrintScriptLinterFactory.createV1()\n--\ninternal: LintingSource,\nDiagnosticSearch, LintRule*, RuleSet" as linter <<etapa>>
+  rectangle "**linter**\n\nLinter, LinterFactory\nDiagnosticSource, Diagnostic\nLintRule, RuleInspection\n--\ninternal: LintingSource,\nDiagnosticSearch, CompositeRule" as linter <<etapa>>
 }
 
 package "Implementación de lenguaje" {
-  rectangle "**printscript-v1**\n\nPrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory\nPrintScriptV1TokenType\nPrintScriptV1Environment\nPrintScriptV1SemanticError\n--\ninternal: scanners, gramática,\nexecutors, formatters, operaciones" as v1 <<etapa>>
+  rectangle "**printscript-v1**\n\nPrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory\nPrintScriptV1LinterFactory\nPrintScriptV1TokenType\nPrintScriptV1Environment\nPrintScriptV1SemanticError\n--\ninternal: scanners, gramática,\nexecutors, formatters, reglas" as v1 <<etapa>>
 }
 
 package "Contratos y modelo — API pública compartida" {
   rectangle "**source-reader**\n\nSourceReader\nSourceChunkReadResult\nSourceReaderFactory\nSourceAccessError" as sourcereader <<contrato>>
   rectangle "**token-source**\n\nTokenSource\nToken / TokenType\nTokenReadResult\nLexicalError" as tokensource <<contrato>>
-  rectangle "**statement-source**\n\nStatementSource\nStatementReadResult\nParseError\nAST: printscript.ast.*" as statementsource <<contrato>>
+  rectangle "**statement-source**\n\nStatement\nStatementSource\nStatementReadResult\nParseError" as statementsource <<contrato>>
+  rectangle "**printscript-ast**\n\nExpression (sealed)\nIdentifier, DeclaredType\nstatements y expresiones oficiales" as ast <<contrato>>
   rectangle "**common**\n\nSourcePosition\nSourceSpan" as common <<contrato>>
 }
 
@@ -63,11 +64,15 @@ linter       -[#2E86C1,bold]-> common         : api
 statementsource -[#2E86C1,bold]-> tokensource : api
 statementsource -[#2E86C1,bold]-> common      : api
 tokensource  -[#2E86C1,bold]-> common         : api
+ast          -[#2E86C1,bold]-> statementsource: api
+ast          -[#2E86C1,bold]-> common         : api
 
 v1 -[#2E86C1,bold]-> lexer       : api
 v1 -[#2E86C1,bold]-> parser      : api
 v1 -[#2E86C1,bold]-> formatter   : api
 v1 -[#2E86C1,bold]-> interpreter : api
+v1 -[#2E86C1,bold]-> linter      : api
+v1 -[#2E86C1,bold]-> ast         : api
 
 ' ---- implementation: detalle interno, no se propaga ----
 cli .[#7F8C8D].> v1           : implementation
@@ -75,6 +80,7 @@ cli .[#7F8C8D].> interpreter  : implementation
 cli .[#7F8C8D].> formatter    : implementation
 cli .[#7F8C8D].> linter       : implementation
 cli .[#7F8C8D].> sourcereader : implementation
+cli .[#7F8C8D].> ast          : implementation
 
 ' ---- testImplementation ----
 tests .[#17A589].> lexer       : testImplementation

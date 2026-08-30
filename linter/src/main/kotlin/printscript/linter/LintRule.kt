@@ -1,6 +1,6 @@
 package printscript.linter
 
-import printscript.ast.statement.Statement
+import printscript.statement.Statement
 
 /**
  * Punto de extensión del linter: una regla mira toda sentencia y devuelve

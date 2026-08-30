@@ -2,9 +2,9 @@ package printscript.v1.formatter
 
 import printscript.ast.Identifier
 import printscript.ast.expression.NumberLiteralExpression
-import printscript.ast.statement.Statement
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import java.math.BigDecimal

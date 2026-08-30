@@ -1,7 +1,5 @@
 package printscript.statement
 
-import printscript.ast.statement.Statement
-
 public sealed interface StatementReadResult {
 
     /**

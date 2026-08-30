@@ -1,12 +1,12 @@
 package printscript.v1.parser.internal.statement
 
 import printscript.ast.Identifier
-import printscript.ast.statement.Statement
 import printscript.parser.ParsingContext
 import printscript.parser.ParsingResult
 import printscript.parser.StatementParser
 import printscript.parser.orReturn
 import printscript.statement.ParseError
+import printscript.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenType
 

@@ -1,11 +1,11 @@
 package printscript.v1.interpreter.internal.statement
 
 import printscript.ast.expression.Expression
-import printscript.ast.statement.Statement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutor
+import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1Environment
 import printscript.v1.interpreter.PrintScriptV1ExpressionEvaluator
 import printscript.v1.interpreter.PrintScriptV1RuntimeValue
