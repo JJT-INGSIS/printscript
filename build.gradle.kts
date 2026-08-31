@@ -1,6 +1,10 @@
+val printScriptVersion =
+    providers.gradleProperty("releaseVersion")
+        .getOrElse("1.0.0-SNAPSHOT")
+
 allprojects {
-    group = "printscript"
-    version = "1.0-SNAPSHOT"
+    group = "io.github.jjt-ingsis.printscript"
+    version = printScriptVersion
 }
 
 tasks.register<Copy>("installHooks") {

@@ -1,5 +1,5 @@
 plugins {
-    id("printscript.kotlin-library")
+    id("printscript.publishable-library")
 }
 
 dependencies {
