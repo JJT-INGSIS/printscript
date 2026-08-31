@@ -8,13 +8,6 @@ import printscript.statement.StatementSource
 
 private const val DELIVERED_DIAGNOSTIC_COUNT = 1
 
-/**
- * Entrega los diagnósticos de a uno. Una sentencia puede incumplir varias
- * reglas, así que la fuente lleva los que todavía no entregó.
- *
- * También lleva la regla: es la que quedó después de mirar lo ya leído, y
- * es con la que se va a mirar lo que falta.
- */
 internal data class LintingSource(
     private val statements: StatementSource,
     private val rule: LintRule,

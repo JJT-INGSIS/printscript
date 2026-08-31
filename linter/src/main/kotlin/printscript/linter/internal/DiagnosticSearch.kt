@@ -5,9 +5,7 @@ import printscript.linter.RuleInspection
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
-
 internal class DiagnosticSearch {
-
 
     tailrec fun findNext(statements: StatementSource, rule: LintRule): DiagnosticSearchResult {
         return when (val readResult = statements.nextStatement()) {
