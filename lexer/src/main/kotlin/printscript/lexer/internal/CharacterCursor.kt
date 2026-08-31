@@ -14,20 +14,13 @@ internal data class CharacterCursor(
     private val currentChunk: SourceChunk?,
     private val indexInChunk: Int,
     private val remainingSourceReader: SourceReader?,
-    private val sourceLocation: SourceLocation,
+    private val positionTracker: SourcePositionTracker,
 ) : ScannerCursor {
 
     override val position: SourcePosition
-        get() = sourceLocation.position
+        get() = positionTracker.currentPosition
 
-    /**
-     * Returns the next character without consuming it. The resulting cursor
-     * may contain a newly read source chunk and must be used for subsequent
-     * operations.
-     */
-    override fun peek(): ScannerCharacterReadResult {
-        return readNextAvailableCharacter(this).toReadResult()
-    }
+    override fun peek(): ScannerCharacterReadResult = readNextAvailableCharacter(this).toReadResult()
 
     override fun advance(): ScannerCharacterReadResult {
         return when (val availableCharacter = readNextAvailableCharacter(this)) {
@@ -49,17 +42,13 @@ internal data class CharacterCursor(
         }
     }
 
-    private fun afterConsuming(character: Char): CharacterCursor {
-        return copy(
-            indexInChunk =
-            indexInChunk + CHARACTER_INDEX_INCREMENT,
-            sourceLocation = sourceLocation.after(character),
-        )
-    }
+    private fun afterConsuming(character: Char): CharacterCursor = copy(
+        indexInChunk = indexInChunk + CHARACTER_INDEX_INCREMENT,
+        positionTracker = positionTracker.afterConsuming(character),
+    )
 
     private tailrec fun readNextAvailableCharacter(cursor: CharacterCursor): AvailableCharacter {
-        val currentCharacter =
-            cursor.currentCharacterOrNull()
+        val currentCharacter = cursor.currentCharacterOrNull()
 
         if (currentCharacter != null) {
             return AvailableCharacter.Success(
@@ -73,78 +62,58 @@ internal data class CharacterCursor(
                 cursor = cursor,
             )
 
-        val chunkReadResult =
-            sourceReader.readChunk()
-
-        return when (chunkReadResult) {
-            is SourceChunkReadResult.Success -> {
+        return when (val chunkReadResult = sourceReader.readChunk()) {
+            is SourceChunkReadResult.Success ->
                 readNextAvailableCharacter(
                     cursor.afterReadingChunk(chunkReadResult),
                 )
-            }
 
-            SourceChunkReadResult.EndOfInput -> {
+            SourceChunkReadResult.EndOfInput ->
                 AvailableCharacter.EndOfInput(
                     cursor = cursor.atEndOfInput(),
                 )
-            }
         }
     }
 
     private fun AvailableCharacter.toReadResult(): ScannerCharacterReadResult {
         return when (this) {
-            is AvailableCharacter.Success -> {
+            is AvailableCharacter.Success ->
                 ScannerCharacterReadResult.Success(
                     character = character,
                     resultingCursor = cursor,
                 )
-            }
 
-            is AvailableCharacter.EndOfInput -> {
+            is AvailableCharacter.EndOfInput ->
                 ScannerCharacterReadResult.EndOfInput(
                     resultingCursor = cursor,
                 )
-            }
         }
     }
 
-    private fun currentCharacterOrNull(): Char? {
-        val chunk = currentChunk
-            ?: return null
+    private fun currentCharacterOrNull(): Char? = currentChunk
+        ?.content
+        ?.getOrNull(indexInChunk)
 
-        if (indexInChunk >= chunk.content.length) {
-            return null
-        }
+    private fun afterReadingChunk(readResult: SourceChunkReadResult.Success): CharacterCursor = copy(
+        currentChunk = readResult.chunk,
+        indexInChunk = INITIAL_INDEX_IN_CHUNK,
+        remainingSourceReader = readResult.remainingReader,
+    )
 
-        return chunk.content[indexInChunk]
-    }
-
-    private fun afterReadingChunk(readResult: SourceChunkReadResult.Success): CharacterCursor {
-        return copy(
-            currentChunk = readResult.chunk,
-            indexInChunk = INITIAL_INDEX_IN_CHUNK,
-            remainingSourceReader = readResult.remainingReader,
-        )
-    }
-
-    private fun atEndOfInput(): CharacterCursor {
-        return copy(
-            currentChunk = null,
-            indexInChunk = INITIAL_INDEX_IN_CHUNK,
-            remainingSourceReader = null,
-        )
-    }
+    private fun atEndOfInput(): CharacterCursor = copy(
+        currentChunk = null,
+        indexInChunk = INITIAL_INDEX_IN_CHUNK,
+        remainingSourceReader = null,
+    )
 
     companion object {
 
-        fun initial(sourceReader: SourceReader): CharacterCursor {
-            return CharacterCursor(
-                currentChunk = null,
-                indexInChunk = INITIAL_INDEX_IN_CHUNK,
-                remainingSourceReader = sourceReader,
-                sourceLocation = SourceLocation.initial(),
-            )
-        }
+        fun initial(sourceReader: SourceReader): CharacterCursor = CharacterCursor(
+            currentChunk = null,
+            indexInChunk = INITIAL_INDEX_IN_CHUNK,
+            remainingSourceReader = sourceReader,
+            positionTracker = SourcePositionTracker.initial(),
+        )
     }
 }
 

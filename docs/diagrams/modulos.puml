@@ -34,7 +34,7 @@ package "Etapas del pipeline — motores genéricos (internal)" {
   rectangle "**lexer**\n\nLexer, LexerFactory\nTokenScanner, ScannerCursor\nIgnoredCharacterPolicy\n--\ninternal: ScanningLexer,\nScanningTokenSource, CharacterCursor" as lexer <<etapa>>
   rectangle "**parser**\n\nParser, ParserFactory\nStatementParser, ExpressionParser\nParsingContext, ParsingResult\n--\ninternal: ConfigurableParser,\nParsingStatementSource" as parser <<etapa>>
   rectangle "**interpreter**\n\nInterpreter, InterpreterFactory\nStatementExecutor<S>, ExecutionResult\nSemanticError\n--\ninternal: ConfigurableInterpreter,\nStatementExecutorDispatcher" as interpreter <<etapa>>
-  rectangle "**formatter**\n\nFormatter, FormatterFactory\nStatementFormatter\nStatementSeparationPolicy\n--\ninternal: ConfigurableFormatter,\nLazyFormattedSource" as formatter <<etapa>>
+  rectangle "**formatter**\n\nFormatter, FormatterFactory\nStatementFormatter\nStatementSeparationPolicy\n--\ninternal: ConfigurableFormatter,\nStatementFormattingSource" as formatter <<etapa>>
   rectangle "**linter**\n\nLinter, LinterFactory\nDiagnosticSource, Diagnostic\nLintRule, RuleInspection\n--\ninternal: LintingSource,\nDiagnosticSearch, CompositeRule" as linter <<etapa>>
 }
 

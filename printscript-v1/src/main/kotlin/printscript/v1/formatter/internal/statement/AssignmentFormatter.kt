@@ -4,10 +4,10 @@ import printscript.ast.statement.AssignmentStatement
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
 import printscript.statement.Statement
-import printscript.v1.formatter.internal.ASSIGNMENT_OPERATOR
-import printscript.v1.formatter.internal.SEMICOLON
 import printscript.v1.formatter.internal.expression.ExpressionFormatter
 import printscript.v1.formatter.internal.spaceIfEnabled
+import printscript.v1.internal.PrintScriptV1Lexemes.ASSIGNMENT_OPERATOR
+import printscript.v1.internal.PrintScriptV1Lexemes.SEMICOLON
 
 internal class AssignmentFormatter(
     private val expressionFormatter: ExpressionFormatter,

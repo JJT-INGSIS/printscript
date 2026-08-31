@@ -6,16 +6,16 @@ import printscript.ast.statement.VariableDeclarationStatement
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
 import printscript.statement.Statement
-import printscript.v1.formatter.internal.ASSIGNMENT_OPERATOR
-import printscript.v1.formatter.internal.COLON
-import printscript.v1.formatter.internal.DECLARATION_KEYWORD
-import printscript.v1.formatter.internal.NUMBER_TYPE_NAME
-import printscript.v1.formatter.internal.SEMICOLON
-import printscript.v1.formatter.internal.STRING_TYPE_NAME
 import printscript.v1.formatter.internal.expression.ExpressionFormatter
 import printscript.v1.formatter.internal.spaceIfEnabled
+import printscript.v1.internal.PrintScriptV1Lexemes.ASSIGNMENT_OPERATOR
+import printscript.v1.internal.PrintScriptV1Lexemes.COLON
+import printscript.v1.internal.PrintScriptV1Lexemes.DECLARATION_KEYWORD
+import printscript.v1.internal.PrintScriptV1Lexemes.NUMBER_TYPE_NAME
+import printscript.v1.internal.PrintScriptV1Lexemes.SEMICOLON
+import printscript.v1.internal.PrintScriptV1Lexemes.STRING_TYPE_NAME
 
-internal class DeclarationFormatter(
+internal class VariableDeclarationFormatter(
     private val expressionFormatter: ExpressionFormatter,
     private val insertSpaceBeforeColon: Boolean,
     private val insertSpaceAfterColon: Boolean,

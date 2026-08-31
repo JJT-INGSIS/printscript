@@ -4,11 +4,11 @@ import printscript.ast.statement.PrintlnStatement
 import printscript.formatter.StatementFormatter
 import printscript.formatter.StatementFormattingResult
 import printscript.statement.Statement
-import printscript.v1.formatter.internal.LEFT_PARENTHESIS
-import printscript.v1.formatter.internal.OUTPUT_FUNCTION_NAME
-import printscript.v1.formatter.internal.RIGHT_PARENTHESIS
-import printscript.v1.formatter.internal.SEMICOLON
 import printscript.v1.formatter.internal.expression.ExpressionFormatter
+import printscript.v1.internal.PrintScriptV1Lexemes.LEFT_PARENTHESIS
+import printscript.v1.internal.PrintScriptV1Lexemes.PRINTLN_FUNCTION_NAME
+import printscript.v1.internal.PrintScriptV1Lexemes.RIGHT_PARENTHESIS
+import printscript.v1.internal.PrintScriptV1Lexemes.SEMICOLON
 
 internal class PrintlnFormatter(
     private val expressionFormatter: ExpressionFormatter,
@@ -31,7 +31,7 @@ internal class PrintlnFormatter(
     private fun formatPrintln(statement: PrintlnStatement): String {
         val formattedArgument = expressionFormatter.formatExpression(statement.argument)
 
-        return "$OUTPUT_FUNCTION_NAME$LEFT_PARENTHESIS" +
+        return "$PRINTLN_FUNCTION_NAME$LEFT_PARENTHESIS" +
             "$formattedArgument$RIGHT_PARENTHESIS$SEMICOLON"
     }
 }

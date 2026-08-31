@@ -10,13 +10,15 @@ import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
-import printscript.v1.formatter.internal.ADDITION_OPERATOR
-import printscript.v1.formatter.internal.DIVISION_OPERATOR
-import printscript.v1.formatter.internal.LEFT_PARENTHESIS
-import printscript.v1.formatter.internal.MULTIPLICATION_OPERATOR
-import printscript.v1.formatter.internal.RIGHT_PARENTHESIS
 import printscript.v1.formatter.internal.SPACE
-import printscript.v1.formatter.internal.SUBTRACTION_OPERATOR
+import printscript.v1.internal.PrintScriptV1Lexemes.ADDITION_OPERATOR
+import printscript.v1.internal.PrintScriptV1Lexemes.DIVISION_OPERATOR
+import printscript.v1.internal.PrintScriptV1Lexemes.DOUBLE_QUOTE_DELIMITER
+import printscript.v1.internal.PrintScriptV1Lexemes.LEFT_PARENTHESIS
+import printscript.v1.internal.PrintScriptV1Lexemes.MULTIPLICATION_OPERATOR
+import printscript.v1.internal.PrintScriptV1Lexemes.RIGHT_PARENTHESIS
+import printscript.v1.internal.PrintScriptV1Lexemes.SINGLE_QUOTE_DELIMITER
+import printscript.v1.internal.PrintScriptV1Lexemes.SUBTRACTION_OPERATOR
 
 internal class ExpressionFormatter(
     private val insertSpaceAroundBinaryOperators: Boolean,
@@ -45,8 +47,8 @@ internal class ExpressionFormatter(
 
     private fun quoteDelimiterFor(quoteStyle: StringQuoteStyle): Char {
         return when (quoteStyle) {
-            StringQuoteStyle.SINGLE -> '\''
-            StringQuoteStyle.DOUBLE -> '"'
+            StringQuoteStyle.SINGLE -> SINGLE_QUOTE_DELIMITER
+            StringQuoteStyle.DOUBLE -> DOUBLE_QUOTE_DELIMITER
         }
     }
 
