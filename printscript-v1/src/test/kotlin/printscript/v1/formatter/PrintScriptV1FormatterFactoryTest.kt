@@ -71,7 +71,6 @@ class PrintScriptV1FormatterFactoryTest {
             insertSpaceAroundEqualsOperator = false,
             insertSpaceAroundBinaryOperators = false,
             lineBreakCountBetweenStatements = 2u,
-            lineBreakCountBeforeOutputStatements = 3u,
         )
         val declaration = VariableDeclarationStatement(
             identifier = identifier("value"),
@@ -96,7 +95,7 @@ class PrintScriptV1FormatterFactoryTest {
         )
 
         assertEquals(
-            expected = "let value :number=1+2;\n\n\nprintln(1);",
+            expected = "let value :number=1+2;\n\nprintln(1);",
             actual = formattedText,
         )
     }
@@ -171,7 +170,7 @@ class PrintScriptV1FormatterFactoryTest {
     @Test
     fun `additional formatters have priority and are copied defensively`() {
         val additionalFormatters = mutableListOf<StatementFormatter>(
-            OverridingDeclarationFormatter,
+            OverridingVariableDeclarationFormatter,
         )
         val formatter = PrintScriptV1FormatterFactory.create(
             additionalStatementFormatters = additionalFormatters,
@@ -257,7 +256,7 @@ class PrintScriptV1FormatterFactoryTest {
     }
 }
 
-private data object OverridingDeclarationFormatter : StatementFormatter {
+private data object OverridingVariableDeclarationFormatter : StatementFormatter {
 
     override fun supportsStatement(statement: Statement): Boolean {
         return statement is VariableDeclarationStatement

@@ -17,7 +17,7 @@ internal class ConfigurableFormatter(
     )
 
     override fun format(statementSource: StatementSource): FormattedSource {
-        return LazyFormattedSource(
+        return StatementFormattingSource(
             statementSource = statementSource,
             statementFormatterDispatcher = statementFormatterDispatcher,
             statementSeparationPolicy = statementSeparationPolicy,

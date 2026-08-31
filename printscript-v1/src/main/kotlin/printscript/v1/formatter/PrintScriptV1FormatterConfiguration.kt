@@ -6,5 +6,4 @@ public data class PrintScriptV1FormatterConfiguration(
     public val insertSpaceAroundEqualsOperator: Boolean,
     public val insertSpaceAroundBinaryOperators: Boolean,
     public val lineBreakCountBetweenStatements: UInt,
-    public val lineBreakCountBeforeOutputStatements: UInt,
 )

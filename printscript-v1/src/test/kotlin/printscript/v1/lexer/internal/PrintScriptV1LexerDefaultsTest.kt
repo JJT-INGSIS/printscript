@@ -4,7 +4,7 @@ import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class PrintScriptV1LexemesTest {
+class PrintScriptV1LexerDefaultsTest {
 
     @Test
     fun `contains all PrintScript V1 string quote delimiters`() {

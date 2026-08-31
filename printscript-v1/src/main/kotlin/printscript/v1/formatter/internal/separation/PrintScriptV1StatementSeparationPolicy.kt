@@ -1,13 +1,11 @@
 package printscript.v1.formatter.internal.separation
 
-import printscript.ast.statement.PrintlnStatement
 import printscript.formatter.StatementSeparationPolicy
 import printscript.statement.Statement
 import printscript.v1.formatter.internal.LINE_BREAK
 
 internal class PrintScriptV1StatementSeparationPolicy(
-    private val defaultLineBreakCountBetweenStatements: UInt,
-    private val lineBreakCountBeforeOutputStatements: UInt,
+    private val lineBreakCountBetweenStatements: UInt,
 ) : StatementSeparationPolicy {
 
     override fun separatorBeforeStatement(statement: Statement, hasPreviousStatement: Boolean): String {
@@ -16,15 +14,7 @@ internal class PrintScriptV1StatementSeparationPolicy(
         }
 
         return LINE_BREAK.repeat(
-            lineBreakCountBeforeStatement(statement).toInt(),
+            lineBreakCountBetweenStatements.toInt(),
         )
-    }
-
-    private fun lineBreakCountBeforeStatement(statement: Statement): UInt {
-        return if (statement is PrintlnStatement) {
-            lineBreakCountBeforeOutputStatements
-        } else {
-            defaultLineBreakCountBetweenStatements
-        }
     }
 }

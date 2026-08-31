@@ -10,7 +10,7 @@ import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
-internal data class LazyFormattedSource(
+internal data class StatementFormattingSource(
     private val statementSource: StatementSource,
     private val statementFormatterDispatcher: StatementFormatterDispatcher,
     private val statementSeparationPolicy: StatementSeparationPolicy,
