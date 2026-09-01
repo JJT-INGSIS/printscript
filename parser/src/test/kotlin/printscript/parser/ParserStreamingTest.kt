@@ -3,7 +3,7 @@ package printscript.parser
 import printscript.model.source.SourceSpan
 import printscript.statement.ParseError
 import printscript.statement.StatementReadResult
-import printscript.token.LexicalError
+import printscript.token.TokenReadError
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource
 import kotlin.test.Test
@@ -84,21 +84,18 @@ class ParserStreamingTest {
     }
 
     @Test
-    fun `converts lexical failures into parse failures`() {
+    fun `converts token reading failures into parse failures`() {
         val span = token(TestTokenType.WORD, "word").span
-        val lexicalError = LexicalError.UnexpectedCharacter(
-            character = '@',
-            span = span,
-        )
+        val tokenReadError = TestTokenReadError(span)
         val result = parser().parse(
-            FailingTokenSource(lexicalError),
+            FailingTokenSource(tokenReadError),
         ).nextStatement()
-        val parseError = assertIs<ParseError.Lexical>(
+        val parseError = assertIs<ParseError.TokenRead>(
             assertIs<StatementReadResult.Failure>(result).error,
         )
 
         assertEquals(
-            expected = lexicalError,
+            expected = tokenReadError,
             actual = parseError.error,
         )
     }
@@ -135,7 +132,7 @@ private class SimpleStatementParser : StatementParser {
 }
 
 private data class FailingTokenSource(
-    private val error: LexicalError,
+    private val error: TokenReadError,
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
@@ -145,3 +142,7 @@ private data class FailingTokenSource(
         )
     }
 }
+
+private data class TestTokenReadError(
+    override val span: SourceSpan,
+) : TokenReadError

@@ -58,7 +58,7 @@ internal data class DefaultParsingContext(
             )
 
             is TokenCursorReadResult.Failure -> ParsingResult.Failure(
-                ParseError.Lexical(read.error),
+                ParseError.TokenRead(read.error),
             )
         }
     }

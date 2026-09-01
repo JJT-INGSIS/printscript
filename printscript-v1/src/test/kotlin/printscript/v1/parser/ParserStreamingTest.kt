@@ -61,7 +61,7 @@ class ParserStreamingTest {
             },
         )
 
-        result.assertParseError<ParseError.Lexical>()
+        result.assertParseError<ParseError.TokenRead>()
     }
 
     @Test

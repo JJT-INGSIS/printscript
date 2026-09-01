@@ -7,6 +7,6 @@ public sealed interface SourceReaderCreationResult {
     ) : SourceReaderCreationResult
 
     public data class Failure(
-        public val error: SourceAccessError,
+        public val error: SourceReaderCreationError,
     ) : SourceReaderCreationResult
 }

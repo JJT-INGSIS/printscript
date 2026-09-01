@@ -6,9 +6,12 @@ import printscript.ast.expression.UnaryOperator
 import printscript.cli.internal.report.ErrorReporter
 import printscript.formatter.FormattingError
 import printscript.interpreter.SemanticError
+import printscript.lexer.SourceReadingError
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.source.SourceAccessError
+import printscript.source.SourceReadError
+import printscript.source.SourceReaderCreationError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
 import printscript.token.Token
@@ -60,6 +63,14 @@ class ErrorReporterTest {
         assertTrue(!message.contains("línea"))
     }
 
+    @Test
+    fun `describes an invalid source reader buffer size`() {
+        val message = reporter.describe(SourceReaderCreationError.InvalidBufferSize(0))
+
+        assertContains(message, "mayor que cero")
+        assertContains(message, "0")
+    }
+
     // --- errores de parseo -------------------------------------------
 
     @Test
@@ -71,11 +82,28 @@ class ErrorReporterTest {
         )
 
         for (error in errors) {
-            val message = reporter.describe(ParseError.Lexical(error))
+            val message = reporter.describe(ParseError.TokenRead(error))
 
             assertContains(message, "error:")
             assertContains(message, "línea 3")
         }
+    }
+
+    @Test
+    fun `describes a source reading error with its position`() {
+        val error = SourceReadingError(
+            sourceError = SourceReadError.InvalidEncoding(
+                path = anyPath,
+                byteOffset = 17L,
+            ),
+            span = anySpan,
+        )
+
+        val message = reporter.describe(ParseError.TokenRead(error))
+
+        assertContains(message, "UTF-8")
+        assertContains(message, "byte 17")
+        assertContains(message, "línea 3")
     }
 
     @Test

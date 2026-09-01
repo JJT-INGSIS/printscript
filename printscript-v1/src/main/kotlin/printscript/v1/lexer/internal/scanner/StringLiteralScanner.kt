@@ -44,6 +44,13 @@ internal class StringLiteralScanner(
         startPosition: SourcePosition,
     ): TokenScanResult {
         return when (val readResult = cursor.peek()) {
+            is ScannerCharacterReadResult.Failure -> {
+                TokenScanResult.Failure(
+                    error = readResult.error,
+                    resultingCursor = readResult.resultingCursor,
+                )
+            }
+
             is ScannerCharacterReadResult.EndOfInput -> {
                 createUnterminatedStringFailure(
                     openingQuote = openingQuote,

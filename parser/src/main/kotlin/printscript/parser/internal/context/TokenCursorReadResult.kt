@@ -1,7 +1,7 @@
 package printscript.parser.internal.context
 
-import printscript.token.LexicalError
 import printscript.token.Token
+import printscript.token.TokenReadError
 
 internal sealed interface TokenCursorReadResult {
 
@@ -13,7 +13,7 @@ internal sealed interface TokenCursorReadResult {
     ) : TokenCursorReadResult
 
     data class Failure(
-        val error: LexicalError,
+        val error: TokenReadError,
         override val resultingCursor: TokenCursor,
     ) : TokenCursorReadResult
 }

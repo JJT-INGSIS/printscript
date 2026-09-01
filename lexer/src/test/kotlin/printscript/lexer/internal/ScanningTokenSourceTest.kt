@@ -1,11 +1,16 @@
 package printscript.lexer.internal
 
 import printscript.lexer.ExpectedToken
+import printscript.lexer.SourceReadFailureReader
+import printscript.lexer.SourceReadingError
+import printscript.lexer.TestSourceReadError
 import printscript.lexer.TestTokenType
 import printscript.lexer.TestWordScanner
 import printscript.lexer.assertLexicalError
 import printscript.lexer.assertNextToken
+import printscript.lexer.assertTokenReadError
 import printscript.lexer.cursorFor
+import printscript.lexer.cursorForChunksThenFailure
 import printscript.lexer.internal.scanner.TokenScannerDispatcher
 import printscript.lexer.scanning.IgnoredCharacterPolicy
 import printscript.model.source.SourcePosition
@@ -152,7 +157,49 @@ class ScanningTokenSourceTest {
         )
     }
 
+    @Test
+    fun `source reading failure is returned as a token reading failure`() {
+        val sourceError = TestSourceReadError("temporary failure")
+        val tokenSource = createTokenSource(
+            cursor = CharacterCursor.initial(SourceReadFailureReader(sourceError)),
+        )
+
+        val error = tokenSource.nextToken().assertTokenReadError<SourceReadingError>()
+
+        assertEquals(expected = sourceError, actual = error.sourceError)
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition.initial(),
+                end = SourcePosition.initial(),
+            ),
+            actual = error.span,
+        )
+    }
+
+    @Test
+    fun `source reading failure inside a token preserves its source position`() {
+        val sourceError = TestSourceReadError("temporary failure")
+        val tokenSource = createTokenSource(
+            cursor = cursorForChunksThenFailure(sourceError, "word"),
+        )
+
+        val error = tokenSource.nextToken().assertTokenReadError<SourceReadingError>()
+
+        assertEquals(expected = sourceError, actual = error.sourceError)
+        assertEquals(
+            expected = SourceSpan(
+                start = SourcePosition(line = 1, column = 5, offset = 4L),
+                end = SourcePosition(line = 1, column = 5, offset = 4L),
+            ),
+            actual = error.span,
+        )
+    }
+
     private fun createTokenSourceFor(sourceText: String): TokenSource {
+        return createTokenSource(cursorFor(sourceText))
+    }
+
+    private fun createTokenSource(cursor: CharacterCursor): TokenSource {
         val tokenScannerDispatcher = TokenScannerDispatcher(
             scanners = listOf(
                 TestWordScanner(
@@ -162,7 +209,7 @@ class ScanningTokenSourceTest {
         )
 
         return ScanningTokenSource(
-            characterCursor = cursorFor(sourceText),
+            characterCursor = cursor,
             tokenScannerDispatcher = tokenScannerDispatcher,
             ignoredCharacterPolicy =
             IgnoredCharacterPolicy { character ->

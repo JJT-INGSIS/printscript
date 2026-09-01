@@ -2,32 +2,30 @@ package printscript.cli.internal.report
 
 import printscript.formatter.FormattingError
 import printscript.interpreter.SemanticError
+import printscript.lexer.SourceReadingError
 import printscript.model.source.SourceSpan
 import printscript.source.SourceAccessError
+import printscript.source.SourceReadError
+import printscript.source.SourceReaderCreationError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
+import printscript.token.TokenReadError
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
 
 internal class ErrorReporter {
 
     /**
-     * Los problemas de acceso al archivo no tienen posición dentro del
-     * código: pasaron antes de leer una sola línea.
+     * Los problemas de creación del lector no tienen posición dentro del
+     * código porque ocurren antes de empezar a procesarlo.
      */
-    fun describe(error: SourceAccessError): String {
+    fun describe(error: SourceReaderCreationError): String {
         val description = when (error) {
-            is SourceAccessError.NotFound ->
-                "no se encontró el archivo '${error.path}'"
+            is SourceAccessError -> describeSourceAccess(error)
 
-            is SourceAccessError.NotAFile ->
-                "'${error.path}' no es un archivo"
-
-            is SourceAccessError.NotReadable ->
-                "no hay permisos de lectura sobre '${error.path}'"
-
-            is SourceAccessError.ReadFailed ->
-                "no se pudo leer '${error.path}': ${error.reason}"
+            is SourceReaderCreationError.InvalidBufferSize ->
+                "el tamaño del buffer debe ser mayor que cero " +
+                    "(se recibió ${error.providedSizeInBytes})"
         }
 
         return "error: $description"
@@ -35,7 +33,7 @@ internal class ErrorReporter {
 
     fun describe(error: ParseError): String {
         val description = when (error) {
-            is ParseError.Lexical -> describeLexical(error.error)
+            is ParseError.TokenRead -> describeTokenRead(error.error)
 
             is ParseError.UnexpectedToken ->
                 "se esperaba ${PrintScriptWording.describeAnyOf(error.expected)} " +
@@ -117,6 +115,42 @@ internal class ErrorReporter {
 
             else ->
                 "error léxico desconocido"
+        }
+    }
+
+    private fun describeTokenRead(error: TokenReadError): String {
+        return when (error) {
+            is LexicalError -> describeLexical(error)
+            is SourceReadingError -> describeSourceReading(error)
+            else -> "error desconocido al leer el próximo token"
+        }
+    }
+
+    private fun describeSourceReading(error: SourceReadingError): String {
+        return when (val sourceError = error.sourceError) {
+            is SourceAccessError -> describeSourceAccess(sourceError)
+
+            is SourceReadError.InvalidEncoding ->
+                "el archivo '${sourceError.path}' no contiene UTF-8 válido " +
+                    "desde el byte ${sourceError.byteOffset}"
+
+            else -> "no se pudo continuar leyendo el código fuente"
+        }
+    }
+
+    private fun describeSourceAccess(error: SourceAccessError): String {
+        return when (error) {
+            is SourceAccessError.NotFound ->
+                "no se encontró el archivo '${error.path}'"
+
+            is SourceAccessError.NotAFile ->
+                "'${error.path}' no es un archivo"
+
+            is SourceAccessError.NotReadable ->
+                "no hay permisos de lectura sobre '${error.path}'"
+
+            is SourceAccessError.ReadFailed ->
+                "no se pudo leer '${error.path}': ${error.reason}"
         }
     }
 

@@ -2,7 +2,7 @@ package printscript.source
 
 import java.nio.file.Path
 
-public sealed interface SourceAccessError {
+public sealed interface SourceAccessError : SourceReaderCreationError, SourceReadError {
 
     public val path: Path
 

@@ -10,7 +10,7 @@ public sealed interface TokenReadResult {
     ) : TokenReadResult
 
     public data class Failure(
-        public val error: LexicalError,
+        public val error: TokenReadError,
         override val remainingSource: TokenSource,
     ) : TokenReadResult
 }

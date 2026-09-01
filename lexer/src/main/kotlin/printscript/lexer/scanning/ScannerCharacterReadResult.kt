@@ -1,5 +1,7 @@
 package printscript.lexer.scanning
 
+import printscript.token.TokenReadError
+
 public sealed interface ScannerCharacterReadResult {
 
     public val resultingCursor: ScannerCursor
@@ -10,6 +12,11 @@ public sealed interface ScannerCharacterReadResult {
     ) : ScannerCharacterReadResult
 
     public data class EndOfInput(
+        override val resultingCursor: ScannerCursor,
+    ) : ScannerCharacterReadResult
+
+    public data class Failure(
+        public val error: TokenReadError,
         override val resultingCursor: ScannerCursor,
     ) : ScannerCharacterReadResult
 }
