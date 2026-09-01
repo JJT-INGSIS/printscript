@@ -36,7 +36,7 @@ El ejecutable queda en `cli/build/install/printscript/bin/printscript`.
 printscript validation ejemplo.ps   # ¿el archivo es válido?
 printscript execution  ejemplo.ps   # correlo
 printscript formatting ejemplo.ps   # reescribilo con el formato configurado
-printscript analyzing  ejemplo.ps   # reportá problemas de estilo
+printscript analysis   ejemplo.ps   # reportá problemas de estilo
 ```
 
 Las cuatro operaciones aceptan las mismas opciones:
@@ -44,7 +44,6 @@ Las cuatro operaciones aceptan las mismas opciones:
 | Opción | Qué hace |
 |---|---|
 | `--version` | Versión del lenguaje. Hoy solo `1.0`, que es el default. |
-| `--config` | Archivo de configuración. Se acepta pero **todavía no tiene efecto**. |
 | `--help` | Ayuda. Disponible también por operación: `printscript formatting --help`. |
 
 ### Códigos de salida
@@ -186,13 +185,33 @@ archivos.
 La CLI está partida en dos capas. El **dominio** —`SourceOperation` y sus cuatro
 implementaciones, `SourceOperationRunner`, los reporters— recibe sentencias y
 una terminal, y devuelve un `OperationOutcome`; no conoce `argv`, ni los flags,
-ni la consola. El **adaptador** es todo Clikt: `SourceFileOperationCommand`
-declara el argumento y las opciones compartidas, y cada subcomando concreto solo
-aporta qué operación montar (Template Method).
+ni la consola. El **adaptador** son los cuatro comandos de Clikt.
 
 Esa frontera es la que permite que el parseo de argumentos sea una librería en
 lugar de código propio, y que las cuatro operaciones se testeen sin línea de
 comandos.
+
+Los cuatro comandos heredan **directamente de `CliktCommand`**: no hay clase base
+propia. Lo que comparten se reutiliza por composición, con los mecanismos que la
+propia librería ofrece para eso:
+
+| Qué se comparte | Cómo |
+|---|---|
+| el argumento `<archivo>` | la extensión `sourceFileArgument()` |
+| la opción `--version` | el `OptionGroup` `LanguageOptions` |
+| la orquestación del `run()` | la extensión `runSourceOperation()` |
+| qué operación montar | la `SourceOperationFactory` inyectada |
+
+Se eligió composición sobre herencia por un motivo concreto: con una clase base,
+los cuatro comandos quedaban obligados a exponer **exactamente las mismas
+opciones**. Declarándolas por comando, cada uno puede tener las suyas — algo que
+va a hacer falta cuando vuelva `--config`, que corresponde solo a `formatting` y
+`analysis`.
+
+`PrintScriptCommandFactory` es la raíz de composición y el único lugar donde se
+instancian los comandos. Producción y tests la comparten: si cada uno armara la
+suya, un test podría quedar en verde verificando un CLI distinto del que se
+distribuye.
 
 Dos decisiones deliberadas en contra de lo que ofrece la librería:
 

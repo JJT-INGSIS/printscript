@@ -1,20 +1,36 @@
 package printscript.cli.internal.command
 
+import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import printscript.cli.internal.operation.FormattingOperation
-import printscript.cli.internal.operation.SourceOperation
+import com.github.ajalt.clikt.parameters.groups.provideDelegate
+import printscript.cli.internal.operation.SourceOperationFactory
 import printscript.cli.internal.operation.SourceOperationRequest
+import printscript.cli.internal.pipeline.StatementSourcePipeline
 import printscript.cli.internal.report.ErrorReporter
 
 internal class FormattingCommand(
-    errorReporter: ErrorReporter,
-) : SourceFileOperationCommand(name = "formatting", errorReporter = errorReporter) {
+    private val operationFactory: SourceOperationFactory,
+    private val errorReporter: ErrorReporter,
+    private val pipeline: StatementSourcePipeline = StatementSourcePipeline(),
+) : CliktCommand(name = "formatting") {
+
+    private val sourceFilePath by sourceFileArgument()
+
+    private val languageOptions by LanguageOptions()
 
     override fun help(context: Context): String {
-        return "Reescribe el código con el formato configurado"
+        return "Muestra el código con el formato configurado, sin modificar el archivo"
     }
 
-    override fun operationFor(request: SourceOperationRequest): SourceOperation {
-        return FormattingOperation(errorReporter)
+    override fun run() {
+        runSourceOperation(
+            request = SourceOperationRequest(
+                sourceFilePath = sourceFilePath,
+                version = languageOptions.version,
+            ),
+            operationFactory = operationFactory,
+            errorReporter = errorReporter,
+            pipeline = pipeline,
+        )
     }
 }
