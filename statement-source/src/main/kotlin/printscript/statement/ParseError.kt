@@ -1,20 +1,20 @@
 package printscript.statement
 
 import printscript.model.source.SourceSpan
-import printscript.token.LexicalError
 import printscript.token.Token
+import printscript.token.TokenReadError
 import printscript.token.TokenType
 
 /**
- * Syntax error contract. Parser extensions may provide language-specific
+ * Parsing error contract. Parser extensions may provide language-specific
  * implementations while the common result pipeline remains unchanged.
  */
 public interface ParseError {
 
     public val span: SourceSpan
 
-    public data class Lexical(
-        public val error: LexicalError,
+    public data class TokenRead(
+        public val error: TokenReadError,
     ) : ParseError {
 
         override val span: SourceSpan = error.span

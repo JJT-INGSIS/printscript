@@ -1,8 +1,10 @@
 package printscript.lexer.internal
 
+import printscript.lexer.SourceReadingError
 import printscript.lexer.scanning.ScannerCharacterReadResult
 import printscript.lexer.scanning.ScannerCursor
 import printscript.model.source.SourcePosition
+import printscript.model.source.SourceSpan
 import printscript.source.SourceChunk
 import printscript.source.SourceChunkReadResult
 import printscript.source.SourceReader
@@ -39,6 +41,13 @@ internal data class CharacterCursor(
                     resultingCursor = availableCharacter.cursor,
                 )
             }
+
+            is AvailableCharacter.Failure -> {
+                ScannerCharacterReadResult.Failure(
+                    error = availableCharacter.error,
+                    resultingCursor = availableCharacter.cursor,
+                )
+            }
         }
     }
 
@@ -68,6 +77,15 @@ internal data class CharacterCursor(
                     cursor.afterReadingChunk(chunkReadResult),
                 )
 
+            is SourceChunkReadResult.Failure ->
+                AvailableCharacter.Failure(
+                    error = SourceReadingError(
+                        sourceError = chunkReadResult.error,
+                        span = cursor.currentSpan(),
+                    ),
+                    cursor = cursor.afterFailedChunkRead(chunkReadResult),
+                )
+
             SourceChunkReadResult.EndOfInput ->
                 AvailableCharacter.EndOfInput(
                     cursor = cursor.atEndOfInput(),
@@ -87,6 +105,12 @@ internal data class CharacterCursor(
                 ScannerCharacterReadResult.EndOfInput(
                     resultingCursor = cursor,
                 )
+
+            is AvailableCharacter.Failure ->
+                ScannerCharacterReadResult.Failure(
+                    error = error,
+                    resultingCursor = cursor,
+                )
         }
     }
 
@@ -98,6 +122,17 @@ internal data class CharacterCursor(
         currentChunk = readResult.chunk,
         indexInChunk = INITIAL_INDEX_IN_CHUNK,
         remainingSourceReader = readResult.remainingReader,
+    )
+
+    private fun afterFailedChunkRead(readResult: SourceChunkReadResult.Failure): CharacterCursor = copy(
+        currentChunk = null,
+        indexInChunk = INITIAL_INDEX_IN_CHUNK,
+        remainingSourceReader = readResult.remainingReader,
+    )
+
+    private fun currentSpan(): SourceSpan = SourceSpan(
+        start = position,
+        end = position,
     )
 
     private fun atEndOfInput(): CharacterCursor = copy(
@@ -125,6 +160,11 @@ private sealed interface AvailableCharacter {
     ) : AvailableCharacter
 
     data class EndOfInput(
+        val cursor: CharacterCursor,
+    ) : AvailableCharacter
+
+    data class Failure(
+        val error: SourceReadingError,
         val cursor: CharacterCursor,
     ) : AvailableCharacter
 }

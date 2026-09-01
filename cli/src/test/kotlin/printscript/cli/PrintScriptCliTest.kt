@@ -160,6 +160,20 @@ class PrintScriptCliTest {
         assertContains(result.stderr, "no se encontró el archivo")
     }
 
+    @Test
+    fun `reports invalid UTF-8 found while reading the source`() {
+        val file = Files.createTempFile("printscript-invalid-utf8", ".ps")
+        file.toFile().deleteOnExit()
+        val validPrefix = "let a: number = 5;\n".toByteArray(Charsets.UTF_8)
+        Files.write(file, validPrefix + byteArrayOf(0xC3.toByte()))
+
+        val result = printScriptCli().test(listOf("validation", file.toString()))
+
+        assertEquals(expected = 1, actual = result.statusCode)
+        assertContains(result.stderr, "UTF-8")
+        assertContains(result.stderr, "línea 2")
+    }
+
     // --- ayuda ----------------------------------------------------------
 
     @Test

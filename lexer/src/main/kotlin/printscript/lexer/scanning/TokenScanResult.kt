@@ -1,7 +1,7 @@
 package printscript.lexer.scanning
 
-import printscript.token.LexicalError
 import printscript.token.Token
+import printscript.token.TokenReadError
 
 public sealed interface TokenScanResult {
 
@@ -13,7 +13,7 @@ public sealed interface TokenScanResult {
     ) : TokenScanResult
 
     public data class Failure(
-        public val error: LexicalError,
+        public val error: TokenReadError,
         override val resultingCursor: ScannerCursor,
     ) : TokenScanResult
 }

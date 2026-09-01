@@ -1,10 +1,12 @@
 package printscript.source
 
+import printscript.source.internal.FileSourceReader
 import printscript.source.internal.StringSourceReader
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val DEFAULT_CHUNK_SIZE_IN_CHARACTERS = 8_192
+private const val DEFAULT_FILE_BUFFER_SIZE_IN_BYTES = 8_192
+private const val DEFAULT_STRING_CHUNK_SIZE_IN_CHARACTERS = 8_192
 
 public object SourceReaderFactory {
 
@@ -12,18 +14,20 @@ public object SourceReaderFactory {
         return StringSourceReader(
             sourceCode = sourceCode,
             nextOffset = 0,
-            chunkSize = DEFAULT_CHUNK_SIZE_IN_CHARACTERS,
+            chunkSize = DEFAULT_STRING_CHUNK_SIZE_IN_CHARACTERS,
         )
     }
 
-    /**
-     * **Implementación temporal:** hoy carga el archivo completo en
-     * memoria y delega en el lector de texto. Eso no cumple el requisito
-     * de soportar fuentes más grandes que la memoria disponible y no debe
-     * quedar así para la entrega. El contrato sí es el definitivo: se
-     * entrega una ruta y se recibe un [SourceReader].
-     */
-    public fun fromPath(path: Path): SourceReaderCreationResult {
+    public fun fromPath(
+        path: Path,
+        bufferSizeInBytes: Int = DEFAULT_FILE_BUFFER_SIZE_IN_BYTES,
+    ): SourceReaderCreationResult {
+        if (bufferSizeInBytes <= 0) {
+            return SourceReaderCreationResult.Failure(
+                SourceReaderCreationError.InvalidBufferSize(bufferSizeInBytes),
+            )
+        }
+
         if (!Files.exists(path)) {
             return SourceReaderCreationResult.Failure(SourceAccessError.NotFound(path))
         }
@@ -36,20 +40,11 @@ public object SourceReaderFactory {
             return SourceReaderCreationResult.Failure(SourceAccessError.NotReadable(path))
         }
 
-        return runCatching { Files.readString(path) }
-            .fold(
-                onSuccess = { sourceCode ->
-                    SourceReaderCreationResult.Success(fromString(sourceCode))
-                },
-                onFailure = { cause -> readFailure(path, cause) },
-            )
-    }
-
-    private fun readFailure(path: Path, cause: Throwable): SourceReaderCreationResult {
-        return SourceReaderCreationResult.Failure(
-            SourceAccessError.ReadFailed(
+        return SourceReaderCreationResult.Success(
+            FileSourceReader(
                 path = path,
-                reason = cause.message.orEmpty(),
+                nextByteOffset = 0L,
+                bufferSizeInBytes = bufferSizeInBytes,
             ),
         )
     }

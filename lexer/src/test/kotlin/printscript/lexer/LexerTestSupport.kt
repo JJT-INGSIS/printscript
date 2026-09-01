@@ -9,10 +9,12 @@ import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.source.SourceChunk
 import printscript.source.SourceChunkReadResult
+import printscript.source.SourceReadError
 import printscript.source.SourceReader
 import printscript.source.SourceReaderFactory
 import printscript.token.LexicalError
 import printscript.token.Token
+import printscript.token.TokenReadError
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource
 import printscript.token.TokenType
@@ -54,8 +56,14 @@ internal class TestWordScanner(
         cursor: ScannerCursor,
         lexeme: String,
         startPosition: SourcePosition,
-    ): TokenScanResult.Success {
+    ): TokenScanResult {
         return when (val readResult = cursor.peek()) {
+            is ScannerCharacterReadResult.Failure ->
+                TokenScanResult.Failure(
+                    error = readResult.error,
+                    resultingCursor = readResult.resultingCursor,
+                )
+
             is ScannerCharacterReadResult.EndOfInput ->
                 createSuccess(
                     cursor = readResult.resultingCursor,
@@ -110,6 +118,13 @@ internal fun sourceReaderForChunks(vararg chunks: String): SourceReader {
     )
 }
 
+internal fun sourceReaderForChunksThenFailure(error: SourceReadError, vararg chunks: String): SourceReader {
+    return ChunkListSourceReader(
+        chunks = chunks.toList(),
+        finalError = error,
+    )
+}
+
 internal fun cursorFor(sourceText: String): CharacterCursor {
     return CharacterCursor.initial(
         sourceReader = sourceReaderFor(sourceText),
@@ -119,6 +134,12 @@ internal fun cursorFor(sourceText: String): CharacterCursor {
 internal fun cursorForChunks(vararg chunks: String): CharacterCursor {
     return CharacterCursor.initial(
         sourceReader = sourceReaderForChunks(*chunks),
+    )
+}
+
+internal fun cursorForChunksThenFailure(error: SourceReadError, vararg chunks: String): CharacterCursor {
+    return CharacterCursor.initial(
+        sourceReader = sourceReaderForChunksThenFailure(error, *chunks),
     )
 }
 
@@ -133,6 +154,12 @@ internal inline fun <reified T : LexicalError> TokenScanResult.assertLexicalErro
 }
 
 internal inline fun <reified T : LexicalError> TokenReadResult.assertLexicalError(): T {
+    val failure = assertIs<TokenReadResult.Failure>(this)
+
+    return assertIs<T>(failure.error)
+}
+
+internal inline fun <reified T : TokenReadError> TokenReadResult.assertTokenReadError(): T {
     val failure = assertIs<TokenReadResult.Failure>(this)
 
     return assertIs<T>(failure.error)
@@ -214,13 +241,37 @@ internal data object FailingSourceReader : SourceReader {
     }
 }
 
+internal data class SourceReadFailureReader(
+    private val error: SourceReadError,
+) : SourceReader {
+
+    override fun readChunk(): SourceChunkReadResult {
+        return SourceChunkReadResult.Failure(
+            error = error,
+            remainingReader = this,
+        )
+    }
+}
+
+internal data class TestSourceReadError(
+    val reason: String,
+) : SourceReadError
+
 private data class ChunkListSourceReader(
     private val chunks: List<String>,
     private val currentChunkIndex: Int = INITIAL_CHUNK_INDEX,
+    private val finalError: SourceReadError? = null,
 ) : SourceReader {
 
     override fun readChunk(): SourceChunkReadResult {
         if (currentChunkIndex >= chunks.size) {
+            if (finalError != null) {
+                return SourceChunkReadResult.Failure(
+                    error = finalError,
+                    remainingReader = this,
+                )
+            }
+
             return SourceChunkReadResult.EndOfInput
         }
 

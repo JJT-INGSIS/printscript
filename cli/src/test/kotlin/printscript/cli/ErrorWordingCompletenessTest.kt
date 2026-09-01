@@ -10,9 +10,11 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.report.PrintScriptWording
 import printscript.formatter.FormattingError
 import printscript.interpreter.SemanticError
+import printscript.lexer.SourceReadingError
 import printscript.linter.Diagnostic
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.source.SourceReadError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
 import printscript.token.Token
@@ -22,19 +24,17 @@ import printscript.v1.linter.PrintScriptV1Diagnostic
 import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.token.PrintScriptV1TokenType
 import java.math.BigDecimal
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertNotEquals
 
 /**
  * Verifica que ningún caso caiga en la rama `else` de los reporters.
  *
- * El proyecto tiene siete jerarquías abiertas —`TokenType`, `LexicalError`,
- * `ParseError`, `FormattingError`, `SemanticError`, `Statement` y
- * `Diagnostic`— porque `printscript-v1` necesita aportar sus propias
- * implementaciones desde afuera. El precio es que el compilador dejó de
- * avisar cuando aparece un caso sin redactar, y hoy hay **cinco mensajes
- * genéricos** que se imprimirían en silencio. Estos tests son la red que
- * reemplaza esa garantía.
+ * El proyecto tiene varias jerarquías abiertas porque `printscript-v1` y los
+ * consumidores externos necesitan aportar implementaciones. El precio es que
+ * el compilador deja de avisar cuando aparece un caso sin redactar. Estos tests
+ * son la red que reemplaza esa garantía en los casos propios del proyecto.
  *
  * El texto de la rama `else` **no está escrito a mano acá**: se obtiene
  * pidiéndole al reporter que describa un caso de extensión. Así, si
@@ -88,14 +88,23 @@ class ErrorWordingCompletenessTest {
         )
     }
 
-    // --- errores sintácticos -----------------------------------------------
+    // --- errores de creación y parseo --------------------------------------
 
     @Test
     fun `every parse error has its own wording`() {
         val unknownWording = errorReporter.describe(ExtensionParseError(anySpan))
 
         val errors = listOf(
-            ParseError.Lexical(LexicalError.UnexpectedCharacter(character = '@', span = anySpan)),
+            ParseError.TokenRead(LexicalError.UnexpectedCharacter(character = '@', span = anySpan)),
+            ParseError.TokenRead(
+                SourceReadingError(
+                    sourceError = SourceReadError.InvalidEncoding(
+                        path = Path.of("program.ps"),
+                        byteOffset = 0L,
+                    ),
+                    span = anySpan,
+                ),
+            ),
             ParseError.UnexpectedToken(
                 expected = setOf(PrintScriptV1TokenType.SEMICOLON),
                 actual = tokenOf(PrintScriptV1TokenType.LET, "let"),
@@ -255,7 +264,7 @@ class ErrorWordingCompletenessTest {
     }
 
     private fun describeLexical(error: LexicalError): String {
-        return errorReporter.describe(ParseError.Lexical(error))
+        return errorReporter.describe(ParseError.TokenRead(error))
     }
 
     private fun tokenOf(type: PrintScriptV1TokenType, lexeme: String): Token {

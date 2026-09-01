@@ -21,10 +21,7 @@ internal data class ScanningTokenSource(
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
-        val cursorAtNextRelevantCharacter =
-            consumeLeadingIgnoredCharacters(characterCursor)
-        val nextCharacterResult =
-            cursorAtNextRelevantCharacter.peek()
+        val nextCharacterResult = readNextRelevantCharacter(characterCursor)
 
         return when (nextCharacterResult) {
             is ScannerCharacterReadResult.EndOfInput -> {
@@ -39,25 +36,32 @@ internal data class ScanningTokenSource(
                     startingCharacter = nextCharacterResult.character,
                 )
             }
+
+            is ScannerCharacterReadResult.Failure -> {
+                tokenReadFailure(nextCharacterResult)
+            }
         }
     }
 
-    private tailrec fun consumeLeadingIgnoredCharacters(cursor: ScannerCursor): ScannerCursor {
+    private tailrec fun readNextRelevantCharacter(cursor: ScannerCursor): ScannerCharacterReadResult {
         return when (val readResult = cursor.peek()) {
-            is ScannerCharacterReadResult.EndOfInput -> {
-                readResult.resultingCursor
-            }
+            is ScannerCharacterReadResult.EndOfInput -> readResult
+
+            is ScannerCharacterReadResult.Failure -> readResult
 
             is ScannerCharacterReadResult.Success -> {
                 if (ignoredCharacterPolicy.shouldIgnore(readResult.character)) {
-                    consumeLeadingIgnoredCharacters(
-                        cursor =
-                        readResult.resultingCursor
-                            .advance()
-                            .resultingCursor,
-                    )
+                    when (val advanceResult = readResult.resultingCursor.advance()) {
+                        is ScannerCharacterReadResult.Success -> {
+                            readNextRelevantCharacter(advanceResult.resultingCursor)
+                        }
+
+                        is ScannerCharacterReadResult.EndOfInput -> advanceResult
+
+                        is ScannerCharacterReadResult.Failure -> advanceResult
+                    }
                 } else {
-                    readResult.resultingCursor
+                    readResult
                 }
             }
         }
@@ -106,6 +110,13 @@ internal data class ScanningTokenSource(
                 ),
             ),
             remainingSource = continuingFrom(cursor),
+        )
+    }
+
+    private fun tokenReadFailure(readResult: ScannerCharacterReadResult.Failure): TokenReadResult.Failure {
+        return TokenReadResult.Failure(
+            error = readResult.error,
+            remainingSource = continuingFrom(readResult.resultingCursor),
         )
     }
 

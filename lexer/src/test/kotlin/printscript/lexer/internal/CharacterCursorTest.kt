@@ -1,5 +1,8 @@
 package printscript.lexer.internal
 
+import printscript.lexer.SourceReadFailureReader
+import printscript.lexer.SourceReadingError
+import printscript.lexer.TestSourceReadError
 import printscript.lexer.assertEndOfInput
 import printscript.lexer.assertNextCharacter
 import printscript.lexer.cursorFor
@@ -7,6 +10,7 @@ import printscript.lexer.cursorForChunks
 import printscript.lexer.scanning.ScannerCharacterReadResult
 import printscript.lexer.scanning.ScannerCursor
 import printscript.model.source.SourcePosition
+import printscript.model.source.SourceSpan
 import printscript.source.SourceChunkReadResult
 import printscript.source.SourceReader
 import kotlin.test.Test
@@ -168,6 +172,25 @@ class CharacterCursorTest {
         assertEquals(
             expected = 1,
             actual = sourceReader.readCount,
+        )
+    }
+
+    @Test
+    fun `source reading failure is exposed at the current position`() {
+        val sourceError = TestSourceReadError("temporary failure")
+        val cursor = CharacterCursor.initial(SourceReadFailureReader(sourceError))
+
+        val failure = assertIs<ScannerCharacterReadResult.Failure>(cursor.peek())
+
+        assertEquals(
+            expected = SourceReadingError(
+                sourceError = sourceError,
+                span = SourceSpan(
+                    start = SourcePosition.initial(),
+                    end = SourcePosition.initial(),
+                ),
+            ),
+            actual = failure.error,
         )
     }
 

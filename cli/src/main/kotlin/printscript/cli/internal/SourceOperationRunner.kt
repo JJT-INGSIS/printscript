@@ -5,14 +5,11 @@ import printscript.cli.internal.operation.OperationOutcome
 import printscript.cli.internal.operation.SourceOperation
 import printscript.cli.internal.operation.SourceOperationRequest
 import printscript.cli.internal.pipeline.StatementSourcePipeline
-import printscript.cli.internal.progress.ProgressReportingStatementSource
 import printscript.cli.internal.report.ErrorReporter
 import printscript.source.SourceReader
 import printscript.source.SourceReaderCreationResult
 import printscript.source.SourceReaderFactory
 import printscript.statement.StatementSource
-import java.nio.file.Files
-import java.nio.file.Path
 
 internal class SourceOperationRunner(
     private val terminal: Terminal,
@@ -39,7 +36,7 @@ internal class SourceOperationRunner(
 
             is SourceReaderCreationResult.Success ->
                 operation.outcomeFor(
-                    statements = progressReportingStatementsOf(creation.reader, request),
+                    statements = statementsOf(creation.reader, request),
                     terminal = terminal,
                 )
         }
@@ -65,23 +62,10 @@ internal class SourceOperationRunner(
         }
     }
 
-    private fun progressReportingStatementsOf(
-        sourceReader: SourceReader,
-        request: SourceOperationRequest,
-    ): StatementSource {
-        val statements = pipeline.statementsFrom(
+    private fun statementsOf(sourceReader: SourceReader, request: SourceOperationRequest): StatementSource {
+        return pipeline.statementsFrom(
             sourceReader = sourceReader,
             version = request.version,
         )
-
-        return ProgressReportingStatementSource(
-            delegate = statements,
-            totalBytes = sourceSizeOf(request.sourceFilePath),
-            onProgress = { percentage -> terminal.writeErrorLine("parsing... $percentage%") },
-        )
-    }
-
-    private fun sourceSizeOf(sourceFilePath: Path): Long {
-        return runCatching { Files.size(sourceFilePath) }.getOrDefault(0L)
     }
 }

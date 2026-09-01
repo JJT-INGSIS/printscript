@@ -139,7 +139,7 @@ class PrintScriptV1EndToEndTest {
             )
 
         val parseError =
-            assertIs<ParseError.Lexical>(
+            assertIs<ParseError.TokenRead>(
                 interpretationFailure.error,
             )
 

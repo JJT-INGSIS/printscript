@@ -40,6 +40,13 @@ internal class IdentifierOrKeywordScanner(
         startPosition: SourcePosition,
     ): TokenScanResult {
         return when (val result = cursor.peek()) {
+            is ScannerCharacterReadResult.Failure -> {
+                TokenScanResult.Failure(
+                    error = result.error,
+                    resultingCursor = result.resultingCursor,
+                )
+            }
+
             is ScannerCharacterReadResult.EndOfInput -> {
                 createTokenSuccess(
                     lexeme = lexeme,
