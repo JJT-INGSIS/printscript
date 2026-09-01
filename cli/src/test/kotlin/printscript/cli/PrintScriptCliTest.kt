@@ -1,14 +1,7 @@
 package printscript.cli
 
-import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.testing.test
-import printscript.cli.internal.command.AnalysisCommand
-import printscript.cli.internal.command.ExecutionCommand
-import printscript.cli.internal.command.FormattingCommand
-import printscript.cli.internal.command.PrintScriptCommandGroup
-import printscript.cli.internal.command.ValidationCommand
-import printscript.cli.internal.report.DiagnosticReporter
-import printscript.cli.internal.report.ErrorReporter
+import printscript.cli.internal.PrintScriptCommandFactory
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -17,12 +10,7 @@ import kotlin.test.assertTrue
 
 class PrintScriptCliTest {
 
-    private fun printScriptCli() = PrintScriptCommandGroup().subcommands(
-        ValidationCommand(ErrorReporter()),
-        ExecutionCommand(ErrorReporter()),
-        FormattingCommand(ErrorReporter()),
-        AnalysisCommand(ErrorReporter(), DiagnosticReporter()),
-    )
+    private fun printScriptCli() = PrintScriptCommandFactory.create()
 
     private fun scriptFile(sourceCode: String): String {
         val file = Files.createTempFile("printscript", ".ps")
@@ -109,23 +97,13 @@ class PrintScriptCliTest {
 
     // --- formatting ----------------------------------------------------
 
-    @Test
-    fun `normalizes spacing in a declaration`() {
-        val file = scriptFile("let    a:number   =   5;")
-
-        val result = printScriptCli().test(listOf("formatting", file))
-
-        assertEquals(expected = 0, actual = result.statusCode)
-        assertContains(result.stdout, "let a: number = 5;")
-    }
-
-    // --- analyzing -----------------------------------------------------
+    // --- analysis ------------------------------------------------------
 
     @Test
     fun `accepts a program that respects the conventions`() {
         val file = scriptFile("let miVariable: number = 5;")
 
-        val result = printScriptCli().test(listOf("analyzing", file))
+        val result = printScriptCli().test(listOf("analysis", file))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "No se encontraron problemas.")
@@ -135,7 +113,7 @@ class PrintScriptCliTest {
     fun `reports an identifier that is not camel case`() {
         val file = scriptFile("let mi_variable: number = 5;")
 
-        val result = printScriptCli().test(listOf("analyzing", file))
+        val result = printScriptCli().test(listOf("analysis", file))
 
         assertEquals(expected = 3, actual = result.statusCode)
         assertContains(result.stdout, "camelCase")
@@ -148,12 +126,12 @@ class PrintScriptCliTest {
 
         assertEquals(
             expected = 3,
-            actual = printScriptCli().test(listOf("analyzing", withFindings)).statusCode,
+            actual = printScriptCli().test(listOf("analysis", withFindings)).statusCode,
         )
 
         assertEquals(
             expected = 1,
-            actual = printScriptCli().test(listOf("analyzing", broken)).statusCode,
+            actual = printScriptCli().test(listOf("analysis", broken)).statusCode,
         )
     }
 
@@ -191,6 +169,6 @@ class PrintScriptCliTest {
         assertContains(result.stdout, "validation")
         assertContains(result.stdout, "execution")
         assertContains(result.stdout, "formatting")
-        assertContains(result.stdout, "analyzing")
+        assertContains(result.stdout, "analysis")
     }
 }

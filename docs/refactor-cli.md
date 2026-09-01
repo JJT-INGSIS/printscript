@@ -232,11 +232,9 @@ Ver punto ⑤ de la sección siguiente: hay al menos una cosa de Clikt que convi
 
 Es lo primero, antes de escribir una línea de la Fase 2. ¿Están de acuerdo con meter Clikt, `implementation`, solo en `:cli`?
 
-### ② `analyzing` o `analysis`
+### ② `analyzing` o `analysis` — resuelto
 
-Hoy la operación se llama `AnalysisCommand` pero se invoca `analyzing`. Las otras tres son consistentes: `validation`/`Validation`, `execution`/`Execution`, `formatting`/`Formatting`.
-
-Propongo unificar en **`analysis`** en la Fase 4. **Rompe el uso actual del CLI y los tests** — por eso lo pregunto en vez de hacerlo.
+Se unificó en **`analysis`**. Rompía el uso del CLI y cuatro tests, por eso se hizo junto con el cambio de composición y no suelto.
 
 ### ③ ¿La consigna fija la sintaxis de invocación?
 
@@ -275,29 +273,34 @@ Necesario para que `--config` funcione de verdad (ver sección 9). Candidato: `k
 
 Cosas que encontramos en el camino y conviene que estén escritas.
 
-### ① `--config` es código muerto, y hay una razón estructural
+### ① `--config` — eliminado por ahora
 
-Seguí el camino:
+Aceptaba un archivo de configuración y lo ignoraba, lo cual engaña al usuario. Se sacó: no está la opción, ni `configurationFilePath` en `SourceOperationRequest`.
 
-```
-CliArgumentsParser lee "reglas.json"
-        ↓
-SourceOperationRequest.configurationFilePath = "reglas.json"
-        ↓
-SourceOperationRunner recibe el request
-        ↓
-        ✗ nadie lo lee
-```
+**El bloqueo estructural que tenía ya no existe.** Antes las cuatro operaciones se construían en `Main.kt` al arrancar, *antes* de leer `argv`, así que era imposible inyectarles algo que todavía no se conocía. Ahora las construye la `SourceOperationFactory`, que **recibe el request ya parseado**. El cable está puesto.
 
-Y del otro lado, `FormattingOperation` usa `PrintScriptV1FormatterFactory.defaultConfiguration()`.
+Cuando se implemente de verdad tiene que volver como:
 
-**Por qué no se puede arreglar hoy:** las cuatro operaciones se construyen en `Main.kt`, al arrancar el programa, **antes** de leer `argv`. Es imposible inyectarles por constructor algo que todavía no existe.
+- `Path?` y no `String?`
+- solo en `formatting` y `analysis`, no en los cuatro comandos
 
-**Clikt lo resuelve solo:** con subcomandos, `FormattingCommand.run()` ya tiene el `--config` en la mano, así que arma su `FormattingOperation` ahí, con la configuración cargada.
-
-O sea: *"config hardcodeado"* y *"parseo a mano"* son el mismo problema. Las operaciones se construyen demasiado temprano.
+Eso último es justamente el motivo por el que se eligió composición en vez de Template Method: con clase base, los cuatro comandos estaban obligados a exponer las mismas opciones.
 
 Falta igual: el lector JSON (punto ⑥), un tipo de error para JSON mal formado (un `Result`, no una excepción), y lo mismo para `LinterConfiguration`.
+
+### ①bis Herencia reemplazada por composición — hecho
+
+`SourceFileOperationCommand` ya no existe. Los cuatro comandos heredan directo de `CliktCommand` y comparten por composición:
+
+| Qué | Cómo |
+|---|---|
+| el argumento `<archivo>` | extensión `sourceFileArgument()` |
+| la opción `--version` | `LanguageOptions : OptionGroup` |
+| la orquestación del `run()` | extensión `runSourceOperation()` |
+| qué operación montar | `SourceOperationFactory` inyectada |
+| la composición completa | `PrintScriptCommandFactory.create()`, compartida con los tests |
+
+Las dos primeras son los mecanismos que la propia Clikt documenta para reutilizar parámetros entre comandos sin herencia.
 
 ### ② El `ErrorReporter` tiene cuatro ramas `else ->`
 
@@ -352,6 +355,35 @@ Tres cosas que vale la pena que sigamos haciendo entre todos:
 3. **La convención `Configurable*` + `*Factory`.** Los cuatro motores se leen igual. El único que rompe el patrón es `ScanningLexer`, pero ahí el nombre dice algo real sobre cómo funciona, así que lo dejaría.
 
 ---
+
+## 10bis. Deuda anotada, con dueño y momento
+
+Tres cosas que decidimos **no** hacer ahora. Están acá para que no se pierdan.
+
+### El progreso compara caracteres con bytes
+
+`ProgressReportingStatementSource` calcula el porcentaje así:
+
+```kotlin
+val percentage = percentageAt(readResult.statement.span.end.offset)  // ← CARACTERES
+return ((offset * 100) / totalBytes)                                  // ← BYTES
+```
+
+`SourcePosition.offset` suma 1 por carácter; `Files.size()` cuenta bytes. Con UTF-8 no son lo mismo, así que un archivo con acentos reporta de menos y después salta a 100%.
+
+**No se arregla acá.** El porcentaje correcto lo tiene que medir el lector, no los spans del AST. Se resuelve en el refactor de `FileSourceReader`, que es la tarea siguiente. Si el progreso no es requisito de la consigna, la alternativa es borrar la clase.
+
+### `--config` vuelve como `Path?`, solo en dos comandos
+
+Ver punto ① de la sección 9.
+
+### El `LanguageToolchain`
+
+Hoy la selección por versión va a quedar en **cinco** lugares: `StatementSourcePipeline` (lexer y parser) y las cuatro lambdas de `PrintScriptCommandFactory` (intérprete, formatter, linter).
+
+No está mal —cada comando elige su herramienta y son decisiones distintas—, y como los cinco `when` son exhaustivos, el compilador los va a marcar a los cinco cuando aparezca `V2_0`.
+
+**El momento de crear una composición central de servicios por versión es ese**, cuando existan los cinco casos reales. No antes.
 
 ## 11. Preguntas concretas para ustedes
 
