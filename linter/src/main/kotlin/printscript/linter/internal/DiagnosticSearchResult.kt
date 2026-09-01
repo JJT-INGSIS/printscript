@@ -7,10 +7,6 @@ import printscript.statement.StatementSource
 
 internal sealed interface DiagnosticSearchResult {
 
-    /**
-     * Lo que incumple la sentencia encontrada, con lo que quedó por leer
-     * detrás de ella y la regla con la que sigue el análisis.
-     */
     data class Found(
         val diagnostics: List<Diagnostic>,
         val remainingStatements: StatementSource,

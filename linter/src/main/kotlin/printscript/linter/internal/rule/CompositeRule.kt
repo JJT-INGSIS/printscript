@@ -4,17 +4,6 @@ import printscript.linter.LintRule
 import printscript.linter.RuleInspection
 import printscript.statement.Statement
 
-/**
- * Varias reglas vistas como una. Toda regla mira toda sentencia: no hay
- * despacho, hay fan-out.
- *
- * Componer es concatenar diagnósticos, no conjugar booleanos: la
- * sentencia está limpia solo si ninguna regla la observa, pero cuando
- * alguna la observa se entrega la evidencia de todas.
- *
- * La sucesora del compuesto es el compuesto de las sucesoras, así una
- * regla con memoria la conserva sin que el motor sepa que existe.
- */
 internal class CompositeRule(
     rules: List<LintRule>,
 ) : LintRule {
