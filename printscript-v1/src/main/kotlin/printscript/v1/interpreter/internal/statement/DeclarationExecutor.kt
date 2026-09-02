@@ -4,6 +4,7 @@ import printscript.ast.expression.Expression
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
+import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1Environment
@@ -24,13 +25,15 @@ internal class DeclarationExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        state: PrintScriptV1Environment,
+        context: StatementExecutionContext<PrintScriptV1Environment>,
     ): ExecutionResult<PrintScriptV1Environment> {
         if (statement !is VariableDeclarationStatement) {
             return ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(span = statement.span),
             )
         }
+
+        val state: PrintScriptV1Environment = context.state
 
         ensureNotAlreadyDeclared(statement, state)
             .orReturn { return it }

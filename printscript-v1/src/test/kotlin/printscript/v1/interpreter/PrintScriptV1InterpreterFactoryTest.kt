@@ -18,6 +18,7 @@ import printscript.interpreter.ExecutionResult
 import printscript.interpreter.InterpretationResult
 import printscript.interpreter.Interpreter
 import printscript.interpreter.SemanticError
+import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
@@ -529,12 +530,12 @@ private class OverridingPrintlnExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        state: PrintScriptV1Environment,
+        context: StatementExecutionContext<PrintScriptV1Environment>,
     ): ExecutionResult<PrintScriptV1Environment> {
         assertIs<PrintlnStatement>(statement)
         output.writeLine("overridden")
 
-        return ExecutionResult.Success(state)
+        return ExecutionResult.Success(context.state)
     }
 }
 
