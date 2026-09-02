@@ -9,19 +9,24 @@ internal data class TokenCursor(
 ) {
 
     fun peek(): TokenCursorReadResult {
-        val readResult = currentRead()
-
-        return readResult.toCursorRead(
-            resultingCursor = withLookahead(readResult),
-        )
+        return read { readResult -> withLookahead(readResult) }
     }
 
     fun advance(): TokenCursorReadResult {
-        val readResult = currentRead()
+        return read { readResult -> initial(readResult.remainingSource) }
+    }
 
-        return readResult.toCursorRead(
-            resultingCursor = initial(readResult.remainingSource),
-        )
+    private inline fun read(successorCursor: (TokenReadResult.Success) -> TokenCursor): TokenCursorReadResult {
+        return when (val readResult = currentRead()) {
+            is TokenReadResult.Success -> TokenCursorReadResult.Success(
+                token = readResult.token,
+                resultingCursor = successorCursor(readResult),
+            )
+
+            is TokenReadResult.Failure -> TokenCursorReadResult.Failure(
+                error = readResult.error,
+            )
+        }
     }
 
     private fun currentRead(): TokenReadResult {
@@ -30,20 +35,6 @@ internal data class TokenCursor(
 
     private fun withLookahead(readResult: TokenReadResult): TokenCursor {
         return copy(lookahead = readResult)
-    }
-
-    private fun TokenReadResult.toCursorRead(resultingCursor: TokenCursor): TokenCursorReadResult {
-        return when (this) {
-            is TokenReadResult.Success -> TokenCursorReadResult.Success(
-                token = token,
-                resultingCursor = resultingCursor,
-            )
-
-            is TokenReadResult.Failure -> TokenCursorReadResult.Failure(
-                error = error,
-                resultingCursor = resultingCursor,
-            )
-        }
     }
 
     companion object {

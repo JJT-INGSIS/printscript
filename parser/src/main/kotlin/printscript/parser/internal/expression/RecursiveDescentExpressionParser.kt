@@ -27,21 +27,21 @@ internal class RecursiveDescentExpressionParser<E>(
     }
 
     private fun buildPrecedenceChain(): ExpressionParser<E> {
-        val primaryParser = configuredPrimaryParser()
-
-        var parser: ExpressionParser<E> = UnaryExpressionParser(
-            operandParser = primaryParser,
-            expressionBuilders = unaryExpressionBuildersByTokenType,
-        )
-
-        for (expressionBuilders in binaryExpressionBuildersByPrecedence) {
-            parser = LeftAssociativeBinaryExpressionParser(
-                operandParser = parser,
+        return binaryExpressionBuildersByPrecedence.fold(
+            initial = unaryExpressionParser(),
+        ) { operandParser, expressionBuilders ->
+            LeftAssociativeBinaryExpressionParser(
+                operandParser = operandParser,
                 expressionBuilders = expressionBuilders,
             )
         }
+    }
 
-        return parser
+    private fun unaryExpressionParser(): ExpressionParser<E> {
+        return UnaryExpressionParser(
+            operandParser = configuredPrimaryParser(),
+            expressionBuilders = unaryExpressionBuildersByTokenType,
+        )
     }
 
     private fun configuredPrimaryParser(): ExpressionParser<E> {
