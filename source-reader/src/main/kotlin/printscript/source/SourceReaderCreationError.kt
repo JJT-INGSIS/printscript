@@ -3,6 +3,6 @@ package printscript.source
 public sealed interface SourceReaderCreationError {
 
     public data class InvalidBufferSize(
-        public val providedSizeInBytes: Int,
+        public val providedSize: Int,
     ) : SourceReaderCreationError
 }

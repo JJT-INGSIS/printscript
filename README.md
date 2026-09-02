@@ -76,7 +76,8 @@ SourceReader → Lexer → TokenSource → Parser → StatementSource → Interp
                                                              └→ Linter
 ```
 
-- `SourceReader` entrega el código en bloques.
+- `SourceReader` entrega en bloques código proveniente de strings, archivos o
+  streams de entrada.
 - `TokenSource` produce un token por solicitud.
 - `StatementSource` produce una sentencia por solicitud.
 - El interpreter consume y ejecuta las sentencias en orden.
@@ -88,6 +89,12 @@ SourceReader → Lexer → TokenSource → Parser → StatementSource → Interp
 Los resultados exitosos transportan la fuente restante en lugar de modificar la
 fuente actual. Los errores léxicos, sintácticos y semánticos se representan como
 resultados de dominio y no mediante excepciones.
+
+Las fuentes reproducibles, como strings y archivos, conservan estados
+inmutables. Un `InputStream` es una fuente no reproducible: su reader encapsula
+el avance del recurso y debe consumirse linealmente usando siempre el estado
+restante. El stream sigue siendo propiedad de quien lo creó y el reader no lo
+cierra.
 
 ## Módulos
 

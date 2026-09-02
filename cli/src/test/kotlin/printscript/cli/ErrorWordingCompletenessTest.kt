@@ -105,6 +105,18 @@ class ErrorWordingCompletenessTest {
                     span = anySpan,
                 ),
             ),
+            ParseError.TokenRead(
+                SourceReadingError(
+                    sourceError = SourceReadError.InvalidInputStreamEncoding,
+                    span = anySpan,
+                ),
+            ),
+            ParseError.TokenRead(
+                SourceReadingError(
+                    sourceError = SourceReadError.InputStreamReadFailed("stream disconnected"),
+                    span = anySpan,
+                ),
+            ),
             ParseError.UnexpectedToken(
                 expected = setOf(PrintScriptV1TokenType.SEMICOLON),
                 actual = tokenOf(PrintScriptV1TokenType.LET, "let"),

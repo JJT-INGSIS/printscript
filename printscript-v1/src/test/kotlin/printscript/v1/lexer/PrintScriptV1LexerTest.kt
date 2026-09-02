@@ -1,12 +1,17 @@
 package printscript.v1.lexer
 
 import printscript.lexer.Lexer
+import printscript.source.SourceReaderCreationResult
+import printscript.source.SourceReaderFactory
 import printscript.token.LexicalError
 import printscript.token.TokenType
 import printscript.v1.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.v1.token.PrintScriptV1TokenType
+import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class PrintScriptV1LexerTest {
 
@@ -150,6 +155,31 @@ class PrintScriptV1LexerTest {
                 ExpectedToken(PrintScriptV1TokenType.STRING_TYPE, "string"),
                 ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
                 ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "\"hello\""),
+                ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
+                ExpectedToken(PrintScriptV1TokenType.EOF, ""),
+            ),
+        )
+    }
+
+    @Test
+    fun `tokenizes a UTF-8 input stream across character buffers`() {
+        val creation = SourceReaderFactory.fromInputStream(
+            inputStream = ByteArrayInputStream(
+                "let café: string = \"sí\";"
+                    .toByteArray(StandardCharsets.UTF_8),
+            ),
+            bufferSizeInCharacters = 1,
+        )
+        val reader = assertIs<SourceReaderCreationResult.Success>(creation).reader
+
+        lexer.tokenize(reader).assertProducesTokenSequence(
+            listOf(
+                ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "café"),
+                ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+                ExpectedToken(PrintScriptV1TokenType.STRING_TYPE, "string"),
+                ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+                ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "\"sí\""),
                 ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
                 ExpectedToken(PrintScriptV1TokenType.EOF, ""),
             ),
