@@ -6,5 +6,5 @@ public interface StatementFormatter {
 
     public fun supportsStatement(statement: Statement): Boolean
 
-    public fun formatStatement(statement: Statement): StatementFormattingResult
+    public fun formatStatement(statement: Statement, context: StatementFormattingContext): StatementFormattingResult
 }

@@ -16,6 +16,7 @@ import printscript.ast.statement.VariableDeclarationStatement
 import printscript.formatter.FormattedStatementReadResult
 import printscript.formatter.Formatter
 import printscript.formatter.StatementFormatter
+import printscript.formatter.StatementFormattingContext
 import printscript.formatter.StatementFormattingResult
 import printscript.formatter.StatementSeparationPolicy
 import printscript.statement.Statement
@@ -262,7 +263,10 @@ private data object OverridingVariableDeclarationFormatter : StatementFormatter 
         return statement is VariableDeclarationStatement
     }
 
-    override fun formatStatement(statement: Statement): StatementFormattingResult {
+    override fun formatStatement(
+        statement: Statement,
+        context: StatementFormattingContext,
+    ): StatementFormattingResult {
         assertIs<VariableDeclarationStatement>(statement)
 
         return StatementFormattingResult.Success(

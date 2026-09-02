@@ -2,6 +2,7 @@ package printscript.v1.formatter.internal.statement
 
 import printscript.ast.statement.PrintlnStatement
 import printscript.formatter.StatementFormatter
+import printscript.formatter.StatementFormattingContext
 import printscript.formatter.StatementFormattingResult
 import printscript.statement.Statement
 import printscript.v1.formatter.internal.expression.ExpressionFormatter
@@ -18,7 +19,10 @@ internal class PrintlnFormatter(
         return statement is PrintlnStatement
     }
 
-    override fun formatStatement(statement: Statement): StatementFormattingResult {
+    override fun formatStatement(
+        statement: Statement,
+        context: StatementFormattingContext,
+    ): StatementFormattingResult {
         if (statement !is PrintlnStatement) {
             return unsupportedStatementFailure(statement)
         }
