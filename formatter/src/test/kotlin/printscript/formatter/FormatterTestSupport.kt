@@ -17,6 +17,11 @@ internal data class TestStatement(
     override val span: SourceSpan = testSpan,
 ) : Statement
 
+internal data class CompositeTestStatement(
+    val statements: List<Statement>,
+    override val span: SourceSpan = testSpan,
+) : Statement
+
 internal data class TestParseError(
     override val span: SourceSpan = testSpan,
 ) : ParseError

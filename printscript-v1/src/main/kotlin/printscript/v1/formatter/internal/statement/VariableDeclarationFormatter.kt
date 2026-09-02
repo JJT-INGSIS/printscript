@@ -4,6 +4,7 @@ import printscript.ast.DeclaredType
 import printscript.ast.expression.Expression
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.formatter.StatementFormatter
+import printscript.formatter.StatementFormattingContext
 import printscript.formatter.StatementFormattingResult
 import printscript.statement.Statement
 import printscript.v1.formatter.internal.expression.ExpressionFormatter
@@ -26,7 +27,10 @@ internal class VariableDeclarationFormatter(
         return statement is VariableDeclarationStatement
     }
 
-    override fun formatStatement(statement: Statement): StatementFormattingResult {
+    override fun formatStatement(
+        statement: Statement,
+        context: StatementFormattingContext,
+    ): StatementFormattingResult {
         if (statement !is VariableDeclarationStatement) {
             return unsupportedStatementFailure(statement)
         }

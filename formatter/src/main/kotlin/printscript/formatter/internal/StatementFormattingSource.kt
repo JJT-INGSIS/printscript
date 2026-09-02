@@ -3,16 +3,16 @@ package printscript.formatter.internal
 import printscript.formatter.FormattedSource
 import printscript.formatter.FormattedStatementReadResult
 import printscript.formatter.FormattingError
+import printscript.formatter.StatementFormattingContext
 import printscript.formatter.StatementFormattingResult
 import printscript.formatter.StatementSeparationPolicy
-import printscript.formatter.internal.statement.StatementFormatterDispatcher
 import printscript.statement.Statement
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
 internal data class StatementFormattingSource(
     private val statementSource: StatementSource,
-    private val statementFormatterDispatcher: StatementFormatterDispatcher,
+    private val statementFormattingContext: StatementFormattingContext,
     private val statementSeparationPolicy: StatementSeparationPolicy,
     private val hasPreviousStatement: Boolean,
 ) : FormattedSource {
@@ -38,7 +38,7 @@ internal data class StatementFormattingSource(
     ): FormattedStatementReadResult {
         return when (
             val statementFormattingResult =
-                statementFormatterDispatcher.formatStatement(
+                statementFormattingContext.formatStatement(
                     statementReadResult.statement,
                 )
         ) {
