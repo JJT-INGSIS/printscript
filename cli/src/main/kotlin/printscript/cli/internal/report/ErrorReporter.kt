@@ -25,7 +25,7 @@ internal class ErrorReporter {
 
             is SourceReaderCreationError.InvalidBufferSize ->
                 "el tamaño del buffer debe ser mayor que cero " +
-                    "(se recibió ${error.providedSizeInBytes})"
+                    "(se recibió ${error.providedSize})"
         }
 
         return "error: $description"
@@ -133,6 +133,12 @@ internal class ErrorReporter {
             is SourceReadError.InvalidEncoding ->
                 "el archivo '${sourceError.path}' no contiene UTF-8 válido " +
                     "desde el byte ${sourceError.byteOffset}"
+
+            SourceReadError.InvalidInputStreamEncoding ->
+                "el flujo de entrada no contiene UTF-8 válido"
+
+            is SourceReadError.InputStreamReadFailed ->
+                "no se pudo leer el flujo de entrada: ${sourceError.reason}"
 
             else -> "no se pudo continuar leyendo el código fuente"
         }

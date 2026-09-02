@@ -13,4 +13,10 @@ public interface SourceReadError {
         public val path: Path,
         public val byteOffset: Long,
     ) : SourceReadError
+
+    public data object InvalidInputStreamEncoding : SourceReadError
+
+    public data class InputStreamReadFailed(
+        public val reason: String,
+    ) : SourceReadError
 }

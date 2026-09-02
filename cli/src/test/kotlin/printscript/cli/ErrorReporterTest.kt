@@ -107,6 +107,34 @@ class ErrorReporterTest {
     }
 
     @Test
+    fun `describes invalid UTF-8 from an input stream`() {
+        val error = SourceReadingError(
+            sourceError = SourceReadError.InvalidInputStreamEncoding,
+            span = anySpan,
+        )
+
+        val message = reporter.describe(ParseError.TokenRead(error))
+
+        assertContains(message, "flujo de entrada")
+        assertContains(message, "UTF-8")
+        assertContains(message, "línea 3")
+    }
+
+    @Test
+    fun `describes an input stream read failure`() {
+        val error = SourceReadingError(
+            sourceError = SourceReadError.InputStreamReadFailed("conexión interrumpida"),
+            span = anySpan,
+        )
+
+        val message = reporter.describe(ParseError.TokenRead(error))
+
+        assertContains(message, "flujo de entrada")
+        assertContains(message, "conexión interrumpida")
+        assertContains(message, "línea 3")
+    }
+
+    @Test
     fun `describes an unexpected token naming every expected one`() {
         val message = reporter.describe(
             ParseError.UnexpectedToken(
