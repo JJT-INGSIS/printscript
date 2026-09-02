@@ -6,9 +6,18 @@ internal class BinaryOperationRegistry {
 
     private val operations: Map<BinaryOperator, BinaryOperation> = mapOf(
         BinaryOperator.ADD to AddOperation(),
-        BinaryOperator.SUBTRACT to SubtractOperation(),
-        BinaryOperator.MULTIPLY to MultiplyOperation(),
-        BinaryOperator.DIVIDE to DivideOperation(),
+        BinaryOperator.SUBTRACT to NumericBinaryOperation(
+            operator = BinaryOperator.SUBTRACT,
+            calculation = SubtractCalculation(),
+        ),
+        BinaryOperator.MULTIPLY to NumericBinaryOperation(
+            operator = BinaryOperator.MULTIPLY,
+            calculation = MultiplyCalculation(),
+        ),
+        BinaryOperator.DIVIDE to NumericBinaryOperation(
+            operator = BinaryOperator.DIVIDE,
+            calculation = DivideCalculation(),
+        ),
     )
 
     fun forOperator(operator: BinaryOperator): BinaryOperation? {
