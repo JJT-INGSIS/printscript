@@ -3,15 +3,16 @@ package printscript.cli.internal.command
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
-import printscript.cli.internal.operation.SourceOperationFactory
-import printscript.cli.internal.operation.SourceOperationRequest
-import printscript.cli.internal.pipeline.StatementSourcePipeline
 import printscript.cli.internal.report.ErrorReporter
+import printscript.cli.internal.toolchain.LanguageVersion
+import printscript.cli.internal.toolchain.PrintScriptToolchain
+import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.runtime.ProgramOutput
 
 internal class ExecutionCommand(
-    private val operationFactory: SourceOperationFactory,
     private val errorReporter: ErrorReporter,
-    private val pipeline: StatementSourcePipeline = StatementSourcePipeline(),
+    private val toolchainFor: (LanguageVersion) -> PrintScriptToolchain =
+        PrintScriptToolchainFactory::forVersion,
 ) : CliktCommand(name = "execution") {
 
     private val sourceFilePath by sourceFileArgument()
@@ -23,14 +24,26 @@ internal class ExecutionCommand(
     }
 
     override fun run() {
-        runSourceOperation(
-            request = SourceOperationRequest(
-                sourceFilePath = sourceFilePath,
-                version = languageOptions.version,
-            ),
-            operationFactory = operationFactory,
+        val toolchain = toolchainFor(languageOptions.version)
+
+        runOnSourceFile(
+            sourceFilePath = sourceFilePath,
+            toolchain = toolchain,
             errorReporter = errorReporter,
-            pipeline = pipeline,
-        )
+        ) { statements ->
+            interpretationOutcome(
+                interpreter = toolchain.interpreterWriting(terminalOutput()),
+                statements = statements,
+                errorReporter = errorReporter,
+            )
+        }
+    }
+
+    private fun terminalOutput(): ProgramOutput {
+        return object : ProgramOutput {
+            override fun writeLine(line: String) {
+                echo(line)
+            }
+        }
     }
 }

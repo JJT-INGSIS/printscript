@@ -1,4 +1,4 @@
-package printscript.cli.internal.operation
+package printscript.cli.internal
 
 internal sealed interface OperationOutcome {
 

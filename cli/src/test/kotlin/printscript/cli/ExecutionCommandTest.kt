@@ -2,58 +2,85 @@ package printscript.cli
 
 import com.github.ajalt.clikt.testing.test
 import printscript.cli.internal.command.ExecutionCommand
-import printscript.cli.internal.io.Terminal
-import printscript.cli.internal.operation.LanguageVersion
-import printscript.cli.internal.operation.OperationOutcome
-import printscript.cli.internal.operation.SourceOperation
-import printscript.cli.internal.operation.SourceOperationFactory
-import printscript.cli.internal.operation.SourceOperationRequest
 import printscript.cli.internal.report.ErrorReporter
+import printscript.cli.internal.toolchain.LanguageVersion
+import printscript.cli.internal.toolchain.PrintScriptToolchain
+import printscript.interpreter.InterpretationResult
+import printscript.interpreter.Interpreter
+import printscript.interpreter.SemanticError
+import printscript.model.source.SourcePosition
+import printscript.model.source.SourceSpan
+import printscript.runtime.ProgramOutput
+import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
- * Prueba la orquestación compartida por los cuatro comandos usando uno
- * real, con una [SourceOperationFactory] falsa.
+ * Prueba el comando real con un toolchain falso.
  *
- * Antes esto se probaba con una subclase inventada de la clase base. Sin
- * clase base, el sujeto pasa a ser un comando de producción: lo único
- * sustituido es qué operación monta.
+ * El punto de sustitución es la función `toolchainFor`, no una interfaz
+ * inventada: lo que varía entre versiones —y entre producción y tests— es
+ * qué toolchain se construye, no cómo se comporta.
  */
 class ExecutionCommandTest {
 
-    private class FixedOutcomeOperation(
-        private val outcome: OperationOutcome,
-    ) : SourceOperation {
+    private val anySpan = SourceSpan(
+        start = SourcePosition(line = 1, column = 1, offset = 0),
+        end = SourcePosition(line = 1, column = 2, offset = 1),
+    )
 
-        override fun outcomeFor(statements: StatementSource, terminal: Terminal): OperationOutcome {
-            terminal.writeLine("operación ejecutada")
+    private object EmptyStatementSource : StatementSource {
 
-            return outcome
+        override fun nextStatement(): StatementReadResult = StatementReadResult.EndOfInput
+    }
+
+    private class FixedResultInterpreter(
+        private val result: InterpretationResult,
+        private val output: ProgramOutput,
+        private val printedLine: String?,
+    ) : Interpreter {
+
+        override fun interpret(source: StatementSource): InterpretationResult {
+            printedLine?.let(output::writeLine)
+
+            return result
         }
     }
 
-    private class RecordingFactory(
-        private val outcome: OperationOutcome = OperationOutcome.Success,
-    ) : SourceOperationFactory {
+    /** Recuerda con qué versión se pidió el toolchain. */
+    private class RecordingToolchainFactory(
+        private val result: InterpretationResult = InterpretationResult.Success,
+        private val printedLine: String? = null,
+    ) : (LanguageVersion) -> PrintScriptToolchain {
 
-        var receivedRequest: SourceOperationRequest? = null
+        var receivedVersion: LanguageVersion? = null
 
-        override fun create(request: SourceOperationRequest): SourceOperation {
-            receivedRequest = request
+        override fun invoke(version: LanguageVersion): PrintScriptToolchain {
+            receivedVersion = version
 
-            return FixedOutcomeOperation(outcome)
+            return PrintScriptToolchain(
+                statementsFrom = { EmptyStatementSource },
+                interpreterWriting = { output ->
+                    FixedResultInterpreter(
+                        result = result,
+                        output = output,
+                        printedLine = printedLine,
+                    )
+                },
+                // ExecutionCommand no los usa; si alguna vez los pide, que se note.
+                formatter = { error("ExecutionCommand no debería pedir el formatter") },
+                linter = { error("ExecutionCommand no debería pedir el linter") },
+            )
         }
     }
 
-    private fun commandWith(factory: RecordingFactory) = ExecutionCommand(
-        operationFactory = factory,
+    private fun commandWith(factory: RecordingToolchainFactory) = ExecutionCommand(
         errorReporter = ErrorReporter(),
+        toolchainFor = factory,
     )
 
     private fun scriptFile(sourceCode: String = "let a: number = 5;"): String {
@@ -64,78 +91,76 @@ class ExecutionCommandTest {
         return file.toString()
     }
 
-    // --- los argumentos llegan a la factory -----------------------------
+    // --- la versión llega al toolchain ---------------------------------
 
     @Test
-    fun `hands the parsed arguments to the operation factory`() {
-        val factory = RecordingFactory()
-        val file = scriptFile()
+    fun `asks the toolchain for the requested version`() {
+        val factory = RecordingToolchainFactory()
 
-        commandWith(factory).test(listOf(file, "--version", "1.0"))
+        commandWith(factory).test(listOf(scriptFile(), "--version", "1.0"))
 
-        val request = assertNotNull(factory.receivedRequest)
-
-        assertEquals(expected = file, actual = request.sourceFilePath.toString())
-        assertEquals(expected = LanguageVersion.V1_0, actual = request.version)
+        assertEquals(expected = LanguageVersion.V1_0, actual = factory.receivedVersion)
     }
 
     @Test
     fun `defaults the version when it is not given`() {
-        val factory = RecordingFactory()
+        val factory = RecordingToolchainFactory()
 
         commandWith(factory).test(listOf(scriptFile()))
 
-        assertEquals(
-            expected = LanguageVersion.DEFAULT,
-            actual = assertNotNull(factory.receivedRequest).version,
-        )
+        assertEquals(expected = LanguageVersion.DEFAULT, actual = factory.receivedVersion)
     }
 
     @Test
-    fun `rejects an unsupported version before building the operation`() {
-        val factory = RecordingFactory()
+    fun `rejects an unsupported version before asking for a toolchain`() {
+        val factory = RecordingToolchainFactory()
 
         val result = commandWith(factory).test(listOf(scriptFile(), "--version", "9.9"))
 
         assertEquals(expected = false, actual = result.statusCode == 0)
-        assertNull(factory.receivedRequest)
+        assertNull(factory.receivedVersion)
+    }
+
+    // --- la salida del programa llega a la terminal ---------------------
+
+    @Test
+    fun `prints what the program writes`() {
+        val factory = RecordingToolchainFactory(printedLine = "hola mundo")
+
+        val result = commandWith(factory).test(listOf(scriptFile()))
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertContains(result.stdout, "hola mundo")
     }
 
     // --- cada resultado tiene su código de salida -----------------------
 
     @Test
-    fun `exits with zero when the operation succeeds`() {
-        val result = commandWith(RecordingFactory(OperationOutcome.Success)).test(listOf(scriptFile()))
+    fun `exits with zero when interpretation succeeds`() {
+        val result = commandWith(RecordingToolchainFactory()).test(listOf(scriptFile()))
 
         assertEquals(expected = 0, actual = result.statusCode)
-        assertContains(result.stdout, "operación ejecutada")
     }
 
     @Test
-    fun `exits with three when the operation reports findings`() {
-        val result = commandWith(
-            RecordingFactory(OperationOutcome.CompletedWithFindings("Se encontraron 2 problemas.")),
-        ).test(listOf(scriptFile()))
+    fun `exits with one when interpretation fails`() {
+        val factory = RecordingToolchainFactory(
+            result = InterpretationResult.SemanticFailure(
+                SemanticError.UnsupportedStatement(span = anySpan),
+            ),
+        )
 
-        assertEquals(expected = 3, actual = result.statusCode)
-        assertContains(result.stdout, "Se encontraron 2 problemas.")
-    }
-
-    @Test
-    fun `exits with one when the operation fails`() {
-        val result = commandWith(
-            RecordingFactory(OperationOutcome.Failure("error: algo salió mal")),
-        ).test(listOf(scriptFile()))
+        val result = commandWith(factory).test(listOf(scriptFile()))
 
         assertEquals(expected = 1, actual = result.statusCode)
-        assertContains(result.stderr, "algo salió mal")
+        assertContains(result.stderr, "error:")
     }
 
     // --- los mensajes siguen siendo nuestros ----------------------------
 
     @Test
     fun `reports a missing file with our own wording`() {
-        val result = commandWith(RecordingFactory()).test(listOf("/no/existe/archivo.ps"))
+        val result = commandWith(RecordingToolchainFactory()).test(listOf("/no/existe/archivo.ps"))
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "no se encontró el archivo")
@@ -145,7 +170,7 @@ class ExecutionCommandTest {
 
     @Test
     fun `generates a help page describing the argument and the version`() {
-        val result = commandWith(RecordingFactory()).test("--help")
+        val result = commandWith(RecordingToolchainFactory()).test("--help")
 
         assertContains(result.stdout, "archivo")
         assertContains(result.stdout, "--version")
@@ -153,7 +178,7 @@ class ExecutionCommandTest {
 
     @Test
     fun `no longer offers a configuration option`() {
-        val result = commandWith(RecordingFactory()).test("--help")
+        val result = commandWith(RecordingToolchainFactory()).test("--help")
 
         assertEquals(expected = false, actual = result.stdout.contains("--config"))
     }
