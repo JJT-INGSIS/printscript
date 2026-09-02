@@ -14,15 +14,15 @@ import printscript.statement.ParseError
 import printscript.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenType
-import printscript.v1.token.PrintScriptV1TokenType
 
 internal class DeclarationParser(
     private val expressionParser: ExpressionParser<Expression>,
-    override val startTokenType: TokenType,
-    private val initializerTokenType: TokenType,
+    private val tokens: DeclarationTokens,
     declaredTypeByToken: Map<TokenType, DeclaredType>,
     private val statementTerminator: StatementTerminator,
 ) : StatementParser {
+
+    override val startTokenType: TokenType = tokens.keyword
 
     private val declaredTypeByToken = declaredTypeByToken.toMap()
     private val typeTokens: Set<TokenType> = this.declaredTypeByToken.keys
@@ -63,13 +63,13 @@ internal class DeclarationParser(
     }
 
     private fun readTypedIdentifier(context: ParsingContext): ParsingResult<TypedIdentifier> {
-        val identifier = context.expect(PrintScriptV1TokenType.IDENTIFIER)
+        val identifier = context.expect(tokens.identifier)
             .orReturn { return it }
 
-        val colon = identifier.resultingContext.expect(PrintScriptV1TokenType.COLON)
+        val typeSeparator = identifier.resultingContext.expect(tokens.typeSeparator)
             .orReturn { return it }
 
-        val declaredType = readDeclaredType(colon.resultingContext)
+        val declaredType = readDeclaredType(typeSeparator.resultingContext)
             .orReturn { return it }
 
         return ParsingResult.Success(
@@ -107,7 +107,7 @@ internal class DeclarationParser(
         val peeked = context.peek()
             .orReturn { return it }
 
-        if (peeked.value.type != initializerTokenType) {
+        if (peeked.value.type != tokens.initializer) {
             return ParsingResult.Success(
                 value = null,
                 resultingContext = peeked.resultingContext,
@@ -118,7 +118,7 @@ internal class DeclarationParser(
     }
 
     private fun readInitializer(context: ParsingContext): ParsingResult<Expression?> {
-        val assignment = context.expect(initializerTokenType)
+        val assignment = context.expect(tokens.initializer)
             .orReturn { return it }
 
         return expressionParser.parseExpression(assignment.resultingContext)
