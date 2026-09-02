@@ -5,18 +5,18 @@ import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
+import printscript.runtime.Environment
+import printscript.runtime.ExpressionEvaluator
+import printscript.runtime.RuntimeValue
+import printscript.runtime.VariableBinding
 import printscript.statement.Statement
-import printscript.v1.interpreter.PrintScriptV1Environment
-import printscript.v1.interpreter.PrintScriptV1ExpressionEvaluator
-import printscript.v1.interpreter.PrintScriptV1RuntimeValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.PrintScriptV1VariableBinding
 import printscript.v1.interpreter.internal.orReturn
 import printscript.v1.interpreter.internal.value.verifyAccepts
 
 internal class AssignmentExecutor(
-    private val expressionEvaluator: PrintScriptV1ExpressionEvaluator,
-) : StatementExecutor<PrintScriptV1Environment> {
+    private val expressionEvaluator: ExpressionEvaluator,
+) : StatementExecutor<Environment> {
 
     override fun supportsStatement(statement: Statement): Boolean {
         return statement is AssignmentStatement
@@ -24,18 +24,18 @@ internal class AssignmentExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        context: StatementExecutionContext<PrintScriptV1Environment>,
-    ): ExecutionResult<PrintScriptV1Environment> {
+        context: StatementExecutionContext<Environment>,
+    ): ExecutionResult<Environment> {
         if (statement !is AssignmentStatement) {
             return ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(span = statement.span),
             )
         }
 
-        val state: PrintScriptV1Environment = context.state
+        val state: Environment = context.state
         val name: String = statement.target.value
 
-        val binding: PrintScriptV1VariableBinding = state.lookupBinding(name)
+        val binding: VariableBinding = state.lookupBinding(name)
             ?: return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.UndeclaredVariable(
                     name = name,
@@ -43,7 +43,7 @@ internal class AssignmentExecutor(
                 ),
             )
 
-        val value: PrintScriptV1RuntimeValue =
+        val value: RuntimeValue =
             expressionEvaluator.evaluateExpression(statement.expression, state)
                 .orReturn { return it }
 
@@ -56,7 +56,7 @@ internal class AssignmentExecutor(
         return ExecutionResult.Success(
             state.withBinding(
                 name = name,
-                binding = PrintScriptV1VariableBinding(
+                binding = VariableBinding(
                     type = binding.type,
                     value = value,
                 ),

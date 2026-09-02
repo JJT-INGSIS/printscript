@@ -1,8 +1,8 @@
 package printscript.cli.internal.io
 
-import printscript.v1.interpreter.PrintScriptV1ProgramOutput
+import printscript.runtime.ProgramOutput
 
-internal object DiscardedProgramOutput : PrintScriptV1ProgramOutput {
+internal object DiscardedProgramOutput : ProgramOutput {
 
     override fun writeLine(line: String) = Unit
 }

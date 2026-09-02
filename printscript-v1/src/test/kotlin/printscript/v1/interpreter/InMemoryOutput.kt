@@ -1,6 +1,8 @@
 package printscript.v1.interpreter
 
-class InMemoryOutput : PrintScriptV1ProgramOutput {
+import printscript.runtime.ProgramOutput
+
+class InMemoryOutput : ProgramOutput {
 
     private val emittedLines = mutableListOf<String>()
 

@@ -9,25 +9,22 @@ import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.interpreter.ExecutionResult
-import printscript.v1.interpreter.PrintScriptV1Environment
-import printscript.v1.interpreter.PrintScriptV1ExpressionEvaluator
-import printscript.v1.interpreter.PrintScriptV1NumberValue
-import printscript.v1.interpreter.PrintScriptV1RuntimeValue
+import printscript.runtime.Environment
+import printscript.runtime.ExpressionEvaluator
+import printscript.runtime.NumberValue
+import printscript.runtime.RuntimeValue
+import printscript.runtime.StringValue
+import printscript.runtime.VariableBinding
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.PrintScriptV1StringValue
-import printscript.v1.interpreter.PrintScriptV1VariableBinding
 import printscript.v1.interpreter.internal.operation.BinaryOperation
 import printscript.v1.interpreter.internal.operation.BinaryOperationRegistry
 import printscript.v1.interpreter.internal.orReturn
 
 internal class DefaultExpressionEvaluator(
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
-) : PrintScriptV1ExpressionEvaluator {
+) : ExpressionEvaluator {
 
-    override fun evaluateExpression(
-        expression: Expression,
-        environment: PrintScriptV1Environment,
-    ): ExecutionResult<PrintScriptV1RuntimeValue> {
+    override fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
         return when (expression) {
             is NumberLiteralExpression -> evaluateNumberLiteral(expression)
             is StringLiteralExpression -> evaluateStringLiteral(expression)
@@ -38,12 +35,12 @@ internal class DefaultExpressionEvaluator(
         }
     }
 
-    private fun evaluateNumberLiteral(expression: NumberLiteralExpression): ExecutionResult<PrintScriptV1RuntimeValue> {
-        return ExecutionResult.Success(PrintScriptV1NumberValue(expression.value))
+    private fun evaluateNumberLiteral(expression: NumberLiteralExpression): ExecutionResult<RuntimeValue> {
+        return ExecutionResult.Success(NumberValue(expression.value))
     }
 
-    private fun evaluateStringLiteral(expression: StringLiteralExpression): ExecutionResult<PrintScriptV1RuntimeValue> {
-        return ExecutionResult.Success(PrintScriptV1StringValue(expression.value))
+    private fun evaluateStringLiteral(expression: StringLiteralExpression): ExecutionResult<RuntimeValue> {
+        return ExecutionResult.Success(StringValue(expression.value))
     }
 
     /**
@@ -52,11 +49,11 @@ internal class DefaultExpressionEvaluator(
      */
     private fun evaluateIdentifier(
         expression: IdentifierExpression,
-        environment: PrintScriptV1Environment,
-    ): ExecutionResult<PrintScriptV1RuntimeValue> {
+        environment: Environment,
+    ): ExecutionResult<RuntimeValue> {
         val name: String = expression.identifier.value
 
-        val binding: PrintScriptV1VariableBinding = environment.lookupBinding(name)
+        val binding: VariableBinding = environment.lookupBinding(name)
             ?: return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.UndeclaredVariable(
                     name = name,
@@ -64,7 +61,7 @@ internal class DefaultExpressionEvaluator(
                 ),
             )
 
-        val value: PrintScriptV1RuntimeValue = binding.value
+        val value: RuntimeValue = binding.value
             ?: return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.UninitializedVariable(
                     name = name,
@@ -75,14 +72,11 @@ internal class DefaultExpressionEvaluator(
         return ExecutionResult.Success(value)
     }
 
-    private fun evaluateUnary(
-        expression: UnaryExpression,
-        environment: PrintScriptV1Environment,
-    ): ExecutionResult<PrintScriptV1RuntimeValue> {
-        val operand: PrintScriptV1RuntimeValue = evaluateExpression(expression.operand, environment)
+    private fun evaluateUnary(expression: UnaryExpression, environment: Environment): ExecutionResult<RuntimeValue> {
+        val operand: RuntimeValue = evaluateExpression(expression.operand, environment)
             .orReturn { return it }
 
-        if (operand !is PrintScriptV1NumberValue) {
+        if (operand !is NumberValue) {
             return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.InvalidUnaryOperand(
                     operator = expression.operator,
@@ -92,22 +86,19 @@ internal class DefaultExpressionEvaluator(
             )
         }
 
-        val result: PrintScriptV1NumberValue = when (expression.operator) {
+        val result: NumberValue = when (expression.operator) {
             UnaryOperator.PLUS -> operand
-            UnaryOperator.MINUS -> PrintScriptV1NumberValue(operand.value.negate())
+            UnaryOperator.MINUS -> NumberValue(operand.value.negate())
         }
 
         return ExecutionResult.Success(result)
     }
 
-    private fun evaluateBinary(
-        expression: BinaryExpression,
-        environment: PrintScriptV1Environment,
-    ): ExecutionResult<PrintScriptV1RuntimeValue> {
-        val left: PrintScriptV1RuntimeValue = evaluateExpression(expression.left, environment)
+    private fun evaluateBinary(expression: BinaryExpression, environment: Environment): ExecutionResult<RuntimeValue> {
+        val left: RuntimeValue = evaluateExpression(expression.left, environment)
             .orReturn { return it }
 
-        val right: PrintScriptV1RuntimeValue = evaluateExpression(expression.right, environment)
+        val right: RuntimeValue = evaluateExpression(expression.right, environment)
             .orReturn { return it }
 
         val operation: BinaryOperation = operations.forOperator(expression.operator)

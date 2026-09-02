@@ -3,8 +3,8 @@ package printscript.v1.interpreter.internal.operation
 import printscript.ast.expression.BinaryOperator
 import printscript.interpreter.ExecutionResult
 import printscript.model.source.SourceSpan
-import printscript.v1.interpreter.PrintScriptV1NumberValue
-import printscript.v1.interpreter.PrintScriptV1RuntimeValue
+import printscript.runtime.NumberValue
+import printscript.runtime.RuntimeValue
 
 internal class NumericBinaryOperation(
     private val operator: BinaryOperator,
@@ -12,11 +12,11 @@ internal class NumericBinaryOperation(
 ) : BinaryOperation {
 
     override fun applyToOperands(
-        left: PrintScriptV1RuntimeValue,
-        right: PrintScriptV1RuntimeValue,
+        left: RuntimeValue,
+        right: RuntimeValue,
         span: SourceSpan,
-    ): ExecutionResult<PrintScriptV1RuntimeValue> {
-        if (left !is PrintScriptV1NumberValue || right !is PrintScriptV1NumberValue) {
+    ): ExecutionResult<RuntimeValue> {
+        if (left !is NumberValue || right !is NumberValue) {
             return invalidOperandsFor(
                 operator = operator,
                 left = left,

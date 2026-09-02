@@ -3,7 +3,10 @@ package printscript.v1.interpreter
 import printscript.interpreter.Interpreter
 import printscript.interpreter.InterpreterFactory
 import printscript.interpreter.StatementExecutor
-import printscript.v1.interpreter.internal.environment.MapEnvironment
+import printscript.runtime.Environment
+import printscript.runtime.EnvironmentFactory
+import printscript.runtime.ExpressionEvaluator
+import printscript.runtime.ProgramOutput
 import printscript.v1.interpreter.internal.statement.AssignmentExecutor
 import printscript.v1.interpreter.internal.statement.DeclarationExecutor
 import printscript.v1.interpreter.internal.statement.PrintlnExecutor
@@ -17,13 +20,13 @@ public object PrintScriptV1InterpreterFactory {
      * while keeping the closed V1 expression hierarchy.
      */
     public fun create(
-        output: PrintScriptV1ProgramOutput,
-        additionalStatementExecutors: List<StatementExecutor<PrintScriptV1Environment>> = emptyList(),
-        expressionEvaluator: PrintScriptV1ExpressionEvaluator =
+        output: ProgramOutput,
+        additionalStatementExecutors: List<StatementExecutor<Environment>> = emptyList(),
+        expressionEvaluator: ExpressionEvaluator =
             PrintScriptV1ExpressionEvaluatorFactory.create(),
     ): Interpreter {
         return InterpreterFactory.create(
-            initialState = MapEnvironment(),
+            initialState = EnvironmentFactory.empty(),
             statementExecutors =
             additionalStatementExecutors +
                 printScriptV1StatementExecutors(
@@ -34,9 +37,9 @@ public object PrintScriptV1InterpreterFactory {
     }
 
     private fun printScriptV1StatementExecutors(
-        expressionEvaluator: PrintScriptV1ExpressionEvaluator,
-        output: PrintScriptV1ProgramOutput,
-    ): List<StatementExecutor<PrintScriptV1Environment>> {
+        expressionEvaluator: ExpressionEvaluator,
+        output: ProgramOutput,
+    ): List<StatementExecutor<Environment>> {
         return listOf(
             DeclarationExecutor(expressionEvaluator),
             AssignmentExecutor(expressionEvaluator),
