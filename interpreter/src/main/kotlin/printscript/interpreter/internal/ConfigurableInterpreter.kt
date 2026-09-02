@@ -3,17 +3,22 @@ package printscript.interpreter.internal
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.InterpretationResult
 import printscript.interpreter.Interpreter
+import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
 
 internal class ConfigurableInterpreter<S>(
-    private val initialState: S,
+    initialState: S,
     statementExecutors: List<StatementExecutor<S>>,
 ) : Interpreter {
 
     private val statementExecutorDispatcher = StatementExecutorDispatcher(
         statementExecutors = statementExecutors,
+    )
+    private val initialContext: StatementExecutionContext<S> = DispatchingStatementExecutionContext(
+        dispatcher = statementExecutorDispatcher,
+        state = initialState,
     )
 
     override fun interpret(source: StatementSource): InterpretationResult {
@@ -24,7 +29,7 @@ internal class ConfigurableInterpreter<S>(
     }
 
     /**
-     * Cada paso lleva la fuente y el estado con los que sigue el
+     * Cada paso lleva la fuente y el contexto con los que sigue el
      * siguiente. La secuencia es perezosa, así que un programa largo no
      * consume ni memoria ni stack de más.
      */
@@ -32,7 +37,7 @@ internal class ConfigurableInterpreter<S>(
         return generateSequence<InterpretationStep<S>>(
             InterpretationStep.Pending(
                 source = source,
-                state = initialState,
+                context = initialContext,
             ),
         ) { step ->
             advance(step)
@@ -62,18 +67,16 @@ internal class ConfigurableInterpreter<S>(
             is StatementReadResult.Success ->
                 continueAfter(
                     readResult = readResult,
-                    state = step.state,
+                    context = step.context,
                 )
         }
     }
 
-    private fun continueAfter(readResult: StatementReadResult.Success, state: S): InterpretationStep<S> {
-        return when (
-            val execution = statementExecutorDispatcher.dispatchToExecutor(
-                statement = readResult.statement,
-                state = state,
-            )
-        ) {
+    private fun continueAfter(
+        readResult: StatementReadResult.Success,
+        context: StatementExecutionContext<S>,
+    ): InterpretationStep<S> {
+        return when (val execution = context.executeStatement(readResult.statement)) {
             is ExecutionResult.Failure -> InterpretationStep.Finished(
                 InterpretationResult.SemanticFailure(
                     error = execution.error,
@@ -82,7 +85,7 @@ internal class ConfigurableInterpreter<S>(
 
             is ExecutionResult.Success -> InterpretationStep.Pending(
                 source = readResult.remainingSource,
-                state = execution.value,
+                context = context.withState(execution.value),
             )
         }
     }
@@ -91,7 +94,7 @@ internal class ConfigurableInterpreter<S>(
 
         data class Pending<S>(
             val source: StatementSource,
-            val state: S,
+            val context: StatementExecutionContext<S>,
         ) : InterpretationStep<S>
 
         data class Finished(

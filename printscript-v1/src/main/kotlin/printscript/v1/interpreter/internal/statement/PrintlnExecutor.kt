@@ -3,6 +3,7 @@ package printscript.v1.interpreter.internal.statement
 import printscript.ast.statement.PrintlnStatement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
+import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1Environment
@@ -22,7 +23,7 @@ internal class PrintlnExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        state: PrintScriptV1Environment,
+        context: StatementExecutionContext<PrintScriptV1Environment>,
     ): ExecutionResult<PrintScriptV1Environment> {
         if (statement !is PrintlnStatement) {
             return ExecutionResult.Failure(
@@ -30,6 +31,7 @@ internal class PrintlnExecutor(
             )
         }
 
+        val state: PrintScriptV1Environment = context.state
         val value: PrintScriptV1RuntimeValue =
             expressionEvaluator.evaluateExpression(statement.argument, state)
                 .orReturn { return it }

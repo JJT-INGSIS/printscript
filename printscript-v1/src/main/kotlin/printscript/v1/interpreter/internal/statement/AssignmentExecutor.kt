@@ -3,6 +3,7 @@ package printscript.v1.interpreter.internal.statement
 import printscript.ast.statement.AssignmentStatement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
+import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1Environment
@@ -23,7 +24,7 @@ internal class AssignmentExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        state: PrintScriptV1Environment,
+        context: StatementExecutionContext<PrintScriptV1Environment>,
     ): ExecutionResult<PrintScriptV1Environment> {
         if (statement !is AssignmentStatement) {
             return ExecutionResult.Failure(
@@ -31,6 +32,7 @@ internal class AssignmentExecutor(
             )
         }
 
+        val state: PrintScriptV1Environment = context.state
         val name: String = statement.target.value
 
         val binding: PrintScriptV1VariableBinding = state.lookupBinding(name)

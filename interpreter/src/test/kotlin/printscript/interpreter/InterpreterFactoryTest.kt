@@ -9,6 +9,7 @@ import printscript.statement.StatementSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
 class InterpreterFactoryTest {
@@ -127,13 +128,111 @@ class InterpreterFactoryTest {
 
         assertEquals(expected = InterpretationResult.Success, actual = result)
     }
+}
 
-    private fun interpreterWith(vararg executors: StatementExecutor<TestState>): Interpreter {
-        return InterpreterFactory.create(
-            initialState = TestState(0),
-            statementExecutors = executors.toList(),
+class StatementExecutionContextTest {
+
+    @Test
+    fun `executes nested statements with the same configured engine`() {
+        val first = AdvancingExecutor()
+        val second = AdvancingExecutor()
+        val result = interpreterWith(
+            CompositeExecutor(),
+            first,
+            second,
+        ).interpret(
+            ListStatementSource(
+                listOf(
+                    CompositeTestStatement(
+                        statements = listOf(
+                            TestStatement("first"),
+                            CompositeTestStatement(
+                                statements = listOf(TestStatement("nested")),
+                            ),
+                            TestStatement("last"),
+                        ),
+                    ),
+                    TestStatement("after composite"),
+                ),
+            ),
         )
+
+        assertEquals(expected = InterpretationResult.Success, actual = result)
+        assertEquals(
+            expected = listOf(TestState(0), TestState(1), TestState(2), TestState(3)),
+            actual = first.receivedStates,
+        )
+        assertEquals(expected = 0, actual = second.executionCount)
     }
+
+    @Test
+    fun `changing state creates a new context without changing the previous state`() {
+        val executor = ContextReplacingExecutor()
+
+        val result = interpreterWith(executor).interpret(
+            ListStatementSource(listOf(TestStatement("value"))),
+        )
+
+        assertEquals(expected = InterpretationResult.Success, actual = result)
+        assertEquals(
+            expected = listOf(TestState(0), TestState(1)),
+            actual = executor.receivedContexts.map { it.state },
+        )
+        assertNotSame(executor.receivedContexts.first(), executor.receivedContexts.last())
+    }
+
+    @Test
+    fun `reports unsupported statements found during nested execution`() {
+        val result = interpreterWith(CompositeExecutor()).interpret(
+            ListStatementSource(
+                listOf(
+                    CompositeTestStatement(
+                        statements = listOf(TestStatement("unsupported")),
+                    ),
+                ),
+            ),
+        )
+
+        val failure = assertIs<InterpretationResult.SemanticFailure>(result)
+        val error = assertIs<SemanticError.UnsupportedStatement>(failure.error)
+
+        assertEquals(expected = testSpan, actual = error.span)
+    }
+
+    @Test
+    fun `stops nested and top level execution after a nested failure`() {
+        val readCounter = ReadCounter()
+        val executor = FailingOnStatementExecutor(failingValue = "failing")
+        val result = interpreterWith(CompositeExecutor(), executor).interpret(
+            CountingStatementSource(
+                statements = listOf(
+                    CompositeTestStatement(
+                        statements = listOf(
+                            TestStatement("executed"),
+                            TestStatement("failing"),
+                            TestStatement("unread nested"),
+                        ),
+                    ),
+                    TestStatement("unread top level"),
+                ),
+                readCounter = readCounter,
+            ),
+        )
+
+        assertIs<InterpretationResult.SemanticFailure>(result)
+        assertEquals(
+            expected = listOf("executed", "failing"),
+            actual = executor.receivedValues,
+        )
+        assertEquals(expected = 1, actual = readCounter.count)
+    }
+}
+
+private fun interpreterWith(vararg executors: StatementExecutor<TestState>): Interpreter {
+    return InterpreterFactory.create(
+        initialState = TestState(0),
+        statementExecutors = executors.toList(),
+    )
 }
 
 private data class TestState(
@@ -142,6 +241,11 @@ private data class TestState(
 
 private data class TestStatement(
     val value: String,
+    override val span: SourceSpan = testSpan,
+) : Statement
+
+private data class CompositeTestStatement(
+    val statements: List<Statement>,
     override val span: SourceSpan = testSpan,
 ) : Statement
 
@@ -156,12 +260,63 @@ private class AdvancingExecutor : StatementExecutor<TestState> {
         return statement is TestStatement
     }
 
-    override fun executeStatement(statement: Statement, state: TestState): ExecutionResult<TestState> {
-        receivedStates.add(state)
+    override fun executeStatement(
+        statement: Statement,
+        context: StatementExecutionContext<TestState>,
+    ): ExecutionResult<TestState> {
+        receivedStates.add(context.state)
 
         return ExecutionResult.Success(
-            TestState(state.executionCount + 1),
+            TestState(context.state.executionCount + 1),
         )
+    }
+}
+
+private class CompositeExecutor : StatementExecutor<TestState> {
+
+    override fun supportsStatement(statement: Statement): Boolean {
+        return statement is CompositeTestStatement
+    }
+
+    override fun executeStatement(
+        statement: Statement,
+        context: StatementExecutionContext<TestState>,
+    ): ExecutionResult<TestState> {
+        val composite = assertIs<CompositeTestStatement>(statement)
+        var currentContext = context
+
+        for (nestedStatement in composite.statements) {
+            when (val result = currentContext.executeStatement(nestedStatement)) {
+                is ExecutionResult.Failure -> return result
+                is ExecutionResult.Success -> {
+                    currentContext = currentContext.withState(result.value)
+                }
+            }
+        }
+
+        return ExecutionResult.Success(currentContext.state)
+    }
+}
+
+private class ContextReplacingExecutor : StatementExecutor<TestState> {
+
+    val receivedContexts = mutableListOf<StatementExecutionContext<TestState>>()
+
+    override fun supportsStatement(statement: Statement): Boolean {
+        return statement is TestStatement
+    }
+
+    override fun executeStatement(
+        statement: Statement,
+        context: StatementExecutionContext<TestState>,
+    ): ExecutionResult<TestState> {
+        val updatedContext = context.withState(
+            TestState(context.state.executionCount + 1),
+        )
+        receivedContexts.add(context)
+        receivedContexts.add(updatedContext)
+
+        return ExecutionResult.Success(updatedContext.state)
     }
 }
 
@@ -173,8 +328,38 @@ private class FailingExecutor(
         return statement is TestStatement
     }
 
-    override fun executeStatement(statement: Statement, state: TestState): ExecutionResult<TestState> {
+    override fun executeStatement(
+        statement: Statement,
+        context: StatementExecutionContext<TestState>,
+    ): ExecutionResult<TestState> {
         return ExecutionResult.Failure(error)
+    }
+}
+
+private class FailingOnStatementExecutor(
+    private val failingValue: String,
+) : StatementExecutor<TestState> {
+
+    val receivedValues = mutableListOf<String>()
+
+    override fun supportsStatement(statement: Statement): Boolean {
+        return statement is TestStatement
+    }
+
+    override fun executeStatement(
+        statement: Statement,
+        context: StatementExecutionContext<TestState>,
+    ): ExecutionResult<TestState> {
+        val testStatement = assertIs<TestStatement>(statement)
+        receivedValues.add(testStatement.value)
+
+        if (testStatement.value == failingValue) {
+            return ExecutionResult.Failure(TestSemanticError(testStatement.span))
+        }
+
+        return ExecutionResult.Success(
+            TestState(context.state.executionCount + 1),
+        )
     }
 }
 

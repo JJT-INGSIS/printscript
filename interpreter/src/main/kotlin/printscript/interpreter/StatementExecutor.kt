@@ -7,5 +7,9 @@ public interface StatementExecutor<S> {
 
     public fun supportsStatement(statement: Statement): Boolean
 
-    public fun executeStatement(statement: Statement, state: S): ExecutionResult<S>
+    /**
+     * Executes [statement]. The [context] exposes the current state and the
+     * same configured engine for statements nested inside this one.
+     */
+    public fun executeStatement(statement: Statement, context: StatementExecutionContext<S>): ExecutionResult<S>
 }
