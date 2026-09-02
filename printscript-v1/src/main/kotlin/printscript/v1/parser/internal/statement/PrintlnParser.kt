@@ -11,11 +11,11 @@ import printscript.parser.orReturn
 import printscript.statement.Statement
 import printscript.token.Token
 import printscript.token.TokenType
-import printscript.v1.token.PrintScriptV1TokenType
 
 internal class PrintlnParser(
     private val expressionParser: ExpressionParser<Expression>,
     override val startTokenType: TokenType,
+    private val argumentDelimiters: ArgumentDelimiters,
     private val statementTerminator: StatementTerminator,
 ) : StatementParser {
 
@@ -50,18 +50,18 @@ internal class PrintlnParser(
     }
 
     private fun readParenthesizedArgument(context: ParsingContext): ParsingResult<Expression> {
-        val leftParenthesis = context.expect(PrintScriptV1TokenType.LEFT_PAREN)
+        val opening = context.expect(argumentDelimiters.opening)
             .orReturn { return it }
 
-        val argument = expressionParser.parseExpression(leftParenthesis.resultingContext)
+        val argument = expressionParser.parseExpression(opening.resultingContext)
             .orReturn { return it }
 
-        val rightParenthesis = argument.resultingContext.expect(PrintScriptV1TokenType.RIGHT_PAREN)
+        val closing = argument.resultingContext.expect(argumentDelimiters.closing)
             .orReturn { return it }
 
         return ParsingResult.Success(
             value = argument.value,
-            resultingContext = rightParenthesis.resultingContext,
+            resultingContext = closing.resultingContext,
         )
     }
 

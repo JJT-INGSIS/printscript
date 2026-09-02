@@ -12,8 +12,10 @@ import printscript.v1.parser.internal.printScriptV1DeclaredTypesByTokenType
 import printscript.v1.parser.internal.printScriptV1MultiplicativeExpressionBuildersByTokenType
 import printscript.v1.parser.internal.printScriptV1QuoteStylesByDelimiter
 import printscript.v1.parser.internal.printScriptV1UnaryExpressionBuildersByTokenType
+import printscript.v1.parser.internal.statement.ArgumentDelimiters
 import printscript.v1.parser.internal.statement.AssignmentParser
 import printscript.v1.parser.internal.statement.DeclarationParser
+import printscript.v1.parser.internal.statement.DeclarationTokens
 import printscript.v1.parser.internal.statement.IdentifierStatementParser
 import printscript.v1.parser.internal.statement.PrintlnParser
 import printscript.v1.parser.internal.statement.StatementTerminator
@@ -70,14 +72,22 @@ public object PrintScriptV1ParserFactory {
         return listOf(
             DeclarationParser(
                 expressionParser = expressionParser,
-                startTokenType = PrintScriptV1TokenType.LET,
-                initializerTokenType = PrintScriptV1TokenType.ASSIGN,
+                tokens = DeclarationTokens(
+                    keyword = PrintScriptV1TokenType.LET,
+                    identifier = PrintScriptV1TokenType.IDENTIFIER,
+                    typeSeparator = PrintScriptV1TokenType.COLON,
+                    initializer = PrintScriptV1TokenType.ASSIGN,
+                ),
                 declaredTypeByToken = printScriptV1DeclaredTypesByTokenType,
                 statementTerminator = statementTerminator,
             ),
             PrintlnParser(
                 expressionParser = expressionParser,
                 startTokenType = PrintScriptV1TokenType.PRINTLN,
+                argumentDelimiters = ArgumentDelimiters(
+                    opening = PrintScriptV1TokenType.LEFT_PAREN,
+                    closing = PrintScriptV1TokenType.RIGHT_PAREN,
+                ),
                 statementTerminator = statementTerminator,
             ),
             IdentifierStatementParser(
