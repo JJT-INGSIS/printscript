@@ -858,33 +858,45 @@ println(a);
 
 # 7. El CLI, clase por clase
 
-## 7.1 Las dos capas
+## 7.1 La forma del módulo
 
-El CLI está partido en **adaptador** y **dominio**:
+Diecinueve archivos en tres grupos:
 
 ```
-┌─ ADAPTADOR (sabe de Clikt, argv, --help, códigos de salida) ─┐
+┌─ COMANDOS · la superficie de la línea de comandos ───────────┐
 │  Main · PrintScriptCommandFactory · PrintScriptCommandGroup  │
 │  ValidationCommand · ExecutionCommand ·                      │
 │  FormattingCommand · AnalysisCommand                         │
 │  LanguageOptions · sourceFileArgument()                      │
-│  runSourceOperation() · EchoTerminal · ProgramTermination    │
-└──────────────────────────────────────────────────────────────┘
-                            │
-┌─ DOMINIO (no sabe que existe una terminal ni argv) ──────────┐
-│  SourceOperationRunner · SourceOperationRequest              │
-│  SourceOperation + sus 4 implementaciones                    │
+│  runOnSourceFile() · interpretationOutcome()                 │
 │  OperationOutcome · ExitCode                                 │
-│  StatementSourcePipeline · ProgressReportingStatementSource  │
-│  ErrorReporter · DiagnosticReporter · PrintScriptWording     │
+└──────────────────────────────────────────────────────────────┘
+                            │ le pide las herramientas a
+                            ▼
+┌─ TOOLCHAIN · qué herramientas usa cada versión ──────────────┐
+│  PrintScriptToolchain · PrintScriptToolchainFactory          │
+│  LanguageVersion                                             │
+└──────────────────────────────────────────────────────────────┘
+                            │ y los errores se los da a
+                            ▼
+┌─ REPORTE · traduce errores de dominio a castellano ──────────┐
+│  ErrorReporter · DiagnosticReporter                          │
+│  PrintScriptWording · SpanRenderer                           │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-Esto se llama **Ports & Adapters**. La ventaja concreta: las cuatro operaciones
-se pueden testear sin línea de comandos, y cambiar la librería de CLI tocaría
-solo la capa de arriba.
+**La frontera que importa: Clikt vive solo adentro de `cli`.** Ningún módulo
+core lo conoce. Lo que cruza hacia afuera son los contratos de los módulos
+—`ProgramOutput`, `StatementSource`, `Linter`— que no saben que existe una
+terminal.
 
-## 7.2 El adaptador
+Antes había una capa más: un puerto `Terminal`, una interfaz `SourceOperation`
+con cuatro implementaciones, un `SourceOperationRunner` y una
+`SourceOperationFactory`. Se sacaron porque **duplicaban lo que Clikt ya
+resuelve**: `echo` para escribir, `ProgramResult` para terminar y `test()` para
+probar. Eran 32 archivos y quedaron 19.
+
+## 7.2 Los comandos
 
 ### `Main.kt`
 
@@ -902,15 +914,10 @@ El único lugar donde se instancian los comandos:
 
 ```kotlin
 return PrintScriptCommandGroup().subcommands(
-    ValidationCommand(
-        operationFactory = SourceOperationFactory { request ->
-            when (request.version) {
-                LanguageVersion.V1_0 -> ValidationOperation(errorReporter)
-            }
-        },
-        errorReporter = errorReporter,
-    ),
-    // ... los otros tres
+    ValidationCommand(errorReporter),
+    ExecutionCommand(errorReporter),
+    FormattingCommand(errorReporter),
+    AnalysisCommand(errorReporter, diagnosticReporter),
 )
 ```
 
@@ -918,237 +925,242 @@ return PrintScriptCommandGroup().subcommands(
 composición, un test podría quedar en verde verificando un CLI distinto del que
 se distribuye.
 
-Y esos `when (request.version)` con un solo caso no son redundantes: son
-**exhaustivos** sobre `LanguageVersion`. El día que se agregue `V2_0` al enum,
-los cuatro dejan de compilar y el compilador entrega la lista completa de
-decisiones a tomar.
-
 ### `PrintScriptCommandGroup`
 
 Comando raíz. Su `run()` está **vacío a propósito**: no hace trabajo, solo
 agrupa los cuatro subcomandos y le da a Clikt el nombre del ejecutable.
 
-### Los cuatro comandos — composición, no herencia
+### Los cuatro comandos
 
 Los cuatro heredan **directamente de `CliktCommand`**. No hay clase base propia:
 
 ```kotlin
-internal class ValidationCommand(
-    private val operationFactory: SourceOperationFactory,
+internal class ExecutionCommand(
     private val errorReporter: ErrorReporter,
-    private val pipeline: StatementSourcePipeline = StatementSourcePipeline(),
-) : CliktCommand(name = "validation") {
+    private val toolchainFor: (LanguageVersion) -> PrintScriptToolchain =
+        PrintScriptToolchainFactory::forVersion,
+) : CliktCommand(name = "execution") {
 
     private val sourceFilePath by sourceFileArgument()
 
     private val languageOptions by LanguageOptions()
 
-    override fun help(context: Context): String {
-        return "Verifica que el archivo sea válido, sin mostrar lo que el programa imprimiría"
-    }
+    override fun help(context: Context) = "Ejecuta el programa y muestra su salida"
 
     override fun run() {
-        runSourceOperation(
-            request = SourceOperationRequest(
-                sourceFilePath = sourceFilePath,
-                version = languageOptions.version,
-            ),
-            operationFactory = operationFactory,
+        val toolchain = toolchainFor(languageOptions.version)
+
+        runOnSourceFile(
+            sourceFilePath = sourceFilePath,
+            toolchain = toolchain,
             errorReporter = errorReporter,
-            pipeline = pipeline,
-        )
+        ) { statements ->
+            interpretationOutcome(
+                interpreter = toolchain.interpreterWriting(terminalOutput()),
+                statements = statements,
+                errorReporter = errorReporter,
+            )
+        }
     }
 }
 ```
 
-**Por qué no hay clase base.** Con Template Method los cuatro comandos quedaban
-obligados a exponer **exactamente las mismas opciones**, porque las opciones se
-declaran en el cuerpo de la clase. Declarándolas por comando, cada uno puede
-tener las suyas — algo que va a hacer falta cuando vuelva `--config`, que
-corresponde solo a `formatting` y `analysis`.
+**Por qué no hay clase base.** Con una, los cuatro comandos quedarían obligados
+a exponer **exactamente las mismas opciones**, porque las opciones se declaran
+en el cuerpo de la clase. Declarándolas por comando, cada uno puede tener las
+suyas — algo que va a hacer falta cuando vuelva `--config`, que corresponde solo
+a `formatting` y `analysis`.
 
-**Cómo se comparte sin heredar.** Tres mecanismos, todos de la propia librería:
+**Por qué el toolchain entra como función y no como instancia.** Porque la
+versión recién se conoce **después** de que Clikt parsea: en el constructor
+todavía no existe. Y eso mismo es el punto de sustitución de los tests — se
+inyecta otra función, no se mockea un tipo.
+
+**Cómo se comparte sin heredar.** Tres mecanismos, dos de la propia librería:
 
 | Qué | Cómo | Por qué así |
 |---|---|---|
 | el argumento `<archivo>` | `sourceFileArgument()` | es extensión porque `argument()` registra el parámetro **en el comando que la llama**, así que necesita saber cuál es |
 | la opción `--version` | `LanguageOptions : OptionGroup` | es el mecanismo de Clikt para agrupar opciones reutilizables |
-| la orquestación del `run()` | `runSourceOperation()` | extensión de nuevo: el receptor le da acceso al `echo` que necesita `EchoTerminal` |
+| la orquestación del `run()` | `runOnSourceFile()` | extensión de nuevo: el receptor le da acceso al `echo` de Clikt |
 
 **Qué es `by`.** Delegación de propiedad: no guarda un valor, se lo pide al
 objeto que devolvió `sourceFileArgument()`. Y ese objeto, al crearse, **se
 registró en el comando** — por eso Clikt genera el `--help` sin que nadie se lo
 diga. Declarar el parámetro y documentarlo son el mismo acto.
 
-**El pareo de nombres dice en qué capa vive cada cosa:** `ValidationCommand` es
-adaptador, `ValidationOperation` es dominio.
-
-### `SourceOperationFactory`
+### `RunSourceCommand.kt` — el flujo compartido
 
 ```kotlin
-internal fun interface SourceOperationFactory {
-    fun create(request: SourceOperationRequest): SourceOperation
-}
-```
+internal fun CliktCommand.runOnSourceFile(
+    sourceFilePath: Path,
+    toolchain: PrintScriptToolchain,
+    errorReporter: ErrorReporter,
+    outcomeFrom: (StatementSource) -> OperationOutcome,
+) {
+    val outcome = when (val creation = SourceReaderFactory.fromPath(sourceFilePath)) {
+        is SourceReaderCreationResult.Failure ->
+            OperationOutcome.Failure(errorReporter.describe(creation.error))
 
-El comando **no sabe qué operación monta**: eso lo decide la raíz de composición.
-Es también el punto de sustitución de los tests —se inyecta una factory falsa— y
-el lugar donde va a vivir la selección por versión cuando exista V2.
+        is SourceReaderCreationResult.Success ->
+            outcomeFrom(toolchain.statementsFrom(creation.reader))
+    }
 
-Es un `fun interface`, así que en el punto de uso se escribe como lambda.
+    reportOutcome(outcome)
 
-### `EchoTerminal`
+    val exitCode = exitCodeOf(outcome)
 
-Patrón **Adapter**. Implementa el puerto `Terminal` del dominio escribiendo por
-`echo`, que es el método de salida de Clikt.
-
-**Por qué `echo` y no `println`.** Porque Clikt detecta el tipo de terminal
-antes de escribir, y porque su helper de tests captura lo que pasa por `echo`
-mientras que `println` se le escapa.
-
-### `ProgramTermination`
-
-```kotlin
-internal object ProgramTermination {
-    fun endWith(exitCode: ExitCode) {
-        if (exitCode == ExitCode.SUCCESS) { return }
+    if (exitCode != ExitCode.SUCCESS) {
         throw ProgramResult(exitCode.value)
     }
 }
 ```
 
-**Es el único `throw` del proyecto.** Clikt señaliza el final del programa
-lanzando `ProgramResult` — es su protocolo, no manejo de errores. Aislarlo en un
-archivo de seis líneas lo hace auditable de un vistazo:
+Abrir el archivo, armar las sentencias, dejar que el comando haga lo suyo,
+reportar y terminar. Un archivo que no se puede abrir se modela como
+`OperationOutcome.Failure`, igual que cualquier otro fracaso: mismo camino,
+mismo código de salida.
+
+En el mismo archivo vive `interpretationOutcome(...)`, lo único que comparten
+validar y ejecutar. **Es una función y no una jerarquía a propósito:** el día que
+validar deje de ejecutar el programa —por `readInput` de la 1.1— se borra una
+función y no hay que desarmar nada.
+
+**El `throw ProgramResult` es el único del módulo.** Clikt señaliza el código de
+salida lanzando esa excepción: es su protocolo, no manejo de errores. Auditable
+de un vistazo:
 
 ```bash
 grep -rn "throw\|catch" cli/src/main --include=*.kt
 ```
 
-## 7.3 El dominio
-
-### `SourceOperation`
-
-```kotlin
-internal interface SourceOperation {
-    fun outcomeFor(statements: StatementSource, terminal: Terminal): OperationOutcome
-}
-```
-
-Patrón **Strategy**. *"Dame sentencias y una terminal, te digo cómo salió."* No
-sabe de dónde vinieron las sentencias ni cómo se lo pidió el usuario.
-
 ### `OperationOutcome` y `ExitCode`
 
-Son dos vocabularios distintos a propósito:
+Dos vocabularios distintos a propósito:
 
-| `OperationOutcome` (dominio) | `ExitCode` (proceso) |
+| `OperationOutcome` (significado) | `ExitCode` (proceso) |
 |---|---|
 | `Success` | `SUCCESS(0)` |
 | `CompletedWithFindings` | `FINDINGS(3)` |
 | `Failure` | `SOURCE_ERROR(1)` |
 
-**Por qué separarlos.** El dominio habla de *significado*; el sistema operativo
-habla de *números*. La traducción se hace en un solo lugar.
-
 **Por qué `FINDINGS(3)` existe.** Para que un CI pueda distinguir *"el código
 está roto"* de *"el código funciona pero no respeta las convenciones"*.
 
-### `SourceOperationRunner` — el orquestador
+## 7.3 El toolchain
 
 ```kotlin
-fun exitCodeFor(operation: SourceOperation, request: SourceOperationRequest): ExitCode {
-    val outcome = outcomeOf(operation, request)   // calculá, sin imprimir
-    reportOutcome(outcome)                         // imprimí, sin devolver
-    return exitCodeOf(outcome)                     // traducí, función pura
+internal class PrintScriptToolchain(
+    val statementsFrom: (SourceReader) -> StatementSource,
+    val interpreterWriting: (ProgramOutput) -> Interpreter,
+    val formatter: () -> Formatter,
+    val linter: () -> Linter,
+)
+```
+
+Las cuatro herramientas de una versión del lenguaje, ya cableadas. Es una clase
+concreta y **no una interfaz**: la variación entre versiones está en qué
+factories se usan para armarla, no en cómo se comporta. Por eso el punto de
+sustitución es la función que la construye.
+
+Las herramientas son lambdas para que la configuración concreta de cada versión
+quede capturada adentro — así el tipo no nombra nada de V1.
+
+```kotlin
+internal object PrintScriptToolchainFactory {
+
+    fun forVersion(version: LanguageVersion): PrintScriptToolchain {
+        return when (version) {
+            LanguageVersion.V1_0 -> printScriptV1Toolchain()
+        }
+    }
 }
 ```
 
-Tres pasos, tres funciones, cada una con **una sola** responsabilidad. Esto es
-**Command-Query Separation**: una función o hace algo, o responde algo, nunca
-las dos.
+**Es el único archivo del CLI que nombra las factories de los módulos.** Antes
+esa decisión estaba partida en cuatro, y en tres de esos casos la versión ni
+siquiera se consultaba: `StatementSourcePipeline` elegía lexer y parser según la
+versión, pero el intérprete, el formatter y el linter estaban clavados en V1.
 
-`outcomeOf` hace el trabajo pesado:
+El `when` es exhaustivo. Cuando se agregue una versión al enum, **este archivo
+deja de compilar** y el compilador obliga a decidir con qué herramientas se arma.
+
+## 7.4 Qué hace cada comando
+
+### `ExecutionCommand` y `ValidationCommand`
+
+Los dos corren el intérprete y comparten `interpretationOutcome(...)`. Difieren
+en dos cosas nada más:
+
+| | `ValidationCommand` | `ExecutionCommand` |
+|---|---|---|
+| a dónde va lo que el programa imprime | se descarta | a la salida estándar |
+| qué se informa al terminar bien | *"El archivo es válido."* | nada |
+
+Cada uno arma su `ProgramOutput` como objeto anónimo:
 
 ```kotlin
-return when (val creation = SourceReaderFactory.fromPath(request.sourceFilePath)) {
-    is Failure -> OperationOutcome.Failure(errorReporter.describe(creation.error))
-    is Success -> operation.outcomeFor(
-        statements = progressReportingStatementsOf(creation.reader, request),
-        terminal = terminal,
-    )
-}
-```
-
-Fijate que un archivo que no se puede abrir se modela como `OperationOutcome.Failure`,
-igual que cualquier otro fracaso. Mismo camino, mismo código de salida.
-
-### `StatementSourcePipeline`
-
-```kotlin
-fun statementsFrom(sourceReader: SourceReader, version: LanguageVersion): StatementSource {
-    return when (version) {
-        LanguageVersion.V1_0 -> v1StatementsFrom(sourceReader)
+// ExecutionCommand
+private fun terminalOutput(): ProgramOutput {
+    return object : ProgramOutput {
+        override fun writeLine(line: String) {
+            echo(line)
+        }
     }
 }
 
-private fun v1StatementsFrom(sourceReader: SourceReader): StatementSource {
-    return PrintScriptV1ParserFactory.create().parse(
-        tokens = PrintScriptV1LexerFactory.create().tokenize(sourceReader),
-    )
+// ValidationCommand
+private fun discardedOutput(): ProgramOutput {
+    return object : ProgramOutput {
+        override fun writeLine(line: String) = Unit
+    }
 }
 ```
 
-**Es el único lugar del CLI que nombra al lexer y al parser.** Las operaciones
-reciben un `StatementSource` ya armado y no saben que existen esas etapas. Por
-eso las cuatro comparten el mismo pipeline.
+Ese segundo es un **Null Object**: cumple el contrato sin hacer nada. Gracias a
+él, `validation` **corre el programa entero** —y por lo tanto detecta errores
+semánticos— sin que el usuario vea lo que habría impreso.
 
-### `ProgressReportingStatementSource`
+> ⚠️ Eso va a cambiar con PrintScript 1.1. Cuando exista `readInput`, correr el
+> programa para validarlo significaría **quedarse esperando entrada por
+> teclado**. Es una decisión abierta del equipo, y por eso
+> `interpretationOutcome` es una función suelta y fácil de borrar.
 
-Patrón **Decorator**. Envuelve un `StatementSource` y, cada vez que le piden una
-sentencia, calcula qué porcentaje del archivo se leyó y avisa al cruzar cada
-decena.
+### `FormattingCommand` y `AnalysisCommand`
 
-**Por qué decorator.** Porque el progreso no es responsabilidad del parser ni
-del intérprete. Envolviendo, se agrega sin tocar a ninguno de los dos.
-
-**Detalle:** el progreso se escribe a **stderr**, no a stdout. Así
-`printscript execution programa.ps > salida.txt` guarda solo lo que el programa
-imprimió, sin el ruido del progreso.
-
-### `ValidationOperation` y `ExecutionOperation`
-
-Las dos heredan de `InterpretingOperation`, que aplica **Template Method** otra
-vez. Validar y ejecutar hacen exactamente lo mismo salvo dos cosas:
-
-| | `ValidationOperation` | `ExecutionOperation` |
-|---|---|---|
-| `programOutputOn(terminal)` | `DiscardedProgramOutput` | `TerminalProgramOutput(terminal)` |
-| `reportSuccessOn(terminal)` | escribe *"El archivo es válido."* | nada |
-
-**`DiscardedProgramOutput` es un Null Object**: implementa la interfaz de salida
-sin hacer nada. Gracias a eso, `validation` **corre el programa entero** —y por
-lo tanto detecta errores semánticos— sin que el usuario vea lo que habría
-impreso.
-
-### `FormattingOperation` y `AnalysisOperation`
-
-Las dos usan **recursión de cola** (`tailrec`) para recorrer su fuente:
+Los dos recorren su fuente con **recursión de cola**:
 
 ```kotlin
-private tailrec fun writeRemainingFormattedStatements(
-    source: FormattedSource,
-    terminal: Terminal,
-): OperationOutcome { ... }
+private tailrec fun writeRemainingFormattedStatements(source: FormattedSource): OperationOutcome {
+    return when (val readResult = source.nextFormattedStatement()) {
+        FormattedStatementReadResult.EndOfInput -> OperationOutcome.Success
+
+        is FormattedStatementReadResult.Failure ->
+            OperationOutcome.Failure(errorReporter.describe(readResult.error))
+
+        is FormattedStatementReadResult.Success -> {
+            echo(readResult.formattedText, trailingNewline = false)
+
+            writeRemainingFormattedStatements(readResult.remainingSource)
+        }
+    }
+}
 ```
 
-`tailrec` le pide al compilador que convierta la recursión en un bucle. Se lee
+`tailrec` le pide al compilador que convierta la recursión en un bucle: se lee
 como recursión pero no consume stack.
 
-En `AnalysisOperation`, el contador de hallazgos viaja **como parámetro** y no
-como campo, así la clase no guarda estado entre corridas.
+En `AnalysisCommand` el contador de hallazgos viaja **como parámetro** y no como
+campo, así el comando no guarda estado entre corridas — se puede llamar dos veces
+seguidas y el conteo arranca de cero.
 
-## 7.4 El reporte
+> **Sobre SRP.** Estos dos comandos declaran opciones de CLI **y** contienen el
+> bucle. Es una responsabilidad más gorda de lo ideal, y fue una decisión
+> consciente: lo que absorbieron es orquestación —iterar e imprimir—, no reglas.
+> Qué es un diagnóstico sigue en el módulo `linter`, y cómo se redacta sigue en
+> `DiagnosticReporter`.
+
+## 7.5 El reporte
 
 Tres clases que responden preguntas distintas:
 
@@ -1170,34 +1182,32 @@ Comando: `printscript execution ejemplo.ps`
 | # | Dónde | Qué pasa |
 |---|---|---|
 | 1 | `main(args)` | llama a `PrintScriptCommandFactory.create().main(args)` |
-| 2 | Clikt | parsea `argv`, encuentra `execution`, llena las dos propiedades |
-| 3 | `ExecutionCommand.run()` | arma `SourceOperationRequest(path, V1_0)` |
-| 4 | `runSourceOperation(...)` | la extensión compartida por los cuatro comandos |
-| 5 | `SourceOperationFactory.create(request)` | el `when (version)` devuelve `ExecutionOperation` |
-| 6 | `SourceOperationRunner.exitCodeFor` | arranca |
-| 7 | `SourceReaderFactory.fromPath` | existe, es archivo, es legible → `Success(reader)` |
-| 8 | `StatementSourcePipeline.statementsFrom` | lexer + parser → `StatementSource` |
-| 9 | `ProgressReportingStatementSource` | lo envuelve para reportar progreso |
-| 10 | `ExecutionOperation.outcomeFor` | crea el intérprete con `TerminalProgramOutput` |
-| 11 | El intérprete | corre el programa; cada `println` llega a la terminal |
-| 12 | | devuelve `InterpretationResult.Success` → `OperationOutcome.Success` |
-| 13 | `reportOutcome` | no imprime nada, porque fue Success |
-| 14 | `exitCodeOf` | `Success` → `ExitCode.SUCCESS` |
-| 15 | `ProgramTermination.endWith` | es SUCCESS → **no lanza nada**, vuelve normal |
-| 16 | Clikt | `run()` terminó sin excepción → sale con 0 |
+| 2 | Clikt | parsea `argv`, encuentra `execution`, llena `sourceFilePath` y `languageOptions` |
+| 3 | `ExecutionCommand.run()` | `toolchainFor(V1_0)` → el toolchain de PrintScript 1.0 |
+| 4 | `runOnSourceFile(...)` | la extensión compartida por los cuatro comandos |
+| 5 | `SourceReaderFactory.fromPath` | existe, es archivo, es legible → `Success(reader)` |
+| 6 | `toolchain.statementsFrom(reader)` | lexer + parser → `StatementSource` |
+| 7 | `ExecutionCommand` | arma el `ProgramOutput` que escribe con `echo` |
+| 8 | `toolchain.interpreterWriting(output)` | el intérprete de 1.0, cableado a esa salida |
+| 9 | `interpretationOutcome(...)` | corre el programa; cada `println` llega a la terminal |
+| 10 | | `InterpretationResult.Success` → `OperationOutcome.Success` |
+| 11 | `reportOutcome` | no imprime nada, porque fue Success |
+| 12 | `exitCodeOf` | `Success` → `ExitCode.SUCCESS` |
+| 13 | `runOnSourceFile` | es SUCCESS → **no lanza nada**, vuelve normal |
+| 14 | Clikt | `run()` terminó sin excepción → sale con 0 |
 
-Si en el paso 11 el programa hubiera usado una variable inexistente:
+Si en el paso 9 el programa hubiera usado una variable inexistente:
 
 | # | Dónde | Qué pasa |
 |---|---|---|
-| 11' | `DefaultExpressionEvaluator` | `lookupBinding("x")` → `null` → `Failure(UndeclaredVariable)` |
-| 12' | `ConfigurableInterpreter` | `Finished(SemanticFailure(error))` |
-| 13' | `InterpretingOperation` | `errorReporter.describe(error)` → texto en castellano con posición |
-| 14' | | `OperationOutcome.Failure(mensaje)` |
-| 15' | `reportOutcome` | `terminal.writeErrorLine(mensaje)` → va a **stderr** |
-| 16' | `exitCodeOf` | `Failure` → `ExitCode.SOURCE_ERROR` |
-| 17' | `ProgramTermination.endWith` | no es SUCCESS → `throw ProgramResult(1)` |
-| 18' | Clikt | atrapa, sale con 1 |
+| 9' | `DefaultExpressionEvaluator` | `lookupBinding("x")` → `null` → `Failure(UndeclaredVariable)` |
+| 10' | `ConfigurableInterpreter` | `Finished(SemanticFailure(error))` |
+| 11' | `interpretationOutcome` | `errorReporter.describe(error)` → texto en castellano con posición |
+| 12' | | `OperationOutcome.Failure(mensaje)` |
+| 13' | `reportOutcome` | `echo(mensaje, err = true)` → va a **stderr** |
+| 14' | `exitCodeOf` | `Failure` → `ExitCode.SOURCE_ERROR` |
+| 15' | `runOnSourceFile` | no es SUCCESS → `throw ProgramResult(1)` |
+| 16' | Clikt | atrapa, sale con 1 |
 
 ---
 
@@ -1206,8 +1216,9 @@ Si en el paso 11 el programa hubiera usado una variable inexistente:
 **AST** *(Abstract Syntax Tree)* — árbol de sintaxis abstracta. La
 representación del programa como estructura anidada en vez de texto plano.
 
-**Adapter** — patrón. Una clase que traduce una interfaz a otra. `EchoTerminal`
-adapta el `echo` de Clikt al puerto `Terminal`.
+**Adapter** — patrón. Una clase que traduce una interfaz a otra. El
+`ProgramOutput` anónimo de `ExecutionCommand` adapta el `echo` de Clikt al
+contrato de salida que espera el intérprete.
 
 **api vs implementation** — en Gradle, `api` significa que el tipo aparece en tu
 firma pública y se re-expone a quien te use; `implementation` significa que lo
@@ -1217,7 +1228,8 @@ usás solo adentro y queda escondido.
 responde algo (consulta), nunca las dos.
 
 **Decorator** — patrón. Envolver un objeto para agregarle comportamiento sin
-modificarlo. `ProgressReportingStatementSource` decora un `StatementSource`.
+modificarlo. Cuando PrintScript 1.1 necesite evaluar expresiones nuevas, su
+evaluador va a decorar al de 1.0 en vez de reescribirlo.
 
 **Dispatcher** — el que recibe algo y decide quién lo atiende.
 
