@@ -1,13 +1,12 @@
 package printscript.v1.interpreter.internal.operation
 
-import printscript.ast.expression.BinaryOperator
 import printscript.interpreter.ExecutionResult
 import printscript.model.source.SourceSpan
 import printscript.v1.interpreter.PrintScriptV1NumberValue
 import printscript.v1.interpreter.PrintScriptV1RuntimeValue
 import java.math.BigDecimal
 
-internal class SubtractOperation : ArithmeticOperation(BinaryOperator.SUBTRACT) {
+internal class SubtractCalculation : NumberCalculation {
 
     override fun calculate(
         left: BigDecimal,
