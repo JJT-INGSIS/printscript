@@ -29,4 +29,5 @@ include(
     "formatter",
     "printscript-v1",
     "printscript-ast",
+    "printscript-runtime",
 )

@@ -101,6 +101,7 @@ resultados de dominio y no mediante excepciones.
 | `printscript-ast` | AST oficial e inmutable compartido por las versiones de PrintScript. |
 | `parser` | Motor lazy de parsing y contratos públicos para estrategias externas. |
 | `interpreter` | Motor de interpretación y contratos públicos para executors externos. |
+| `printscript-runtime` | Estado, valores y puertos públicos para extender la ejecución de PrintScript. |
 | `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
 | `linter` | Motor lazy de análisis de estilo y contratos públicos para reglas externas. |
 | `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript V1. |
@@ -174,10 +175,15 @@ tipo, por lo que el compilador impide mezclar estrategias de lenguajes distintos
 El `Interpreter` que usa la CLI permanece no genérico.
 
 El dispatcher conserva el orden configurado y da prioridad al primer executor
-compatible. Los executors, el environment inmutable, los valores runtime, la
-evaluación de expresiones, los errores semánticos concretos y la salida de
-`println` pertenecen a `printscript-v1`. La salida se abstrae mediante
-`PrintScriptV1ProgramOutput`, por lo que tampoco depende de la consola ni de
+compatible. `StatementExecutionContext<S>` permite ejecutar sentencias anidadas
+con el mismo motor y propagar estados nuevos sin mutar los anteriores.
+
+`printscript-runtime` contiene el environment inmutable, los bindings, los
+valores oficiales y los puertos compartidos de evaluación y salida. Sus
+contratos permiten crear executors compatibles con PrintScript sin depender de
+la implementación completa de V1. Los executors, el evaluador concreto y los
+errores semánticos del lenguaje permanecen en `printscript-v1`. La salida se
+abstrae mediante `ProgramOutput`, por lo que tampoco depende de la consola ni de
 archivos.
 
 ### CLI

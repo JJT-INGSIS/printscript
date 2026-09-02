@@ -1,8 +1,8 @@
 package printscript.e2e
 
+import printscript.runtime.ProgramOutput
 import printscript.source.SourceReaderFactory
 import printscript.v1.interpreter.PrintScriptV1InterpreterFactory
-import printscript.v1.interpreter.PrintScriptV1ProgramOutput
 import printscript.v1.lexer.PrintScriptV1LexerFactory
 import printscript.v1.parser.PrintScriptV1ParserFactory
 
@@ -35,7 +35,7 @@ internal fun runV1Script(sourceCode: String): ProgramExecution {
     )
 }
 
-private class RecordingProgramOutput : PrintScriptV1ProgramOutput {
+private class RecordingProgramOutput : ProgramOutput {
 
     private val emittedLines =
         mutableListOf<String>()

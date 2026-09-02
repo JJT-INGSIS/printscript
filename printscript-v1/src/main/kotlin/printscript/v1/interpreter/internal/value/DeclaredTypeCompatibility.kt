@@ -3,11 +3,11 @@ package printscript.v1.interpreter.internal.value
 import printscript.ast.DeclaredType
 import printscript.interpreter.ExecutionResult
 import printscript.model.source.SourceSpan
-import printscript.v1.interpreter.PrintScriptV1RuntimeValue
+import printscript.runtime.RuntimeValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 
 internal fun DeclaredType.verifyAccepts(
-    value: PrintScriptV1RuntimeValue,
+    value: RuntimeValue,
     variableName: String,
     span: SourceSpan,
 ): ExecutionResult<Unit> = if (value.type == this) {

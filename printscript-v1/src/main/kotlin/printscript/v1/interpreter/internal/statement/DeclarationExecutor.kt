@@ -6,18 +6,18 @@ import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
+import printscript.runtime.Environment
+import printscript.runtime.ExpressionEvaluator
+import printscript.runtime.RuntimeValue
+import printscript.runtime.VariableBinding
 import printscript.statement.Statement
-import printscript.v1.interpreter.PrintScriptV1Environment
-import printscript.v1.interpreter.PrintScriptV1ExpressionEvaluator
-import printscript.v1.interpreter.PrintScriptV1RuntimeValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.PrintScriptV1VariableBinding
 import printscript.v1.interpreter.internal.orReturn
 import printscript.v1.interpreter.internal.value.verifyAccepts
 
 internal class DeclarationExecutor(
-    private val expressionEvaluator: PrintScriptV1ExpressionEvaluator,
-) : StatementExecutor<PrintScriptV1Environment> {
+    private val expressionEvaluator: ExpressionEvaluator,
+) : StatementExecutor<Environment> {
 
     override fun supportsStatement(statement: Statement): Boolean {
         return statement is VariableDeclarationStatement
@@ -25,27 +25,27 @@ internal class DeclarationExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        context: StatementExecutionContext<PrintScriptV1Environment>,
-    ): ExecutionResult<PrintScriptV1Environment> {
+        context: StatementExecutionContext<Environment>,
+    ): ExecutionResult<Environment> {
         if (statement !is VariableDeclarationStatement) {
             return ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(span = statement.span),
             )
         }
 
-        val state: PrintScriptV1Environment = context.state
+        val state: Environment = context.state
 
         ensureNotAlreadyDeclared(statement, state)
             .orReturn { return it }
 
-        val initialValue: PrintScriptV1RuntimeValue? =
+        val initialValue: RuntimeValue? =
             evaluateInitializer(statement, state)
                 .orReturn { return it }
 
         return ExecutionResult.Success(
             state.withBinding(
                 name = statement.identifier.value,
-                binding = PrintScriptV1VariableBinding(
+                binding = VariableBinding(
                     type = statement.declaredType,
                     value = initialValue,
                 ),
@@ -55,7 +55,7 @@ internal class DeclarationExecutor(
 
     private fun ensureNotAlreadyDeclared(
         statement: VariableDeclarationStatement,
-        state: PrintScriptV1Environment,
+        state: Environment,
     ): ExecutionResult<Unit> {
         val name: String = statement.identifier.value
 
@@ -73,12 +73,12 @@ internal class DeclarationExecutor(
 
     private fun evaluateInitializer(
         statement: VariableDeclarationStatement,
-        state: PrintScriptV1Environment,
-    ): ExecutionResult<PrintScriptV1RuntimeValue?> {
+        state: Environment,
+    ): ExecutionResult<RuntimeValue?> {
         val initializer: Expression = statement.initializer
             ?: return ExecutionResult.Success(null)
 
-        val value: PrintScriptV1RuntimeValue =
+        val value: RuntimeValue =
             expressionEvaluator.evaluateExpression(initializer, state)
                 .orReturn { return it }
 

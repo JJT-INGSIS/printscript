@@ -5,17 +5,17 @@ import printscript.interpreter.ExecutionResult
 import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
+import printscript.runtime.Environment
+import printscript.runtime.ExpressionEvaluator
+import printscript.runtime.ProgramOutput
+import printscript.runtime.RuntimeValue
 import printscript.statement.Statement
-import printscript.v1.interpreter.PrintScriptV1Environment
-import printscript.v1.interpreter.PrintScriptV1ExpressionEvaluator
-import printscript.v1.interpreter.PrintScriptV1ProgramOutput
-import printscript.v1.interpreter.PrintScriptV1RuntimeValue
 import printscript.v1.interpreter.internal.orReturn
 
 internal class PrintlnExecutor(
-    private val expressionEvaluator: PrintScriptV1ExpressionEvaluator,
-    private val output: PrintScriptV1ProgramOutput,
-) : StatementExecutor<PrintScriptV1Environment> {
+    private val expressionEvaluator: ExpressionEvaluator,
+    private val output: ProgramOutput,
+) : StatementExecutor<Environment> {
 
     override fun supportsStatement(statement: Statement): Boolean {
         return statement is PrintlnStatement
@@ -23,16 +23,16 @@ internal class PrintlnExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        context: StatementExecutionContext<PrintScriptV1Environment>,
-    ): ExecutionResult<PrintScriptV1Environment> {
+        context: StatementExecutionContext<Environment>,
+    ): ExecutionResult<Environment> {
         if (statement !is PrintlnStatement) {
             return ExecutionResult.Failure(
                 SemanticError.UnsupportedStatement(span = statement.span),
             )
         }
 
-        val state: PrintScriptV1Environment = context.state
-        val value: PrintScriptV1RuntimeValue =
+        val state: Environment = context.state
+        val value: RuntimeValue =
             expressionEvaluator.evaluateExpression(statement.argument, state)
                 .orReturn { return it }
 

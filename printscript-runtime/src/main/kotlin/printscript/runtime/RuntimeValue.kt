@@ -1,17 +1,17 @@
-package printscript.v1.interpreter
+package printscript.runtime
 
 import printscript.ast.DeclaredType
 import java.math.BigDecimal
 
-public sealed interface PrintScriptV1RuntimeValue {
+public sealed interface RuntimeValue {
     public val type: DeclaredType
 
     public fun asText(): String
 }
 
-public data class PrintScriptV1NumberValue(
+public data class NumberValue(
     public val value: BigDecimal,
-) : PrintScriptV1RuntimeValue {
+) : RuntimeValue {
 
     override val type: DeclaredType = DeclaredType.NUMBER
 
@@ -20,9 +20,9 @@ public data class PrintScriptV1NumberValue(
     }
 }
 
-public data class PrintScriptV1StringValue(
+public data class StringValue(
     public val value: String,
-) : PrintScriptV1RuntimeValue {
+) : RuntimeValue {
 
     override val type: DeclaredType = DeclaredType.STRING
 

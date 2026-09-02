@@ -22,6 +22,11 @@ import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.runtime.Environment
+import printscript.runtime.ExpressionEvaluator
+import printscript.runtime.ProgramOutput
+import printscript.runtime.RuntimeValue
+import printscript.runtime.StringValue
 import printscript.statement.ParseError
 import printscript.statement.Statement
 import printscript.token.Token
@@ -471,7 +476,7 @@ class PrintScriptV1InterpreterFactoryTest {
     @Test
     fun `additional executors have priority and are copied defensively`() {
         val output = InMemoryOutput()
-        val additionalExecutors = mutableListOf<StatementExecutor<PrintScriptV1Environment>>(
+        val additionalExecutors = mutableListOf<StatementExecutor<Environment>>(
             OverridingPrintlnExecutor(output),
         )
         val interpreter = PrintScriptV1InterpreterFactory.create(
@@ -521,8 +526,8 @@ class PrintScriptV1InterpreterFactoryTest {
 }
 
 private class OverridingPrintlnExecutor(
-    private val output: PrintScriptV1ProgramOutput,
-) : StatementExecutor<PrintScriptV1Environment> {
+    private val output: ProgramOutput,
+) : StatementExecutor<Environment> {
 
     override fun supportsStatement(statement: Statement): Boolean {
         return statement is PrintlnStatement
@@ -530,8 +535,8 @@ private class OverridingPrintlnExecutor(
 
     override fun executeStatement(
         statement: Statement,
-        context: StatementExecutionContext<PrintScriptV1Environment>,
-    ): ExecutionResult<PrintScriptV1Environment> {
+        context: StatementExecutionContext<Environment>,
+    ): ExecutionResult<Environment> {
         assertIs<PrintlnStatement>(statement)
         output.writeLine("overridden")
 
@@ -539,12 +544,9 @@ private class OverridingPrintlnExecutor(
     }
 }
 
-private data object ConstantExpressionEvaluator : PrintScriptV1ExpressionEvaluator {
+private data object ConstantExpressionEvaluator : ExpressionEvaluator {
 
-    override fun evaluateExpression(
-        expression: Expression,
-        environment: PrintScriptV1Environment,
-    ): ExecutionResult<PrintScriptV1RuntimeValue> {
-        return ExecutionResult.Success(PrintScriptV1StringValue("configured"))
+    override fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
+        return ExecutionResult.Success(StringValue("configured"))
     }
 }

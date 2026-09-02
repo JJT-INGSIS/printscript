@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":lexer"))
     implementation(project(":statement-source"))
     implementation(project(":printscript-ast"))
+    implementation(project(":printscript-runtime"))
     implementation(project(":interpreter"))
     implementation(project(":formatter"))
     implementation(project(":linter"))
