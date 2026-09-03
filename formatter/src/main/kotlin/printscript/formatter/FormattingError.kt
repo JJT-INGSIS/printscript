@@ -1,20 +1,16 @@
 package printscript.formatter
 
 import printscript.model.source.SourceSpan
-import printscript.statement.ParseError
+import printscript.token.TokenReadError
 
 public interface FormattingError {
 
     public val span: SourceSpan
 
-    public data class ParseFailure(
-        public val parseError: ParseError,
+    public data class TokenReadFailure(
+        public val tokenReadError: TokenReadError,
     ) : FormattingError {
 
-        override val span: SourceSpan = parseError.span
+        override val span: SourceSpan = tokenReadError.span
     }
-
-    public data class UnsupportedStatement(
-        override val span: SourceSpan,
-    ) : FormattingError
 }

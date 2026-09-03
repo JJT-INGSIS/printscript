@@ -1,283 +1,308 @@
 package printscript.v1.formatter
 
-import printscript.ast.DeclaredType
-import printscript.ast.expression.BinaryExpression
-import printscript.ast.expression.BinaryOperator
-import printscript.ast.expression.Expression
-import printscript.ast.expression.GroupingExpression
-import printscript.ast.expression.IdentifierExpression
-import printscript.ast.expression.StringLiteralExpression
-import printscript.ast.expression.StringQuoteStyle
-import printscript.ast.expression.UnaryExpression
-import printscript.ast.expression.UnaryOperator
-import printscript.ast.statement.AssignmentStatement
-import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.VariableDeclarationStatement
-import printscript.formatter.FormattedStatementReadResult
-import printscript.formatter.Formatter
-import printscript.formatter.StatementFormatter
-import printscript.formatter.StatementFormattingContext
-import printscript.formatter.StatementFormattingResult
-import printscript.formatter.StatementSeparationPolicy
-import printscript.statement.Statement
+import printscript.formatter.TokenGap
+import printscript.formatter.TokenGapFormattingRule
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 
 class PrintScriptV1FormatterFactoryTest {
 
     @Test
-    fun `formats every V1 statement using default configuration`() {
-        val declaration = VariableDeclarationStatement(
-            identifier = identifier("total"),
-            declaredType = DeclaredType.NUMBER,
-            initializer = BinaryExpression(
-                left = numberLiteral("1"),
-                operator = BinaryOperator.ADD,
-                operatorSpan = testSpan,
-                right = numberLiteral("2"),
-            ),
-            span = testSpan,
-        )
-        val assignment = AssignmentStatement(
-            target = identifier("total"),
-            expression = numberLiteral("3"),
-            span = testSpan,
-        )
-        val output = PrintlnStatement(
-            argument = StringLiteralExpression(
-                value = "done",
-                quoteStyle = StringQuoteStyle.SINGLE,
-                span = testSpan,
-            ),
-            span = testSpan,
-        )
+    fun `preserves the complete source when no rule is configured`() {
+        val source = "let value :number= 1;\r\nprintln (value);"
 
-        val formattedText = formatAll(
-            formatter = PrintScriptV1FormatterFactory.create(),
-            statements = listOf(declaration, assignment, output),
-        )
-
-        assertEquals(
-            expected = "let total: number = 1 + 2;\ntotal = 3;\nprintln('done');",
-            actual = formattedText,
-        )
+        assertEquals(expected = source, actual = formatSource(source))
     }
 
     @Test
-    fun `applies V1 spacing and separation configuration`() {
-        val configuration = PrintScriptV1FormatterConfiguration(
-            insertSpaceBeforeColon = true,
-            insertSpaceAfterColon = false,
-            insertSpaceAroundEqualsOperator = false,
-            insertSpaceAroundBinaryOperators = false,
-            lineBreakCountBetweenStatements = 2u,
-        )
-        val declaration = VariableDeclarationStatement(
-            identifier = identifier("value"),
-            declaredType = DeclaredType.NUMBER,
-            initializer = binaryExpression(
-                left = numberLiteral("1"),
-                operator = BinaryOperator.ADD,
-                right = numberLiteral("2"),
-            ),
-            span = testSpan,
-        )
-        val output = PrintlnStatement(
-            argument = numberLiteral("1"),
-            span = testSpan,
-        )
+    fun `removes spacing around equals without changing other gaps`() {
+        val source =
+            """
+            let something: string= "a really cool thing";
+            let another_thing: string ="another really cool thing";
+            let twice_thing: string = "another really cool thing twice";
+            let third_thing: string="another really cool thing three times";
+            """.trimIndent()
 
-        val formattedText = formatAll(
-            formatter = PrintScriptV1FormatterFactory.create(
-                configuration = configuration,
-            ),
-            statements = listOf(declaration, output),
-        )
-
-        assertEquals(
-            expected = "let value :number=1+2;\n\nprintln(1);",
-            actual = formattedText,
-        )
-    }
-
-    @Test
-    fun `formats every V1 expression variant`() {
-        val expression = GroupingExpression(
-            expression = binaryExpression(
-                left = unaryExpression(
-                    operator = UnaryOperator.PLUS,
-                    operand = IdentifierExpression(identifier("value")),
-                ),
-                operator = BinaryOperator.SUBTRACT,
-                right = binaryExpression(
-                    left = numberLiteral("3"),
-                    operator = BinaryOperator.MULTIPLY,
-                    right = binaryExpression(
-                        left = numberLiteral("4"),
-                        operator = BinaryOperator.DIVIDE,
-                        right = unaryExpression(
-                            operator = UnaryOperator.MINUS,
-                            operand = numberLiteral("5"),
-                        ),
-                    ),
-                ),
-            ),
-            span = testSpan,
-        )
-        val doubleQuotedText = StringLiteralExpression(
-            value = "done",
-            quoteStyle = StringQuoteStyle.DOUBLE,
-            span = testSpan,
-        )
-
-        val formattedText = formatAll(
-            formatter = PrintScriptV1FormatterFactory.create(),
-            statements = listOf(
-                PrintlnStatement(
-                    argument = expression,
-                    span = testSpan,
-                ),
-                PrintlnStatement(
-                    argument = doubleQuotedText,
-                    span = testSpan,
-                ),
+        val formatted = formatSource(
+            sourceCode = source,
+            configuration = PrintScriptV1FormatterConfiguration(
+                equalsSpacing = EqualsSpacing.WITHOUT_SPACES,
             ),
         )
 
         assertEquals(
-            expected = "println((+value - 3 * 4 / -5));\nprintln(\"done\");",
-            actual = formattedText,
+            expected =
+            """
+                let something: string="a really cool thing";
+                let another_thing: string="another really cool thing";
+                let twice_thing: string="another really cool thing twice";
+                let third_thing: string="another really cool thing three times";
+            """.trimIndent(),
+            actual = formatted,
         )
     }
 
     @Test
-    fun `formats declarations without initializer`() {
-        val declaration = VariableDeclarationStatement(
-            identifier = identifier("name"),
-            declaredType = DeclaredType.STRING,
-            initializer = null,
-            span = testSpan,
+    fun `inserts spacing around equals without changing other gaps`() {
+        val source =
+            """
+            let something: string= "a really cool thing";
+            let another_thing: string ="another really cool thing";
+            let twice_thing: string="another really cool thing twice";
+            let third_thing: string = "another really cool thing three times";
+            """.trimIndent()
+
+        val formatted = formatSource(
+            sourceCode = source,
+            configuration = PrintScriptV1FormatterConfiguration(
+                equalsSpacing = EqualsSpacing.SURROUNDED_BY_SPACES,
+            ),
         )
 
-        val formattedText = formatAll(
-            formatter = PrintScriptV1FormatterFactory.create(),
-            statements = listOf(declaration),
+        assertEquals(
+            expected =
+            """
+                let something: string = "a really cool thing";
+                let another_thing: string = "another really cool thing";
+                let twice_thing: string = "another really cool thing twice";
+                let third_thing: string = "another really cool thing three times";
+            """.trimIndent(),
+            actual = formatted,
         )
-
-        assertEquals(expected = "let name: string;", actual = formattedText)
     }
 
     @Test
-    fun `additional formatters have priority and are copied defensively`() {
-        val additionalFormatters = mutableListOf<StatementFormatter>(
-            OverridingVariableDeclarationFormatter,
+    fun `inserts spacing after declaration colon without changing other gaps`() {
+        val source =
+            """
+            let something:string = "a really cool thing";
+            let another_thing: string = "another really cool thing";
+            let twice_thing : string = "another really cool thing twice";
+            let third_thing :string="another really cool thing three times";
+            """.trimIndent()
+
+        val formatted = formatSource(
+            sourceCode = source,
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceSpaceAfterColonInDeclaration = true,
+            ),
+        )
+
+        assertEquals(
+            expected =
+            """
+                let something: string = "a really cool thing";
+                let another_thing: string = "another really cool thing";
+                let twice_thing : string = "another really cool thing twice";
+                let third_thing : string="another really cool thing three times";
+            """.trimIndent(),
+            actual = formatted,
+        )
+    }
+
+    @Test
+    fun `inserts spacing before declaration colon without changing other gaps`() {
+        val source =
+            """
+            let something:string = "a really cool thing";
+            let another_thing :string = "another really cool thing";
+            let twice_thing : string = "another really cool thing twice";
+            let third_thing: string="another really cool thing three times";
+            """.trimIndent()
+
+        val formatted = formatSource(
+            sourceCode = source,
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceSpaceBeforeColonInDeclaration = true,
+            ),
+        )
+
+        assertEquals(
+            expected =
+            """
+                let something :string = "a really cool thing";
+                let another_thing :string = "another really cool thing";
+                let twice_thing : string = "another really cool thing twice";
+                let third_thing : string="another really cool thing three times";
+            """.trimIndent(),
+            actual = formatted,
+        )
+    }
+
+    @Test
+    fun `enforces single spacing inside statements`() {
+        val formatted = formatSource(
+            sourceCode =
+            """
+                let something:      string="a really cool thing";
+                println(something);
+            """.trimIndent(),
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceSingleSpaceSeparation = true,
+            ),
+        )
+
+        assertEquals(
+            expected =
+            """
+                let something : string = "a really cool thing";
+                println ( something );
+            """.trimIndent(),
+            actual = formatted,
+        )
+    }
+
+    @Test
+    fun `enforces spacing around binary operators`() {
+        val formatted = formatSource(
+            sourceCode = "let result: number = 5+4*3/2;",
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceSpaceAroundBinaryOperators = true,
+            ),
+        )
+
+        assertEquals(
+            expected = "let result: number = 5 + 4 * 3 / 2;",
+            actual = formatted,
+        )
+    }
+
+    @Test
+    fun `does not treat unary operators as binary operators`() {
+        val formatted = formatSource(
+            sourceCode = "let result:number=-5+ +4;",
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceSpaceAroundBinaryOperators = true,
+            ),
+        )
+
+        assertEquals(expected = "let result:number=-5 + +4;", actual = formatted)
+    }
+
+    @Test
+    fun `enforces one line break between statements`() {
+        val formatted = formatSource(
+            sourceCode =
+            "let first:number = 1;let second : number=2;\n" +
+                "let third:number = 3;",
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceLineBreakAfterStatement = true,
+            ),
+        )
+
+        assertEquals(
+            expected =
+            """
+                let first:number = 1;
+                let second : number=2;
+                let third:number = 3;
+            """.trimIndent(),
+            actual = formatted,
+        )
+    }
+
+    @Test
+    fun `uses configured blank lines only after println`() {
+        val source =
+            """
+            let something:string = "a really cool thing";
+            println(something);
+            println("in the way she moves");
+            """.trimIndent()
+
+        assertEquals(
+            expected = source,
+            actual = formatSource(
+                sourceCode = source,
+                configuration = PrintScriptV1FormatterConfiguration(
+                    lineBreaksAfterPrintln = 0u,
+                ),
+            ),
+        )
+        assertEquals(
+            expected = source.replace(
+                "println(something);\n",
+                "println(something);\n\n",
+            ),
+            actual = formatSource(
+                sourceCode = source,
+                configuration = PrintScriptV1FormatterConfiguration(
+                    lineBreaksAfterPrintln = 1u,
+                ),
+            ),
+        )
+        assertEquals(
+            expected = source.replace(
+                "println(something);\n",
+                "println(something);\n\n\n",
+            ),
+            actual = formatSource(
+                sourceCode = source,
+                configuration = PrintScriptV1FormatterConfiguration(
+                    lineBreaksAfterPrintln = 2u,
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `does not append line breaks after the final println`() {
+        val formatted = formatSource(
+            sourceCode = "println(1);",
+            configuration = PrintScriptV1FormatterConfiguration(
+                lineBreaksAfterPrintln = 2u,
+            ),
+        )
+
+        assertEquals(expected = "println(1);", actual = formatted)
+    }
+
+    @Test
+    fun `println line breaks take priority over the general statement rule`() {
+        val formatted = formatSource(
+            sourceCode = "println(1);let value:number=2;",
+            configuration = PrintScriptV1FormatterConfiguration(
+                enforceLineBreakAfterStatement = true,
+                lineBreaksAfterPrintln = 2u,
+            ),
+        )
+
+        assertEquals(
+            expected = "println(1);\n\n\nlet value:number=2;",
+            actual = formatted,
+        )
+    }
+
+    @Test
+    fun `additional rules have priority and are copied defensively`() {
+        val additionalRules = mutableListOf<TokenGapFormattingRule>(
+            ReplacingEqualsGapRule,
         )
         val formatter = PrintScriptV1FormatterFactory.create(
-            additionalStatementFormatters = additionalFormatters,
+            configuration = PrintScriptV1FormatterConfiguration(
+                equalsSpacing = EqualsSpacing.SURROUNDED_BY_SPACES,
+            ),
+            additionalFormattingRules = additionalRules,
         )
+        additionalRules.clear()
 
-        additionalFormatters.clear()
-
-        val formattedText = formatAll(
+        val formatted = formatSourceWith(
             formatter = formatter,
-            statements = listOf(
-                VariableDeclarationStatement(
-                    identifier = identifier("value"),
-                    declaredType = DeclaredType.STRING,
-                    initializer = null,
-                    span = testSpan,
-                ),
-            ),
+            sourceCode = "let value:number=1;",
         )
 
-        assertEquals(expected = "overridden", actual = formattedText)
-    }
-
-    @Test
-    fun `allows replacing V1 statement separation policy`() {
-        val formattedText = formatAll(
-            formatter = PrintScriptV1FormatterFactory.create(
-                statementSeparationPolicy = PipeSeparationPolicy,
-            ),
-            statements = listOf(
-                PrintlnStatement(
-                    argument = numberLiteral("1"),
-                    span = testSpan,
-                ),
-                PrintlnStatement(
-                    argument = numberLiteral("2"),
-                    span = testSpan,
-                ),
-            ),
-        )
-
-        assertEquals(expected = "println(1);|println(2);", actual = formattedText)
-    }
-
-    private fun formatAll(formatter: Formatter, statements: List<Statement>): String {
-        var source = formatter.format(
-            ListStatementSource(
-                statements = statements,
-            ),
-        )
-        val formattedText = StringBuilder()
-
-        while (true) {
-            when (val result = source.nextFormattedStatement()) {
-                is FormattedStatementReadResult.Success -> {
-                    formattedText.append(result.formattedText)
-                    source = result.remainingSource
-                }
-
-                is FormattedStatementReadResult.Failure ->
-                    error("Unexpected formatting failure: ${result.error}")
-
-                FormattedStatementReadResult.EndOfInput ->
-                    return formattedText.toString()
-            }
-        }
-    }
-
-    private fun binaryExpression(left: Expression, operator: BinaryOperator, right: Expression): BinaryExpression {
-        return BinaryExpression(
-            left = left,
-            operator = operator,
-            operatorSpan = testSpan,
-            right = right,
-        )
-    }
-
-    private fun unaryExpression(operator: UnaryOperator, operand: Expression): UnaryExpression {
-        return UnaryExpression(
-            operator = operator,
-            operatorSpan = testSpan,
-            operand = operand,
-        )
+        assertEquals(expected = "let value:number~=~1;", actual = formatted)
     }
 }
 
-private data object OverridingVariableDeclarationFormatter : StatementFormatter {
+private data object ReplacingEqualsGapRule : TokenGapFormattingRule {
 
-    override fun supportsStatement(statement: Statement): Boolean {
-        return statement is VariableDeclarationStatement
+    override fun supports(gap: TokenGap): Boolean {
+        return gap.previousToken?.lexeme == "=" || gap.nextToken?.lexeme == "="
     }
 
-    override fun formatStatement(
-        statement: Statement,
-        context: StatementFormattingContext,
-    ): StatementFormattingResult {
-        assertIs<VariableDeclarationStatement>(statement)
-
-        return StatementFormattingResult.Success(
-            formattedText = "overridden",
-        )
-    }
-}
-
-private data object PipeSeparationPolicy : StatementSeparationPolicy {
-
-    override fun separatorBeforeStatement(statement: Statement, hasPreviousStatement: Boolean): String {
-        return if (hasPreviousStatement) "|" else ""
+    override fun formatWhitespace(gap: TokenGap): String {
+        return "~"
     }
 }

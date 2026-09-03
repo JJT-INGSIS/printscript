@@ -1,15 +1,15 @@
 package printscript.formatter
 
-public sealed interface FormattedStatementReadResult {
+public sealed interface FormattedChunkReadResult {
 
     public data class Success(
         public val formattedText: String,
         public val remainingSource: FormattedSource,
-    ) : FormattedStatementReadResult
+    ) : FormattedChunkReadResult
 
     public data class Failure(
         public val error: FormattingError,
-    ) : FormattedStatementReadResult
+    ) : FormattedChunkReadResult
 
-    public data object EndOfInput : FormattedStatementReadResult
+    public data object EndOfInput : FormattedChunkReadResult
 }

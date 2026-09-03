@@ -97,6 +97,27 @@ class PrintScriptCliTest {
 
     // --- formatting ----------------------------------------------------
 
+    @Test
+    fun `formatting preserves source gaps when no rules are configured`() {
+        val source = "let value :number= 1;"
+        val file = scriptFile(source)
+
+        val result = printScriptCli().test(listOf("formatting", file))
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertEquals(expected = source, actual = result.stdout)
+    }
+
+    @Test
+    fun `formatting reports lexical errors from its lossless token stream`() {
+        val file = scriptFile("let value: number = @;")
+
+        val result = printScriptCli().test(listOf("formatting", file))
+
+        assertEquals(expected = 1, actual = result.statusCode)
+        assertContains(result.stderr, "el carácter '@' no pertenece al lenguaje")
+    }
+
     // --- analysis ------------------------------------------------------
 
     @Test

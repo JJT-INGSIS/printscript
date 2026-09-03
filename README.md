@@ -121,6 +121,7 @@ pública:
 
 ```kotlin
 PrintScriptV1LexerFactory.create()
+PrintScriptV1FormattingLexerFactory.create()
 PrintScriptV1ParserFactory.create()
 PrintScriptV1FormatterFactory.create()
 PrintScriptV1InterpreterFactory.create(output)
@@ -162,16 +163,15 @@ resultado terminal y el consumidor debe detener la lectura.
 
 ### Formatter
 
-El formatter core consume `StatementSource` de forma lazy y coordina estrategias
-públicas de formateo. El primer `StatementFormatter` compatible tiene prioridad,
-por lo que un consumidor puede extender o reemplazar reglas sin modificar el
-motor. `StatementSeparationPolicy` decide solamente qué texto insertar antes de
-cada sentencia.
+El formatter core consume un `TokenSource` lossless de forma lazy. Cada
+`TokenGap` conserva el whitespace original entre dos tokens, y la primera
+`TokenGapFormattingRule` compatible puede reemplazarlo. Cuando ninguna regla
+aplica, el texto original se preserva.
 
-La configuración de espacios, los formatters de declaraciones, asignaciones,
-`println` y expresiones, y la política concreta de separación pertenecen a
-`printscript-v1`. La jerarquía `Expression` de `printscript-ast` permanece
-sellada y no forma parte de los contratos extensibles del formatter core.
+El lexer normal de V1 continúa descartando whitespace antes del parser.
+`PrintScriptV1FormattingLexerFactory` crea la variante que lo conserva para el
+formatter. Las reglas concretas de espacios y saltos de línea pertenecen a
+`printscript-v1`; el parser y el AST no participan del formateo.
 
 ### Interpreter
 

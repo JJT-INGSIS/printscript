@@ -28,12 +28,11 @@ internal class ExecutionCommand(
 
         runOnSourceFile(
             sourceFilePath = sourceFilePath,
-            toolchain = toolchain,
             errorReporter = errorReporter,
-        ) { statements ->
+        ) { sourceReader ->
             interpretationOutcome(
                 interpreter = toolchain.interpreterWriting(terminalOutput()),
-                statements = statements,
+                statements = toolchain.statementsFrom(sourceReader),
                 errorReporter = errorReporter,
             )
         }

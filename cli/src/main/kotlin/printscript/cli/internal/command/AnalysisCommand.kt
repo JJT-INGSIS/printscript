@@ -32,11 +32,12 @@ internal class AnalysisCommand(
 
         runOnSourceFile(
             sourceFilePath = sourceFilePath,
-            toolchain = toolchain,
             errorReporter = errorReporter,
-        ) { statements ->
+        ) { sourceReader ->
             reportRemainingDiagnostics(
-                source = toolchain.linter().lint(statements),
+                source = toolchain.linter().lint(
+                    toolchain.statementsFrom(sourceReader),
+                ),
                 reportedCount = 0,
             )
         }

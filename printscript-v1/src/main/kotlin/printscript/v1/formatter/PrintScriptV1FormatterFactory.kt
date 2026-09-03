@@ -2,78 +2,64 @@ package printscript.v1.formatter
 
 import printscript.formatter.Formatter
 import printscript.formatter.FormatterFactory
-import printscript.formatter.StatementFormatter
-import printscript.formatter.StatementSeparationPolicy
-import printscript.v1.formatter.internal.expression.ExpressionFormatter
-import printscript.v1.formatter.internal.separation.PrintScriptV1StatementSeparationPolicy
-import printscript.v1.formatter.internal.statement.AssignmentFormatter
-import printscript.v1.formatter.internal.statement.PrintlnFormatter
-import printscript.v1.formatter.internal.statement.VariableDeclarationFormatter
-
-private const val SINGLE_LINE_BREAK_COUNT: UInt = 1u
+import printscript.formatter.TokenGapFormattingRule
+import printscript.v1.formatter.internal.rule.EqualsSpacingRule
+import printscript.v1.formatter.internal.rule.LineBreakAfterPrintlnRule
+import printscript.v1.formatter.internal.rule.LineBreakAfterStatementRule
+import printscript.v1.formatter.internal.rule.SingleSpaceSeparationRule
+import printscript.v1.formatter.internal.rule.SpaceAfterDeclarationColonRule
+import printscript.v1.formatter.internal.rule.SpaceAroundBinaryOperatorRule
+import printscript.v1.formatter.internal.rule.SpaceBeforeDeclarationColonRule
+import printscript.v1.lexer.PrintScriptV1FormattingTokenType
+import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV1FormatterFactory {
 
     @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1FormatterConfiguration {
-        return PrintScriptV1FormatterConfiguration(
-            insertSpaceBeforeColon = false,
-            insertSpaceAfterColon = true,
-            insertSpaceAroundEqualsOperator = true,
-            insertSpaceAroundBinaryOperators = true,
-            lineBreakCountBetweenStatements = SINGLE_LINE_BREAK_COUNT,
-        )
+        return PrintScriptV1FormatterConfiguration()
     }
 
     @JvmStatic
     @JvmOverloads
     public fun create(
         configuration: PrintScriptV1FormatterConfiguration = defaultConfiguration(),
-        additionalStatementFormatters: List<StatementFormatter> = emptyList(),
-        statementSeparationPolicy: StatementSeparationPolicy =
-            defaultStatementSeparationPolicy(configuration),
+        additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
     ): Formatter {
-        val expressionFormatter = ExpressionFormatter(
-            insertSpaceAroundBinaryOperators = configuration.insertSpaceAroundBinaryOperators,
-        )
-
         return FormatterFactory.create(
-            statementFormatters =
-            additionalStatementFormatters +
-                printScriptV1StatementFormatters(
-                    configuration = configuration,
-                    expressionFormatter = expressionFormatter,
-                ),
-            statementSeparationPolicy = statementSeparationPolicy,
+            formattingRules =
+            additionalFormattingRules +
+                printScriptV1FormattingRules(configuration),
+            whitespaceTokenType = PrintScriptV1FormattingTokenType.WHITESPACE,
+            endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
     }
 
-    private fun defaultStatementSeparationPolicy(
+    private fun printScriptV1FormattingRules(
         configuration: PrintScriptV1FormatterConfiguration,
-    ): StatementSeparationPolicy {
-        return PrintScriptV1StatementSeparationPolicy(
-            lineBreakCountBetweenStatements = configuration.lineBreakCountBetweenStatements,
-        )
-    }
-
-    private fun printScriptV1StatementFormatters(
-        configuration: PrintScriptV1FormatterConfiguration,
-        expressionFormatter: ExpressionFormatter,
-    ): List<StatementFormatter> {
-        return listOf(
-            VariableDeclarationFormatter(
-                expressionFormatter = expressionFormatter,
-                insertSpaceBeforeColon = configuration.insertSpaceBeforeColon,
-                insertSpaceAfterColon = configuration.insertSpaceAfterColon,
-                insertSpaceAroundEqualsOperator = configuration.insertSpaceAroundEqualsOperator,
-            ),
-            AssignmentFormatter(
-                expressionFormatter = expressionFormatter,
-                insertSpaceAroundEqualsOperator = configuration.insertSpaceAroundEqualsOperator,
-            ),
-            PrintlnFormatter(
-                expressionFormatter = expressionFormatter,
-            ),
+    ): List<TokenGapFormattingRule> {
+        return listOfNotNull(
+            configuration.lineBreaksAfterPrintln?.let { blankLineCount ->
+                LineBreakAfterPrintlnRule(blankLineCount)
+            },
+            LineBreakAfterStatementRule.takeIf {
+                configuration.enforceLineBreakAfterStatement
+            },
+            configuration.equalsSpacing?.let(::EqualsSpacingRule),
+            SpaceBeforeDeclarationColonRule.takeIf {
+                configuration.enforceSpaceBeforeColonInDeclaration
+            },
+            SpaceAfterDeclarationColonRule.takeIf {
+                configuration.enforceSpaceAfterColonInDeclaration
+            },
+            if (configuration.enforceSpaceAroundBinaryOperators) {
+                SpaceAroundBinaryOperatorRule()
+            } else {
+                null
+            },
+            SingleSpaceSeparationRule.takeIf {
+                configuration.enforceSingleSpaceSeparation
+            },
         )
     }
 }

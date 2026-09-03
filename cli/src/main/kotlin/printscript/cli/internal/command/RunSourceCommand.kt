@@ -5,9 +5,9 @@ import com.github.ajalt.clikt.core.ProgramResult
 import printscript.cli.internal.ExitCode
 import printscript.cli.internal.OperationOutcome
 import printscript.cli.internal.report.ErrorReporter
-import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.interpreter.InterpretationResult
 import printscript.interpreter.Interpreter
+import printscript.source.SourceReader
 import printscript.source.SourceReaderCreationResult
 import printscript.source.SourceReaderFactory
 import printscript.statement.StatementSource
@@ -15,16 +15,15 @@ import java.nio.file.Path
 
 internal fun CliktCommand.runOnSourceFile(
     sourceFilePath: Path,
-    toolchain: PrintScriptToolchain,
     errorReporter: ErrorReporter,
-    outcomeFrom: (StatementSource) -> OperationOutcome,
+    outcomeFrom: (SourceReader) -> OperationOutcome,
 ) {
     val outcome = when (val creation = SourceReaderFactory.fromPath(sourceFilePath)) {
         is SourceReaderCreationResult.Failure ->
             OperationOutcome.Failure(errorReporter.describe(creation.error))
 
         is SourceReaderCreationResult.Success ->
-            outcomeFrom(toolchain.statementsFrom(creation.reader))
+            outcomeFrom(creation.reader)
     }
 
     reportOutcome(outcome)

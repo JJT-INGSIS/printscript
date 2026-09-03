@@ -28,12 +28,11 @@ internal class ValidationCommand(
 
         runOnSourceFile(
             sourceFilePath = sourceFilePath,
-            toolchain = toolchain,
             errorReporter = errorReporter,
-        ) { statements ->
+        ) { sourceReader ->
             interpretationOutcome(
                 interpreter = toolchain.interpreterWriting(discardedOutput()),
-                statements = statements,
+                statements = toolchain.statementsFrom(sourceReader),
                 errorReporter = errorReporter,
                 onSuccess = { echo("El archivo es válido.") },
             )
