@@ -15,6 +15,7 @@ import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV1LexerFactory {
 
+    @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1LexerConfiguration {
         return PrintScriptV1LexerConfiguration(
             keywordTokenTypesByLexeme = printScriptV1KeywordTokenTypesByLexeme,
@@ -28,6 +29,8 @@ public object PrintScriptV1LexerFactory {
      * Creates the V1 lexer. Additional scanners are evaluated before the
      * scanners included by V1, allowing callers to extend or override them.
      */
+    @JvmStatic
+    @JvmOverloads
     public fun create(
         configuration: PrintScriptV1LexerConfiguration = defaultConfiguration(),
         additionalScanners: List<TokenScanner> = emptyList(),
