@@ -14,6 +14,7 @@ private const val SINGLE_LINE_BREAK_COUNT: UInt = 1u
 
 public object PrintScriptV1FormatterFactory {
 
+    @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1FormatterConfiguration {
         return PrintScriptV1FormatterConfiguration(
             insertSpaceBeforeColon = false,
@@ -24,6 +25,8 @@ public object PrintScriptV1FormatterFactory {
         )
     }
 
+    @JvmStatic
+    @JvmOverloads
     public fun create(
         configuration: PrintScriptV1FormatterConfiguration = defaultConfiguration(),
         additionalStatementFormatters: List<StatementFormatter> = emptyList(),

@@ -5,6 +5,7 @@ import printscript.v1.interpreter.internal.expression.DefaultExpressionEvaluator
 
 public object PrintScriptV1ExpressionEvaluatorFactory {
 
+    @JvmStatic
     public fun create(): ExpressionEvaluator {
         return DefaultExpressionEvaluator()
     }

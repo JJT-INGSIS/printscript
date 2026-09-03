@@ -13,6 +13,7 @@ private const val DEFAULT_STRING_CHUNK_SIZE_IN_CHARACTERS = 8_192
 
 public object SourceReaderFactory {
 
+    @JvmStatic
     public fun fromString(sourceCode: String): SourceReader {
         return StringSourceReader(
             sourceCode = sourceCode,
@@ -27,6 +28,8 @@ public object SourceReaderFactory {
      * This factory does not consume or close the stream. The caller retains
      * ownership and must close it after the complete pipeline has finished.
      */
+    @JvmStatic
+    @JvmOverloads
     public fun fromInputStream(
         inputStream: InputStream,
         bufferSizeInCharacters: Int = DEFAULT_INPUT_STREAM_BUFFER_SIZE_IN_CHARACTERS,
@@ -45,6 +48,8 @@ public object SourceReaderFactory {
         )
     }
 
+    @JvmStatic
+    @JvmOverloads
     public fun fromPath(
         path: Path,
         bufferSizeInBytes: Int = DEFAULT_FILE_BUFFER_SIZE_IN_BYTES,

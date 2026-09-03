@@ -19,6 +19,8 @@ public object PrintScriptV1InterpreterFactory {
      * statement behavior. Expression evaluation can be replaced independently
      * while keeping the closed V1 expression hierarchy.
      */
+    @JvmStatic
+    @JvmOverloads
     public fun create(
         output: ProgramOutput,
         additionalStatementExecutors: List<StatementExecutor<Environment>> = emptyList(),

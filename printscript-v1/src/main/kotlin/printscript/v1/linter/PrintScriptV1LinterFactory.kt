@@ -8,6 +8,7 @@ import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
 
 public object PrintScriptV1LinterFactory {
 
+    @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1LinterConfiguration {
         return PrintScriptV1LinterConfiguration(
             rules = listOf(
@@ -26,6 +27,8 @@ public object PrintScriptV1LinterFactory {
      * configuración: acá nadie pisa a nadie, porque toda regla mira toda
      * sentencia. El orden solo decide en qué orden salen los avisos.
      */
+    @JvmStatic
+    @JvmOverloads
     public fun create(
         configuration: PrintScriptV1LinterConfiguration = defaultConfiguration(),
         additionalRules: List<LintRule> = emptyList(),

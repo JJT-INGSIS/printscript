@@ -24,6 +24,7 @@ import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV1ParserFactory {
 
+    @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1ParserConfiguration {
         return PrintScriptV1ParserConfiguration(
             primaryExpressionParser = PrintScriptV1PrimaryExpressionParser(
@@ -42,6 +43,8 @@ public object PrintScriptV1ParserFactory {
      * Creates the V1 parser. Additional statement parsers are evaluated before
      * the parsers included by V1, allowing callers to extend or override them.
      */
+    @JvmStatic
+    @JvmOverloads
     public fun create(
         configuration: PrintScriptV1ParserConfiguration = defaultConfiguration(),
         additionalStatementParsers: List<StatementParser> = emptyList(),
