@@ -22,11 +22,6 @@ public object PrintScriptV1LinterFactory {
         )
     }
 
-    /**
-     * Crea el linter de V1. Las reglas adicionales se suman a las de la
-     * configuración: acá nadie pisa a nadie, porque toda regla mira toda
-     * sentencia. El orden solo decide en qué orden salen los avisos.
-     */
     @JvmStatic
     @JvmOverloads
     public fun create(

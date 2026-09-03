@@ -11,12 +11,6 @@ import printscript.v1.linter.PrintScriptV1ArgumentAcceptance
 import printscript.v1.linter.PrintScriptV1Diagnostic
 import printscript.v1.linter.PrintScriptV1ExpressionKind
 
-/**
- * Limita qué puede ir como argumento de `println`.
- *
- * La regla es el mecanismo y el mapa es la política: invertir qué se
- * acepta no toca esta clase.
- */
 public class PrintScriptV1PrintlnArgumentRule(
     acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance>,
 ) : StatelessLintRule() {
@@ -54,9 +48,6 @@ public class PrintScriptV1PrintlnArgumentRule(
         }
     }
 
-    /**
-     * Total: el constructor ya garantizó que el mapa cubre toda clase.
-     */
     private fun acceptanceOf(argument: Expression): PrintScriptV1ArgumentAcceptance {
         return acceptanceByKind.getValue(
             PrintScriptV1ExpressionKind.of(argument),

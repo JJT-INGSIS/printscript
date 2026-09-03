@@ -39,10 +39,6 @@ public object PrintScriptV1ParserFactory {
         )
     }
 
-    /**
-     * Creates the V1 parser. Additional statement parsers are evaluated before
-     * the parsers included by V1, allowing callers to extend or override them.
-     */
     @JvmStatic
     @JvmOverloads
     public fun create(

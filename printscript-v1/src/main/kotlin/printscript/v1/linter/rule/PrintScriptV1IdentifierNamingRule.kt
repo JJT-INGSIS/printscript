@@ -10,11 +10,6 @@ import printscript.statement.Statement
 import printscript.v1.linter.PrintScriptV1Diagnostic
 import printscript.v1.linter.PrintScriptV1NamingConvention
 
-/**
- * Exige que los nombres declarados sigan una convención.
- *
- * No recuerda nada entre sentencias: alcanza con mirar la declaración.
- */
 public class PrintScriptV1IdentifierNamingRule(
     private val convention: PrintScriptV1NamingConvention,
 ) : StatelessLintRule() {
@@ -25,10 +20,6 @@ public class PrintScriptV1IdentifierNamingRule(
             .map { identifier -> violationOf(identifier) }
     }
 
-    /**
-     * Solo el sitio de declaración: revisar cada uso repetiría el mismo
-     * diagnóstico sobre el mismo nombre.
-     */
     private fun declaredIdentifiersOf(statement: Statement): List<Identifier> {
         return when (statement) {
             is VariableDeclarationStatement -> listOf(statement.identifier)

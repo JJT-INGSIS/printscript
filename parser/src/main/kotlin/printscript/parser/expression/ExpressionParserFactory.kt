@@ -5,10 +5,6 @@ import printscript.token.TokenType
 
 public object ExpressionParserFactory {
 
-    /**
-     * Creates a recursive-descent parser. Binary precedence levels must be
-     * ordered from highest to lowest precedence.
-     */
     public fun <E> create(
         primaryExpressionParser: PrimaryExpressionParser<E>,
         unaryExpressionBuildersByTokenType: Map<TokenType, UnaryExpressionBuilder<E>> = emptyMap(),

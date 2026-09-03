@@ -20,8 +20,6 @@ class PrintScriptCliTest {
         return file.toString()
     }
 
-    // --- execution -----------------------------------------------------
-
     @Test
     fun `executes a valid program and prints its output`() {
         val file = scriptFile(
@@ -53,8 +51,6 @@ class PrintScriptCliTest {
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "división por cero")
     }
-
-    // --- validation ----------------------------------------------------
 
     @Test
     fun `validation accepts a well formed program`() {
@@ -95,8 +91,6 @@ class PrintScriptCliTest {
         assertContains(result.stderr, "línea 1")
     }
 
-    // --- formatting ----------------------------------------------------
-
     @Test
     fun `formatting preserves source gaps when no rules are configured`() {
         val source = "let value :number= 1;"
@@ -117,8 +111,6 @@ class PrintScriptCliTest {
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "el carácter '@' no pertenece al lenguaje")
     }
-
-    // --- analysis ------------------------------------------------------
 
     @Test
     fun `accepts a program that respects the conventions`() {
@@ -156,8 +148,6 @@ class PrintScriptCliTest {
         )
     }
 
-    // --- errores de uso, ahora los reporta Clikt ------------------------
-
     @Test
     fun `rejects an unknown operation`() {
         val result = printScriptCli().test("dancing archivo.ps")
@@ -194,8 +184,6 @@ class PrintScriptCliTest {
         assertContains(result.stderr, "UTF-8")
         assertContains(result.stderr, "línea 2")
     }
-
-    // --- ayuda ----------------------------------------------------------
 
     @Test
     fun `lists the four operations in the help page`() {

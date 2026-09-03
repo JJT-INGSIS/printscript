@@ -43,10 +43,6 @@ internal class DefaultExpressionEvaluator(
         return ExecutionResult.Success(StringValue(expression.value))
     }
 
-    /**
-     * Una variable puede fallar de dos maneras distintas, y el error
-     * tiene que decir cuál: no existe, o existe pero nunca recibió valor.
-     */
     private fun evaluateIdentifier(
         expression: IdentifierExpression,
         environment: Environment,

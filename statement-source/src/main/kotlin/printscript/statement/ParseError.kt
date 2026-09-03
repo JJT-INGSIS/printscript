@@ -5,10 +5,6 @@ import printscript.token.Token
 import printscript.token.TokenReadError
 import printscript.token.TokenType
 
-/**
- * Parsing error contract. Parser extensions may provide language-specific
- * implementations while the common result pipeline remains unchanged.
- */
 public interface ParseError {
 
     public val span: SourceSpan

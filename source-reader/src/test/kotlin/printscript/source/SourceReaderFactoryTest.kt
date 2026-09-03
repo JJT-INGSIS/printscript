@@ -19,10 +19,6 @@ class SourceReaderFactoryTest {
         return file
     }
 
-    /**
-     * Vacía el lector encadenando `remainingReader`, que es la única forma
-     * de recorrerlo: cada lectura devuelve el resto en vez de avanzar.
-     */
     private tailrec fun readAll(reader: SourceReader, accumulated: String = ""): String {
         return when (val result = reader.readChunk()) {
             SourceChunkReadResult.EndOfInput -> accumulated

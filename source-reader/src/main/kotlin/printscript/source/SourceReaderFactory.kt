@@ -22,12 +22,6 @@ public object SourceReaderFactory {
         )
     }
 
-    /**
-     * Creates a lazy, single-pass reader over [inputStream].
-     *
-     * This factory does not consume or close the stream. The caller retains
-     * ownership and must close it after the complete pipeline has finished.
-     */
     @JvmStatic
     @JvmOverloads
     public fun fromInputStream(

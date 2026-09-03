@@ -19,13 +19,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/**
- * Prueba el comando real con un toolchain falso.
- *
- * El punto de sustitución es la función `toolchainFor`, no una interfaz
- * inventada: lo que varía entre versiones —y entre producción y tests— es
- * qué toolchain se construye, no cómo se comporta.
- */
 class ExecutionCommandTest {
 
     private val anySpan = SourceSpan(
@@ -51,7 +44,6 @@ class ExecutionCommandTest {
         }
     }
 
-    /** Recuerda con qué versión se pidió el toolchain. */
     private class RecordingToolchainFactory(
         private val result: InterpretationResult = InterpretationResult.Success,
         private val printedLine: String? = null,
@@ -74,7 +66,6 @@ class ExecutionCommandTest {
                         printedLine = printedLine,
                     )
                 },
-                // ExecutionCommand no los usa; si alguna vez los pide, que se note.
                 formatter = { error("ExecutionCommand no debería pedir el formatter") },
                 linter = { error("ExecutionCommand no debería pedir el linter") },
             )
@@ -93,8 +84,6 @@ class ExecutionCommandTest {
 
         return file.toString()
     }
-
-    // --- la versión llega al toolchain ---------------------------------
 
     @Test
     fun `asks the toolchain for the requested version`() {
@@ -124,8 +113,6 @@ class ExecutionCommandTest {
         assertNull(factory.receivedVersion)
     }
 
-    // --- la salida del programa llega a la terminal ---------------------
-
     @Test
     fun `prints what the program writes`() {
         val factory = RecordingToolchainFactory(printedLine = "hola mundo")
@@ -135,8 +122,6 @@ class ExecutionCommandTest {
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "hola mundo")
     }
-
-    // --- cada resultado tiene su código de salida -----------------------
 
     @Test
     fun `exits with zero when interpretation succeeds`() {
@@ -159,8 +144,6 @@ class ExecutionCommandTest {
         assertContains(result.stderr, "error:")
     }
 
-    // --- los mensajes siguen siendo nuestros ----------------------------
-
     @Test
     fun `reports a missing file with our own wording`() {
         val result = commandWith(RecordingToolchainFactory()).test(listOf("/no/existe/archivo.ps"))
@@ -168,8 +151,6 @@ class ExecutionCommandTest {
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "no se encontró el archivo")
     }
-
-    // --- la ayuda -------------------------------------------------------
 
     @Test
     fun `generates a help page describing the argument and the version`() {

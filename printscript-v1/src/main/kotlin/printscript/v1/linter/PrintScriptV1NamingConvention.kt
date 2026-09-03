@@ -1,8 +1,5 @@
 package printscript.v1.linter
 
-/**
- * Una convención es su patrón: no hay tabla al lado que las asocie.
- */
 public enum class PrintScriptV1NamingConvention(
     private val pattern: Regex,
 ) {

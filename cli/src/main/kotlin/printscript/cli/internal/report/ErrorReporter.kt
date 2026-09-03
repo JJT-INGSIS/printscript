@@ -15,10 +15,6 @@ import printscript.v1.lexer.PrintScriptV1LexicalError
 
 internal class ErrorReporter {
 
-    /**
-     * Los problemas de creación del lector no tienen posición dentro del
-     * código porque ocurren antes de empezar a procesarlo.
-     */
     fun describe(error: SourceReaderCreationError): String {
         val description = when (error) {
             is SourceAccessError -> describeSourceAccess(error)

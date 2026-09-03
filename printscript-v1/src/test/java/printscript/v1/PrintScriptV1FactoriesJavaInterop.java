@@ -9,7 +9,6 @@ import printscript.v1.lexer.PrintScriptV1LexerFactory;
 import printscript.v1.linter.PrintScriptV1LinterFactory;
 import printscript.v1.parser.PrintScriptV1ParserFactory;
 
-/** Compilation fixture that protects the public V1 factories consumed from Java. */
 final class PrintScriptV1FactoriesJavaInterop {
 
     private PrintScriptV1FactoriesJavaInterop() {

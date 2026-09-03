@@ -4,9 +4,6 @@ import printscript.statement.ParseError
 
 public sealed interface ParsingResult<out T> {
 
-    /**
-     * The parsed value and the only context that should be used to continue.
-     */
     public data class Success<out T>(
         public val value: T,
         public val resultingContext: ParsingContext,

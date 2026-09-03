@@ -85,9 +85,6 @@ class DeclarationParserTest {
 
     @Test
     fun `statement span covers from the keyword to the semicolon`() {
-        // "let a : number = 5 ;"
-        //  ^                   ^
-        //  columna 1           columna 21
         val statement = statementOf<VariableDeclarationStatement>(
             tokens {
                 let()

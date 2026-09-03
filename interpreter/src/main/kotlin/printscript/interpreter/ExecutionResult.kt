@@ -1,6 +1,5 @@
 package printscript.interpreter
 
-/** Result of an interpreter strategy operation. */
 public sealed interface ExecutionResult<out T> {
 
     public data class Success<T>(
