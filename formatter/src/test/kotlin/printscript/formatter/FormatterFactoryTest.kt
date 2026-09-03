@@ -1,6 +1,12 @@
 package printscript.formatter
 
-import printscript.statement.Statement
+import printscript.model.source.SourcePosition
+import printscript.model.source.SourceSpan
+import printscript.token.Token
+import printscript.token.TokenReadError
+import printscript.token.TokenReadResult
+import printscript.token.TokenSource
+import printscript.token.TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -9,365 +15,289 @@ import kotlin.test.assertSame
 class FormatterFactoryTest {
 
     @Test
-    fun `does not read statements until formatted output is requested`() {
-        val statementSource = CountingStatementSource(
-            ListStatementSource(
-                statements = listOf(
-                    TestStatement("value"),
-                    TestStatement("unread"),
-                ),
+    fun `does not read tokens until formatted output is requested`() {
+        val tokenSource = CountingTokenSource(
+            ListTokenSource(
+                tokens = listOf(token(TestTokenType.WORD, "first")),
             ),
         )
-        val formattedSource = formatterWith(
-            statementFormatters = listOf(SuccessfulTestStatementFormatter("")),
-        ).format(statementSource)
+        val formattedSource = formatterWith().format(tokenSource)
 
-        assertEquals(expected = 0, actual = statementSource.readCount)
+        assertEquals(expected = 0, actual = tokenSource.readCount)
 
-        formattedSource.nextFormattedStatement()
+        formattedSource.nextFormattedChunk()
 
-        assertEquals(expected = 1, actual = statementSource.readCount)
+        assertEquals(expected = 1, actual = tokenSource.readCount)
     }
 
     @Test
-    fun `uses first formatter that supports a statement`() {
-        val result = formatOne(
+    fun `preserves every original gap when no rule supports it`() {
+        val formattedText = formatAll(
+            formatter = formatterWith(),
+            tokenSource = ListTokenSource(
+                tokens = listOf(
+                    token(TestTokenType.WHITESPACE, "  "),
+                    token(TestTokenType.WORD, "first"),
+                    token(TestTokenType.WHITESPACE, "\t"),
+                    token(TestTokenType.WORD, "second"),
+                    token(TestTokenType.WHITESPACE, "\r\n"),
+                ),
+            ),
+        )
+
+        assertEquals(expected = "  first\tsecond\r\n", actual = formattedText)
+    }
+
+    @Test
+    fun `uses the first rule that supports a gap`() {
+        val formattedText = formatAll(
             formatter = formatterWith(
-                statementFormatters = listOf(
-                    SuccessfulTestStatementFormatter("first:"),
-                    SuccessfulTestStatementFormatter("second:"),
+                formattingRules = listOf(
+                    ReplacingGapRule("<first>"),
+                    ReplacingGapRule("<second>"),
                 ),
             ),
-            statement = TestStatement("value"),
+            tokenSource = words("left", "right"),
         )
 
-        assertEquals(expected = "first:value", actual = result.formattedText)
+        assertEquals(expected = "left<first>right", actual = formattedText)
     }
 
     @Test
-    fun `formats nested statements with the same configured engine`() {
-        val result = formatOne(
+    fun `can insert whitespace into an empty gap`() {
+        val formattedText = formatAll(
             formatter = formatterWith(
-                statementFormatters = listOf(
-                    CompositeTestStatementFormatter,
-                    SuccessfulTestStatementFormatter(""),
-                ),
-                statementSeparationPolicy = PipeSeparationPolicy,
+                formattingRules = listOf(ReplacingGapRule(" ")),
             ),
-            statement = CompositeTestStatement(
-                statements = listOf(
-                    TestStatement("first"),
-                    CompositeTestStatement(
-                        statements = listOf(TestStatement("nested")),
-                    ),
-                    TestStatement("last"),
-                ),
-            ),
+            tokenSource = words("left", "right"),
         )
 
-        assertEquals(expected = "[first|[nested]|last]", actual = result.formattedText)
+        assertEquals(expected = "left right", actual = formattedText)
     }
 
     @Test
-    fun `nested statements preserve formatter priority`() {
-        val result = formatOne(
+    fun `copies configured rules defensively`() {
+        val rules = mutableListOf<TokenGapFormattingRule>(
+            ReplacingGapRule(" "),
+        )
+        val formatter = formatterWith(rules)
+
+        rules.clear()
+
+        assertEquals(
+            expected = "left right",
+            actual = formatAll(formatter, words("left", "right")),
+        )
+    }
+
+    @Test
+    fun `uses the immutable rule state returned after consuming a token`() {
+        val formattedText = formatAll(
             formatter = formatterWith(
-                statementFormatters = listOf(
-                    CompositeTestStatementFormatter,
-                    SuccessfulTestStatementFormatter("first:"),
-                    SuccessfulTestStatementFormatter("second:"),
-                ),
+                formattingRules = listOf(AfterMarkerRule()),
             ),
-            statement = CompositeTestStatement(
-                statements = listOf(TestStatement("value")),
-            ),
-        )
-
-        assertEquals(expected = "[first:value]", actual = result.formattedText)
-    }
-
-    @Test
-    fun `nested formatting stops and propagates the first failure`() {
-        val expectedError = TestFormattingError()
-        val recordingFormatter = RecordingTestStatementFormatter(
-            failureByValue = mapOf("failure" to expectedError),
-        )
-        val result = formatterWith(
-            statementFormatters = listOf(
-                CompositeTestStatementFormatter,
-                recordingFormatter,
-            ),
-        ).format(
-            ListStatementSource(
-                statements = listOf(
-                    CompositeTestStatement(
-                        statements = listOf(
-                            TestStatement("first"),
-                            TestStatement("failure"),
-                            TestStatement("unread"),
-                        ),
-                    ),
-                ),
-            ),
-        ).nextFormattedStatement()
-
-        val failure = assertIs<FormattedStatementReadResult.Failure>(result)
-
-        assertSame(expected = expectedError, actual = failure.error)
-        assertEquals(expected = listOf("first", "failure"), actual = recordingFormatter.formattedValues)
-    }
-
-    @Test
-    fun `reports unsupported statements found inside a composite statement`() {
-        val result = formatterWith(
-            statementFormatters = listOf(CompositeTestStatementFormatter),
-        ).format(
-            ListStatementSource(
-                statements = listOf(
-                    CompositeTestStatement(
-                        statements = listOf(TestStatement("unsupported")),
-                    ),
-                ),
-            ),
-        ).nextFormattedStatement()
-
-        val failure = assertIs<FormattedStatementReadResult.Failure>(result)
-
-        assertIs<FormattingError.UnsupportedStatement>(failure.error)
-    }
-
-    @Test
-    fun `formats an empty nested statement list as empty text`() {
-        val result = formatOne(
-            formatter = formatterWith(
-                statementFormatters = listOf(CompositeTestStatementFormatter),
-            ),
-            statement = CompositeTestStatement(statements = emptyList()),
-        )
-
-        assertEquals(expected = "[]", actual = result.formattedText)
-    }
-
-    @Test
-    fun `formatter configuration cannot change after creation`() {
-        val statementFormatters = mutableListOf<StatementFormatter>(
-            SuccessfulTestStatementFormatter("stable:"),
-        )
-        val formatter = formatterWith(statementFormatters)
-
-        statementFormatters.clear()
-
-        val result = formatOne(
-            formatter = formatter,
-            statement = TestStatement("value"),
-        )
-
-        assertEquals(expected = "stable:value", actual = result.formattedText)
-    }
-
-    @Test
-    fun `applies separation policy before every statement`() {
-        val formattedSource = formatterWith(
-            statementFormatters = listOf(SuccessfulTestStatementFormatter("")),
-            statementSeparationPolicy = TestSeparationPolicy,
-        ).format(
-            ListStatementSource(
-                statements = listOf(
-                    TestStatement("first"),
-                    TestStatement("second"),
+            tokenSource = ListTokenSource(
+                tokens = listOf(
+                    token(TestTokenType.MARKER, "marker"),
+                    token(TestTokenType.WORD, "value"),
                 ),
             ),
         )
 
-        val first = assertIs<FormattedStatementReadResult.Success>(
-            formattedSource.nextFormattedStatement(),
-        )
-        val second = assertIs<FormattedStatementReadResult.Success>(
-            first.remainingSource.nextFormattedStatement(),
-        )
-
-        assertEquals(expected = "<first>falsefirst", actual = first.formattedText)
-        assertEquals(expected = "<second>truesecond", actual = second.formattedText)
+        assertEquals(expected = "marker!value", actual = formattedText)
     }
 
     @Test
-    fun `preserves errors returned by external formatters`() {
-        val expectedError = TestFormattingError()
-        val formatter = formatterWith(
-            statementFormatters = listOf(FailingTestStatementFormatter(expectedError)),
+    fun `propagates token read failures`() {
+        val expectedError = TestTokenReadError()
+        val result = formatterWith()
+            .format(FailingTokenSource(expectedError))
+            .nextFormattedChunk()
+
+        val formattingError = assertIs<FormattingError.TokenReadFailure>(
+            assertIs<FormattedChunkReadResult.Failure>(result).error,
         )
-        val result = formatter.format(
-            ListStatementSource(
-                statements = listOf(TestStatement("value")),
+
+        assertSame(expected = expectedError, actual = formattingError.tokenReadError)
+    }
+
+    @Test
+    fun `reports end of input for an empty token source`() {
+        val result = formatterWith()
+            .format(ListTokenSource(tokens = emptyList()))
+            .nextFormattedChunk()
+
+        assertIs<FormattedChunkReadResult.EndOfInput>(result)
+    }
+
+    @Test
+    fun `returns trailing whitespace before reporting end of input`() {
+        val source = formatterWith().format(
+            ListTokenSource(
+                tokens = listOf(token(TestTokenType.WHITESPACE, "\n")),
             ),
-        ).nextFormattedStatement()
-
-        val failure = assertIs<FormattedStatementReadResult.Failure>(result)
-
-        assertSame(expected = expectedError, actual = failure.error)
-    }
-
-    @Test
-    fun `reports unsupported statements when no formatter accepts them`() {
-        val formatter = formatterWith(statementFormatters = emptyList())
-        val result = formatter.format(
-            ListStatementSource(
-                statements = listOf(TestStatement("value")),
-            ),
-        ).nextFormattedStatement()
-
-        val failure = assertIs<FormattedStatementReadResult.Failure>(result)
-
-        assertIs<FormattingError.UnsupportedStatement>(failure.error)
-    }
-
-    @Test
-    fun `propagates parse failures from statement source`() {
-        val expectedError = TestParseError()
-        val result = formatterWith(emptyList()).format(
-            FailingStatementSource(expectedError),
-        ).nextFormattedStatement()
-
-        val formattingError = assertIs<FormattingError.ParseFailure>(
-            assertIs<FormattedStatementReadResult.Failure>(result).error,
         )
 
-        assertSame(expected = expectedError, actual = formattingError.parseError)
+        val trailingWhitespace = assertIs<FormattedChunkReadResult.Success>(
+            source.nextFormattedChunk(),
+        )
+
+        assertEquals(expected = "\n", actual = trailingWhitespace.formattedText)
+        assertIs<FormattedChunkReadResult.EndOfInput>(
+            trailingWhitespace.remainingSource.nextFormattedChunk(),
+        )
     }
 
-    @Test
-    fun `reports end of input`() {
-        val result = formatterWith(emptyList()).format(
-            ListStatementSource(statements = emptyList()),
-        ).nextFormattedStatement()
-
-        assertIs<FormattedStatementReadResult.EndOfInput>(result)
-    }
-
-    private fun formatterWith(
-        statementFormatters: List<StatementFormatter>,
-        statementSeparationPolicy: StatementSeparationPolicy = EmptySeparationPolicy,
-    ): Formatter {
+    private fun formatterWith(formattingRules: List<TokenGapFormattingRule> = emptyList()): Formatter {
         return FormatterFactory.create(
-            statementFormatters = statementFormatters,
-            statementSeparationPolicy = statementSeparationPolicy,
+            formattingRules = formattingRules,
+            whitespaceTokenType = TestTokenType.WHITESPACE,
+            endOfInputTokenType = TestTokenType.EOF,
         )
     }
 
-    private fun formatOne(formatter: Formatter, statement: Statement): FormattedStatementReadResult.Success {
-        return assertIs<FormattedStatementReadResult.Success>(
-            formatter.format(
-                ListStatementSource(
-                    statements = listOf(statement),
-                ),
-            ).nextFormattedStatement(),
+    private fun words(vararg lexemes: String): TokenSource {
+        return ListTokenSource(
+            tokens = lexemes.map { lexeme ->
+                token(TestTokenType.WORD, lexeme)
+            },
+        )
+    }
+
+    private fun formatAll(formatter: Formatter, tokenSource: TokenSource): String {
+        var source = formatter.format(tokenSource)
+        val result = StringBuilder()
+
+        while (true) {
+            when (val readResult = source.nextFormattedChunk()) {
+                is FormattedChunkReadResult.Success -> {
+                    result.append(readResult.formattedText)
+                    source = readResult.remainingSource
+                }
+
+                is FormattedChunkReadResult.Failure ->
+                    error("Unexpected formatting failure: ${readResult.error}")
+
+                FormattedChunkReadResult.EndOfInput -> return result.toString()
+            }
+        }
+    }
+}
+
+private enum class TestTokenType : TokenType {
+    WORD,
+    MARKER,
+    WHITESPACE,
+    EOF,
+}
+
+private val testSpan = SourceSpan(
+    start = SourcePosition.initial(),
+    end = SourcePosition.initial().nextColumn(),
+)
+
+private fun token(type: TokenType, lexeme: String): Token {
+    return Token(
+        type = type,
+        lexeme = lexeme,
+        span = testSpan,
+    )
+}
+
+private data class ListTokenSource(
+    private val tokens: List<Token>,
+) : TokenSource {
+
+    override fun nextToken(): TokenReadResult {
+        if (tokens.isEmpty()) {
+            return TokenReadResult.Success(
+                token = token(TestTokenType.EOF, ""),
+                remainingSource = this,
+            )
+        }
+
+        return TokenReadResult.Success(
+            token = tokens.first(),
+            remainingSource = copy(tokens = tokens.drop(1)),
         )
     }
 }
 
-private class SuccessfulTestStatementFormatter(
-    private val prefix: String,
-) : StatementFormatter {
+private class CountingTokenSource private constructor(
+    private val delegate: TokenSource,
+    private val counter: TokenReadCounter,
+) : TokenSource {
 
-    override fun supportsStatement(statement: Statement): Boolean {
-        return statement is TestStatement
-    }
+    constructor(delegate: TokenSource) : this(delegate, TokenReadCounter())
 
-    override fun formatStatement(
-        statement: Statement,
-        context: StatementFormattingContext,
-    ): StatementFormattingResult {
-        val testStatement = assertIs<TestStatement>(statement)
+    val readCount: Int
+        get() = counter.value
 
-        return StatementFormattingResult.Success(
-            formattedText = prefix + testStatement.value,
-        )
-    }
-}
+    override fun nextToken(): TokenReadResult {
+        counter.increment()
 
-private class FailingTestStatementFormatter(
-    private val error: FormattingError,
-) : StatementFormatter {
-
-    override fun supportsStatement(statement: Statement): Boolean {
-        return statement is TestStatement
-    }
-
-    override fun formatStatement(
-        statement: Statement,
-        context: StatementFormattingContext,
-    ): StatementFormattingResult {
-        return StatementFormattingResult.Failure(error)
-    }
-}
-
-private data object CompositeTestStatementFormatter : StatementFormatter {
-
-    override fun supportsStatement(statement: Statement): Boolean {
-        return statement is CompositeTestStatement
-    }
-
-    override fun formatStatement(
-        statement: Statement,
-        context: StatementFormattingContext,
-    ): StatementFormattingResult {
-        val compositeStatement = assertIs<CompositeTestStatement>(statement)
-
-        return when (val result = context.formatStatements(compositeStatement.statements)) {
-            is StatementFormattingResult.Failure -> result
-            is StatementFormattingResult.Success ->
-                StatementFormattingResult.Success(
-                    formattedText = "[${result.formattedText}]",
+        return when (val result = delegate.nextToken()) {
+            is TokenReadResult.Failure -> result
+            is TokenReadResult.Success ->
+                result.copy(
+                    remainingSource = CountingTokenSource(result.remainingSource, counter),
                 )
         }
     }
 }
 
-private class RecordingTestStatementFormatter(
-    private val failureByValue: Map<String, FormattingError>,
-) : StatementFormatter {
+private class TokenReadCounter {
 
-    val formattedValues: MutableList<String> = mutableListOf()
+    var value: Int = 0
+        private set
 
-    override fun supportsStatement(statement: Statement): Boolean {
-        return statement is TestStatement
-    }
-
-    override fun formatStatement(
-        statement: Statement,
-        context: StatementFormattingContext,
-    ): StatementFormattingResult {
-        val testStatement = assertIs<TestStatement>(statement)
-        formattedValues.add(testStatement.value)
-
-        val failure = failureByValue[testStatement.value]
-        if (failure != null) {
-            return StatementFormattingResult.Failure(failure)
-        }
-
-        return StatementFormattingResult.Success(testStatement.value)
+    fun increment() {
+        value += 1
     }
 }
 
-private data object EmptySeparationPolicy : StatementSeparationPolicy {
+private data class FailingTokenSource(
+    private val error: TokenReadError,
+) : TokenSource {
 
-    override fun separatorBeforeStatement(statement: Statement, hasPreviousStatement: Boolean): String {
-        return ""
+    override fun nextToken(): TokenReadResult {
+        return TokenReadResult.Failure(
+            error = error,
+            remainingSource = this,
+        )
     }
 }
 
-private data object TestSeparationPolicy : StatementSeparationPolicy {
+private data class TestTokenReadError(
+    override val span: SourceSpan = testSpan,
+) : TokenReadError
 
-    override fun separatorBeforeStatement(statement: Statement, hasPreviousStatement: Boolean): String {
-        val testStatement = assertIs<TestStatement>(statement)
+private data class ReplacingGapRule(
+    private val replacement: String,
+) : TokenGapFormattingRule {
 
-        return "<${testStatement.value}>$hasPreviousStatement"
+    override fun supports(gap: TokenGap): Boolean {
+        return gap.previousToken != null && gap.nextToken != null
+    }
+
+    override fun formatWhitespace(gap: TokenGap): String {
+        return replacement
     }
 }
 
-private data object PipeSeparationPolicy : StatementSeparationPolicy {
+private data class AfterMarkerRule(
+    private val markerWasConsumed: Boolean = false,
+) : TokenGapFormattingRule {
 
-    override fun separatorBeforeStatement(statement: Statement, hasPreviousStatement: Boolean): String {
-        return if (hasPreviousStatement) "|" else ""
+    override fun supports(gap: TokenGap): Boolean {
+        return markerWasConsumed && gap.nextToken != null
+    }
+
+    override fun formatWhitespace(gap: TokenGap): String {
+        return "!"
+    }
+
+    override fun afterConsuming(token: Token): TokenGapFormattingRule {
+        return copy(markerWasConsumed = token.type == TestTokenType.MARKER)
     }
 }

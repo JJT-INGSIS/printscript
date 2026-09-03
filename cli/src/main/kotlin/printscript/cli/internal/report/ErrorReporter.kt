@@ -92,10 +92,8 @@ internal class ErrorReporter {
 
     fun describe(error: FormattingError): String {
         return when (error) {
-            is FormattingError.ParseFailure -> describe(error.parseError)
-
-            is FormattingError.UnsupportedStatement ->
-                format("esta sentencia no se puede formatear en esta versión", error.span)
+            is FormattingError.TokenReadFailure ->
+                format(describeTokenRead(error.tokenReadError), error.span)
 
             else ->
                 format("error de formateo desconocido", error.span)

@@ -163,10 +163,9 @@ class ErrorWordingCompletenessTest {
         val unknownWording = errorReporter.describe(ExtensionFormattingError(anySpan))
 
         val errors = listOf(
-            FormattingError.ParseFailure(
-                ParseError.InvalidLiteral(tokenOf(PrintScriptV1TokenType.NUMBER_LITERAL, "1..2")),
+            FormattingError.TokenReadFailure(
+                LexicalError.UnexpectedCharacter(character = '@', span = anySpan),
             ),
-            FormattingError.UnsupportedStatement(span = anySpan),
         )
 
         for (error in errors) {

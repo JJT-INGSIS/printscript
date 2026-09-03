@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(project(":statement-source"))
+    api(project(":token-source"))
 }

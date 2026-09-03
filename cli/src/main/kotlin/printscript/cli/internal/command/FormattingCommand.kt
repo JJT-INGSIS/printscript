@@ -8,8 +8,8 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.formatter.FormattedChunkReadResult
 import printscript.formatter.FormattedSource
-import printscript.formatter.FormattedStatementReadResult
 
 internal class FormattingCommand(
     private val errorReporter: ErrorReporter,
@@ -30,28 +30,29 @@ internal class FormattingCommand(
 
         runOnSourceFile(
             sourceFilePath = sourceFilePath,
-            toolchain = toolchain,
             errorReporter = errorReporter,
-        ) { statements ->
-            writeRemainingFormattedStatements(
-                toolchain.formatter().format(statements),
+        ) { sourceReader ->
+            writeRemainingFormattedChunks(
+                toolchain.formatter().format(
+                    toolchain.formattingTokensFrom(sourceReader),
+                ),
             )
         }
     }
 
-    private tailrec fun writeRemainingFormattedStatements(source: FormattedSource): OperationOutcome {
-        return when (val readResult = source.nextFormattedStatement()) {
-            FormattedStatementReadResult.EndOfInput -> OperationOutcome.Success
+    private tailrec fun writeRemainingFormattedChunks(source: FormattedSource): OperationOutcome {
+        return when (val readResult = source.nextFormattedChunk()) {
+            FormattedChunkReadResult.EndOfInput -> OperationOutcome.Success
 
-            is FormattedStatementReadResult.Failure ->
+            is FormattedChunkReadResult.Failure ->
                 OperationOutcome.Failure(
                     errorReporter.describe(readResult.error),
                 )
 
-            is FormattedStatementReadResult.Success -> {
+            is FormattedChunkReadResult.Success -> {
                 echo(readResult.formattedText, trailingNewline = false)
 
-                writeRemainingFormattedStatements(readResult.remainingSource)
+                writeRemainingFormattedChunks(readResult.remainingSource)
             }
         }
     }

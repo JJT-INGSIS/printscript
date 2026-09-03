@@ -2,6 +2,7 @@ package printscript.cli.internal.toolchain
 
 import printscript.v1.formatter.PrintScriptV1FormatterFactory
 import printscript.v1.interpreter.PrintScriptV1InterpreterFactory
+import printscript.v1.lexer.PrintScriptV1FormattingLexerFactory
 import printscript.v1.lexer.PrintScriptV1LexerFactory
 import printscript.v1.linter.PrintScriptV1LinterFactory
 import printscript.v1.parser.PrintScriptV1ParserFactory
@@ -20,6 +21,9 @@ internal object PrintScriptToolchainFactory {
                 PrintScriptV1ParserFactory.create().parse(
                     tokens = PrintScriptV1LexerFactory.create().tokenize(sourceReader),
                 )
+            },
+            formattingTokensFrom = { sourceReader ->
+                PrintScriptV1FormattingLexerFactory.create().tokenize(sourceReader)
             },
             interpreterWriting = { output ->
                 PrintScriptV1InterpreterFactory.create(output)

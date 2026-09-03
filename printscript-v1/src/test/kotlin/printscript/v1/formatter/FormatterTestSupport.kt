@@ -1,47 +1,53 @@
 package printscript.v1.formatter
 
-import printscript.ast.Identifier
-import printscript.ast.expression.NumberLiteralExpression
-import printscript.model.source.SourcePosition
-import printscript.model.source.SourceSpan
-import printscript.statement.Statement
-import printscript.statement.StatementReadResult
-import printscript.statement.StatementSource
-import java.math.BigDecimal
+import printscript.formatter.FormattedChunkReadResult
+import printscript.formatter.Formatter
+import printscript.formatter.TokenGapFormattingRule
+import printscript.source.SourceReaderFactory
+import printscript.token.TokenSource
+import printscript.v1.lexer.PrintScriptV1FormattingLexerFactory
 
-internal val testSpan: SourceSpan = SourceSpan(
-    start = SourcePosition.initial(),
-    end = SourcePosition.initial().nextColumn(),
-)
-
-internal fun identifier(value: String): Identifier {
-    return Identifier(
-        value = value,
-        span = testSpan,
+internal fun formatSource(
+    sourceCode: String,
+    configuration: PrintScriptV1FormatterConfiguration =
+        PrintScriptV1FormatterFactory.defaultConfiguration(),
+    additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
+): String {
+    val tokens = PrintScriptV1FormattingLexerFactory.create().tokenize(
+        SourceReaderFactory.fromString(sourceCode),
     )
+    val formatter = PrintScriptV1FormatterFactory.create(
+        configuration = configuration,
+        additionalFormattingRules = additionalFormattingRules,
+    )
+
+    return collectFormattedText(formatter, tokens)
 }
 
-internal fun numberLiteral(value: String): NumberLiteralExpression {
-    return NumberLiteralExpression(
-        value = BigDecimal(value),
-        span = testSpan,
+internal fun formatSourceWith(formatter: Formatter, sourceCode: String): String {
+    val tokens = PrintScriptV1FormattingLexerFactory.create().tokenize(
+        SourceReaderFactory.fromString(sourceCode),
     )
+
+    return collectFormattedText(formatter, tokens)
 }
 
-internal data class ListStatementSource(
-    private val statements: List<Statement>,
-) : StatementSource {
+private fun collectFormattedText(formatter: Formatter, tokens: TokenSource): String {
+    var source = formatter.format(tokens)
+    val formattedText = StringBuilder()
 
-    override fun nextStatement(): StatementReadResult {
-        if (statements.isEmpty()) {
-            return StatementReadResult.EndOfInput
+    while (true) {
+        when (val result = source.nextFormattedChunk()) {
+            is FormattedChunkReadResult.Success -> {
+                formattedText.append(result.formattedText)
+                source = result.remainingSource
+            }
+
+            is FormattedChunkReadResult.Failure ->
+                error("Unexpected formatting failure: ${result.error}")
+
+            FormattedChunkReadResult.EndOfInput ->
+                return formattedText.toString()
         }
-
-        return StatementReadResult.Success(
-            statement = statements.first(),
-            remainingSource = copy(
-                statements = statements.drop(1),
-            ),
-        )
     }
 }

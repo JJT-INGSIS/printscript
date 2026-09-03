@@ -64,6 +64,9 @@ class ExecutionCommandTest {
 
             return PrintScriptToolchain(
                 statementsFrom = { EmptyStatementSource },
+                formattingTokensFrom = {
+                    error("ExecutionCommand no debería pedir tokens de formato")
+                },
                 interpreterWriting = { output ->
                     FixedResultInterpreter(
                         result = result,

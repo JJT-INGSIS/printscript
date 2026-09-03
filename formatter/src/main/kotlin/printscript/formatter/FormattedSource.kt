@@ -3,9 +3,9 @@ package printscript.formatter
 public interface FormattedSource {
 
     /**
-     * Returns the next formatted statement.
+     * Returns the next formatted chunk.
      *
      * Failure and EndOfInput are terminal results.
      */
-    public fun nextFormattedStatement(): FormattedStatementReadResult
+    public fun nextFormattedChunk(): FormattedChunkReadResult
 }

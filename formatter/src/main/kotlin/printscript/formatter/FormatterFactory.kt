@@ -1,20 +1,25 @@
 package printscript.formatter
 
 import printscript.formatter.internal.ConfigurableFormatter
+import printscript.token.TokenType
 
 public object FormatterFactory {
 
     /**
-     * Creates a lazy formatter. When several strategies support a statement,
-     * the first configured formatter has priority.
+     * Creates a lazy formatter. When several rules support a gap, the first
+     * configured rule has priority. If none supports it, the original
+     * whitespace is preserved. [whitespaceTokenType] identifies the tokens
+     * that retain that whitespace in the supplied token stream.
      */
     public fun create(
-        statementFormatters: List<StatementFormatter>,
-        statementSeparationPolicy: StatementSeparationPolicy,
+        formattingRules: List<TokenGapFormattingRule>,
+        whitespaceTokenType: TokenType,
+        endOfInputTokenType: TokenType,
     ): Formatter {
         return ConfigurableFormatter(
-            statementFormatters = statementFormatters,
-            statementSeparationPolicy = statementSeparationPolicy,
+            formattingRules = formattingRules,
+            whitespaceTokenType = whitespaceTokenType,
+            endOfInputTokenType = endOfInputTokenType,
         )
     }
 }
