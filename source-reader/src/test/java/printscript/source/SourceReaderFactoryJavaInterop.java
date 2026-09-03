@@ -3,7 +3,6 @@ package printscript.source;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-/** Compilation fixture that protects the public factory API consumed from Java. */
 final class SourceReaderFactoryJavaInterop {
 
     private SourceReaderFactoryJavaInterop() {

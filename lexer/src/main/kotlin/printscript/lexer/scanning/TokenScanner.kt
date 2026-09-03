@@ -1,8 +1,5 @@
 package printscript.lexer.scanning
 
-/**
- * Extension point used to recognize one token from an immutable cursor.
- */
 public interface TokenScanner {
 
     public fun canStartWith(character: Char): Boolean

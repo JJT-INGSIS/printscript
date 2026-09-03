@@ -37,8 +37,6 @@ class ErrorReporterTest {
 
     private fun tokenOf(type: TokenType, lexeme: String) = Token(type = type, lexeme = lexeme, span = anySpan)
 
-    // --- acceso al archivo -------------------------------------------
-
     @Test
     fun `describes every source access error mentioning the path`() {
         val errors = listOf(
@@ -70,8 +68,6 @@ class ErrorReporterTest {
         assertContains(message, "mayor que cero")
         assertContains(message, "0")
     }
-
-    // --- errores de parseo -------------------------------------------
 
     @Test
     fun `describes every lexical error`() {
@@ -176,8 +172,6 @@ class ErrorReporterTest {
 
         assertContains(message, ExtensionTokenType.toString())
     }
-
-    // --- errores semánticos ------------------------------------------
 
     @Test
     fun `describes every semantic error with its position`() {

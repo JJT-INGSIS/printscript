@@ -60,9 +60,6 @@ class PrintlnParserTest {
 
     @Test
     fun `statement span covers from the keyword to the semicolon`() {
-        // "println ( a ) ;"
-        //  ^              ^
-        //  col 1          col 16
         val statement = statementOf<PrintlnStatement>(
             tokens {
                 println()

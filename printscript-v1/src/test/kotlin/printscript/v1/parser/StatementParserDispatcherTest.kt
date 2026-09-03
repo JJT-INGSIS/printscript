@@ -78,8 +78,6 @@ class StatementParserDispatcherTest {
 
     @Test
     fun `reports valid continuations for identifier statements`() {
-        // Después de un identificador, V1 solamente admite
-        // una asignación como continuación de la sentencia.
         parseFirst(
             tokens {
                 id("a")

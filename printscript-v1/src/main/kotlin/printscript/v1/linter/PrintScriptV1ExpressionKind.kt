@@ -8,10 +8,6 @@ import printscript.ast.expression.NumberLiteralExpression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.UnaryExpression
 
-/**
- * Clasifica una expresión sin decidir nada sobre ella: qué se acepta y
- * qué no es política, y vive en la configuración.
- */
 public enum class PrintScriptV1ExpressionKind {
     LITERAL,
     VARIABLE,

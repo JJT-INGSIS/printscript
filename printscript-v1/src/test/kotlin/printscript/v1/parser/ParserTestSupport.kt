@@ -22,17 +22,6 @@ private const val FIRST_COLUMN = 1
 private const val SEPARATOR_LENGTH = 1
 private const val RESULT_INDEX_INCREMENT = 1
 
-// --------------------------------------------------------------------
-// Construcción de tokens
-// --------------------------------------------------------------------
-
-/**
- * Arma listas de tokens con posiciones realistas, como si el programa
- * estuviera escrito en una línea con un espacio entre cada token.
- *
- * Que los spans sean reales permite verificar que los nodos los
- * propaguen bien: una declaración tiene que abarcar del `let` al `;`.
- */
 internal class TokenListBuilder {
 
     private val results = mutableListOf<TokenReadFixture>()
@@ -135,10 +124,6 @@ internal fun tokens(block: TokenListBuilder.() -> Unit): List<TokenReadFixture> 
     return builder.build()
 }
 
-// --------------------------------------------------------------------
-// Dobles de prueba
-// --------------------------------------------------------------------
-
 internal sealed interface TokenReadFixture {
 
     data class Success(
@@ -206,10 +191,6 @@ private fun TokenReadFixture.toTokenReadResult(remainingSource: TokenSource): To
     }
 }
 
-/**
- * Cuenta cuántos tokens se le pidieron a la fuente, para verificar que
- * el parser lea de a uno y solo cuando hace falta.
- */
 internal class CountingTokenSource private constructor(
     private val source: TokenSource,
     private val readCounter: ReadCounter,
@@ -265,10 +246,6 @@ private fun TokenReadResult.withRemainingSource(remainingSource: TokenSource): T
     }
 }
 
-// --------------------------------------------------------------------
-// Construcción del sujeto bajo prueba
-// --------------------------------------------------------------------
-
 internal fun sourceOf(tokens: List<TokenReadFixture>): StatementSource {
     return PrintScriptV1ParserFactory.create().parse(
         tokens = FakeTokenSource(tokens),
@@ -298,9 +275,6 @@ private fun continuationOf(result: StatementReadResult): StatementReadResult? {
         StatementReadResult.EndOfInput -> null
     }
 }
-// --------------------------------------------------------------------
-// Aserciones sobre resultados
-// --------------------------------------------------------------------
 
 internal fun StatementReadResult.assertSuccessStatement(): Statement {
     return assertIs<StatementReadResult.Success>(this).statement
@@ -316,11 +290,6 @@ internal inline fun <reified T : ParseError> StatementReadResult.assertParseErro
     return assertIs<T>(failure.error, message)
 }
 
-/**
- * Verifica que el error sea un token inesperado, y **qué** se esperaba
- * y qué llegó. Sin esto, un test de error pasa aunque el parser reporte
- * el problema equivocado.
- */
 internal fun StatementReadResult.assertUnexpectedToken(
     expectedTokenTypes: Set<TokenType>,
     actualTokenType: TokenType,
@@ -343,10 +312,6 @@ internal fun StatementReadResult.assertUnexpectedToken(
     )
 }
 
-/**
- * Devuelve la lectura completa, no solo la sentencia: quien encadena
- * necesita la fuente restante para pedir la siguiente.
- */
 internal fun StatementSource.assertNextStatement(): StatementReadResult.Success {
     return assertIs<StatementReadResult.Success>(nextStatement())
 }
@@ -358,18 +323,10 @@ internal fun StatementSource.assertEndOfInput() {
     )
 }
 
-// --------------------------------------------------------------------
-// Atajos de alto nivel
-// --------------------------------------------------------------------
-
 internal inline fun <reified T : Statement> statementOf(tokens: List<TokenReadFixture>): T {
     return parseFirst(tokens).assertStatement()
 }
 
-/**
- * Parsea una expresión suelta envolviéndola en una asignación, que es
- * la sentencia más corta que la contiene.
- */
 internal fun expressionOf(expression: TokenListBuilder.() -> Unit): Expression {
     val statement = statementOf<AssignmentStatement>(
         tokens {

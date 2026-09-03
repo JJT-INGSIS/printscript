@@ -8,14 +8,6 @@ import printscript.v1.lexer.internal.printScriptV1TokenScanners
 import printscript.v1.lexer.internal.scanner.WhitespaceScanner
 import printscript.v1.token.PrintScriptV1TokenType
 
-/**
- * Creates the lossless V1 token stream consumed by formatting tools.
- *
- * The ignored-character policy from [PrintScriptV1LexerConfiguration] is
- * deliberately replaced so that every whitespace character reaches the
- * formatter. The remaining lexical configuration is shared with the normal
- * V1 lexer.
- */
 public object PrintScriptV1FormattingLexerFactory {
 
     @JvmStatic

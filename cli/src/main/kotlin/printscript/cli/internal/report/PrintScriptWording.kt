@@ -7,23 +7,8 @@ import printscript.token.TokenType
 import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.token.PrintScriptV1TokenType
 
-/**
- * Cómo se nombra cada elemento del lenguaje dentro de un mensaje.
- *
- * Responde una pregunta distinta de la de los reporters: ellos explican
- * **qué pasó**, esto explica **cómo se dice**. Por eso lo comparten el
- * reporte de errores y el de diagnósticos.
- *
- * Estas tablas se parecen a las del formatter, pero no son las mismas:
- * allá se produce **código** y acá **texto para humanos**, que mañana
- * podría estar traducido. Hoy coinciden por casualidad, no por necesidad.
- */
 internal object PrintScriptWording {
 
-    /**
-     * Une los tokens esperados con "o", para mensajes del tipo
-     * "se esperaba ';' o ')'".
-     */
     fun describeAnyOf(expected: Set<TokenType>): String {
         return expected
             .map { tokenType -> "'${describe(tokenType)}'" }

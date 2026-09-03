@@ -20,12 +20,6 @@ internal val anySpan: SourceSpan = SourceSpan(
     end = SourcePosition(FIRST_LINE, FIRST_COLUMN, FIRST_OFFSET),
 )
 
-// --------------------------------------------------------------------
-// Vocabulario propio del motor
-//
-// El núcleo no conoce ninguna versión del lenguaje: sus pruebas tampoco.
-// --------------------------------------------------------------------
-
 internal data class TestStatement(
     val name: String,
     override val span: SourceSpan = anySpan,
@@ -49,13 +43,6 @@ internal fun unexpectedTokenError(): ParseError {
     )
 }
 
-// --------------------------------------------------------------------
-// Reglas de prueba
-// --------------------------------------------------------------------
-
-/**
- * Observa las sentencias que nombra, tantas veces como se le pida.
- */
 internal class NameReportingRule(
     private val label: String,
     private val reportedNames: Set<String>,
@@ -79,13 +66,6 @@ internal class NameReportingRule(
     }
 }
 
-/**
- * Observa toda repetición de un nombre.
- *
- * Solo puede hacerlo acordándose de lo ya leído, así que ejercita la
- * regla con memoria: cada inspección devuelve su sucesora con un nombre
- * más.
- */
 internal class RepeatedNameRule(
     private val seenNames: Set<String>,
 ) : LintRule {
@@ -113,10 +93,6 @@ private fun nameOf(statement: Statement): String {
     return (statement as TestStatement).name
 }
 
-// --------------------------------------------------------------------
-// Dobles de prueba
-// --------------------------------------------------------------------
-
 internal class ListStatementSource(
     private val statements: List<Statement>,
 ) : StatementSource {
@@ -143,10 +119,6 @@ internal class FailingStatementSource(
     }
 }
 
-/**
- * Cuenta cuántas sentencias se le pidieron a la fuente, para verificar
- * que el linter lea de a una y solo cuando hace falta.
- */
 internal class CountingStatementSource private constructor(
     private val source: StatementSource,
     private val readCounter: ReadCounter,
@@ -189,10 +161,6 @@ private class ReadCounter {
         value += CONSUMED_STATEMENT_COUNT
     }
 }
-
-// --------------------------------------------------------------------
-// Construcción del sujeto bajo prueba
-// --------------------------------------------------------------------
 
 internal fun statementsNamed(vararg names: String): StatementSource {
     return ListStatementSource(

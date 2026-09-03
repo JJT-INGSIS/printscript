@@ -38,10 +38,6 @@ internal val anySpan: SourceSpan = SourceSpan(
     end = SourcePosition(FIRST_LINE, FIRST_COLUMN, FIRST_OFFSET),
 )
 
-// --------------------------------------------------------------------
-// Construcción del AST
-// --------------------------------------------------------------------
-
 internal fun name(value: String): Identifier {
     return Identifier(
         value = value,
@@ -118,17 +114,9 @@ internal fun printOf(argument: Expression): Statement {
     )
 }
 
-/**
- * Una sentencia que V1 no conoce: las reglas de la versión tienen que
- * dejarla pasar en vez de romperse.
- */
 internal data class ExtensionStatement(
     override val span: SourceSpan = anySpan,
 ) : Statement
-
-// --------------------------------------------------------------------
-// Dobles de prueba
-// --------------------------------------------------------------------
 
 internal class ListStatementSource(
     private val statements: List<Statement>,
@@ -147,13 +135,6 @@ internal class ListStatementSource(
     }
 }
 
-// --------------------------------------------------------------------
-// Construcción del sujeto bajo prueba
-// --------------------------------------------------------------------
-
-/**
- * La política de `println` de PrintScript 1.0: variable o literal.
- */
 internal fun printlnArgumentRule(): PrintScriptV1RuleConfiguration {
     return PrintScriptV1RuleConfiguration.PrintlnArgument(
         acceptanceByKind = mapOf(
@@ -196,10 +177,6 @@ internal fun diagnosticsOf(linter: Linter, vararg statements: Statement): List<D
         source = ListStatementSource(statements.toList()),
     ).readAll()
 }
-
-// --------------------------------------------------------------------
-// Aserciones sobre resultados
-// --------------------------------------------------------------------
 
 internal fun List<Diagnostic>.assertNoDiagnostics() {
     assertEquals(

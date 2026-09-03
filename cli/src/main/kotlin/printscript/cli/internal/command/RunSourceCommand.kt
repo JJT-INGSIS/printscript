@@ -30,11 +30,6 @@ internal fun CliktCommand.runOnSourceFile(
 
     val exitCode = exitCodeOf(outcome)
 
-    /*
-     * Clikt señaliza el código de salida lanzando ProgramResult. Es su
-     * protocolo, no manejo de errores: el resto del CLI sigue devolviendo
-     * resultados. Salir sin lanzar ya equivale al código 0.
-     */
     if (exitCode != ExitCode.SUCCESS) {
         throw ProgramResult(exitCode.value)
     }

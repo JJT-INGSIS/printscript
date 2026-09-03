@@ -13,12 +13,6 @@ import printscript.v1.interpreter.internal.statement.PrintlnExecutor
 
 public object PrintScriptV1InterpreterFactory {
 
-    /**
-     * Creates the V1 interpreter. Additional executors are evaluated before
-     * the executors included by V1, allowing callers to extend or override
-     * statement behavior. Expression evaluation can be replaced independently
-     * while keeping the closed V1 expression hierarchy.
-     */
     @JvmStatic
     @JvmOverloads
     public fun create(

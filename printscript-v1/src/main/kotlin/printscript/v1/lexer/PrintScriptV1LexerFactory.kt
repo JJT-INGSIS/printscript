@@ -22,10 +22,6 @@ public object PrintScriptV1LexerFactory {
         )
     }
 
-    /**
-     * Creates the V1 lexer. Additional scanners are evaluated before the
-     * scanners included by V1, allowing callers to extend or override them.
-     */
     @JvmStatic
     @JvmOverloads
     public fun create(

@@ -28,18 +28,6 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertNotEquals
 
-/**
- * Verifica que ningún caso caiga en la rama `else` de los reporters.
- *
- * El proyecto tiene varias jerarquías abiertas porque `printscript-v1` y los
- * consumidores externos necesitan aportar implementaciones. El precio es que
- * el compilador deja de avisar cuando aparece un caso sin redactar. Estos tests
- * son la red que reemplaza esa garantía en los casos propios del proyecto.
- *
- * El texto de la rama `else` **no está escrito a mano acá**: se obtiene
- * pidiéndole al reporter que describa un caso de extensión. Así, si
- * alguien reescribe el mensaje genérico, los tests siguen valiendo.
- */
 class ErrorWordingCompletenessTest {
 
     private val errorReporter = ErrorReporter()
@@ -49,8 +37,6 @@ class ErrorWordingCompletenessTest {
         start = SourcePosition(line = 3, column = 5, offset = 20),
         end = SourcePosition(line = 3, column = 9, offset = 24),
     )
-
-    // --- tipos de token: la enum permite recorrerlos sola -----------------
 
     @Test
     fun `every V1 token type has its own wording`() {
@@ -62,8 +48,6 @@ class ErrorWordingCompletenessTest {
             )
         }
     }
-
-    // --- errores léxicos ---------------------------------------------------
 
     @Test
     fun `every V1 lexical error has its own wording`() {
@@ -87,8 +71,6 @@ class ErrorWordingCompletenessTest {
             ),
         )
     }
-
-    // --- errores de creación y parseo --------------------------------------
 
     @Test
     fun `every parse error has its own wording`() {
@@ -133,8 +115,6 @@ class ErrorWordingCompletenessTest {
         }
     }
 
-    // --- errores semánticos -------------------------------------------------
-
     @Test
     fun `every V1 semantic error has its own wording`() {
         val unknownWording = errorReporter.describe(ExtensionSemanticError(anySpan))
@@ -156,8 +136,6 @@ class ErrorWordingCompletenessTest {
         )
     }
 
-    // --- errores de formateo ------------------------------------------------
-
     @Test
     fun `every formatting error has its own wording`() {
         val unknownWording = errorReporter.describe(ExtensionFormattingError(anySpan))
@@ -177,8 +155,6 @@ class ErrorWordingCompletenessTest {
         }
     }
 
-    // --- diagnósticos del linter ---------------------------------------------
-
     @Test
     fun `every V1 diagnostic has its own wording`() {
         val unknownWording = diagnosticReporter.describe(ExtensionDiagnostic(anySpan))
@@ -191,8 +167,6 @@ class ErrorWordingCompletenessTest {
             )
         }
     }
-
-    // --- las listas y sus candados de compilación -----------------------------
 
     private val everyV1SemanticError = listOf(
         PrintScriptV1SemanticError.UndeclaredVariable(name = "x", span = anySpan),
@@ -237,16 +211,6 @@ class ErrorWordingCompletenessTest {
         ),
     )
 
-    /**
-     * Los tres `when` de abajo son el candado.
-     *
-     * Las tres jerarquías de V1 son `sealed`, así que agregar un caso nuevo
-     * **rompe la compilación de este archivo**. Quien lo agregue aterriza
-     * acá, al lado de la lista de ejemplos que también tiene que actualizar.
-     *
-     * Además son lo que hace que el mensaje de fallo diga *cuál* caso quedó
-     * sin redactar, en vez de un `assert` anónimo.
-     */
     private fun caseNameOf(error: PrintScriptV1SemanticError): String {
         return when (error) {
             is PrintScriptV1SemanticError.UndeclaredVariable -> "UndeclaredVariable"

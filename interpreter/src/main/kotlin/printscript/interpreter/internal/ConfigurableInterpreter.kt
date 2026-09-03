@@ -28,11 +28,6 @@ internal class ConfigurableInterpreter<S>(
             .result
     }
 
-    /**
-     * Cada paso lleva la fuente y el contexto con los que sigue el
-     * siguiente. La secuencia es perezosa, así que un programa largo no
-     * consume ni memoria ni stack de más.
-     */
     private fun interpretationSteps(source: StatementSource): Sequence<InterpretationStep<S>> {
         return generateSequence<InterpretationStep<S>>(
             InterpretationStep.Pending(

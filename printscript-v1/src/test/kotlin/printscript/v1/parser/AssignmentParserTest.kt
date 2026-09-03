@@ -40,9 +40,6 @@ class AssignmentParserTest {
 
     @Test
     fun `statement span covers from the target to the semicolon`() {
-        // "a = 5 ;"
-        //  ^      ^
-        //  col 1  col 8
         val statement = statementOf<AssignmentStatement>(
             tokens {
                 id("a")
