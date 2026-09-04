@@ -1,19 +1,24 @@
 package printscript.v1.formatter.internal.configuration
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * Mirrors the JSON shape of a formatter configuration file. Every field is
- * optional and nullable so an absent key falls back to the domain default
- * instead of failing to decode.
- */
 @Serializable
 internal data class PrintScriptV1FormatterConfigurationDocument(
-    val equalsSpacing: String? = null,
-    val enforceSpaceBeforeColonInDeclaration: Boolean? = null,
-    val enforceSpaceAfterColonInDeclaration: Boolean? = null,
-    val enforceSingleSpaceSeparation: Boolean? = null,
-    val enforceSpaceAroundBinaryOperators: Boolean? = null,
-    val enforceLineBreakAfterStatement: Boolean? = null,
+    @SerialName("enforce-no-spacing-around-equals")
+    val enforceNoSpacingAroundEquals: Boolean = false,
+    @SerialName("enforce-spacing-around-equals")
+    val enforceSpacingAroundEquals: Boolean = false,
+    @SerialName("enforce-spacing-before-colon-in-declaration")
+    val enforceSpaceBeforeColonInDeclaration: Boolean = false,
+    @SerialName("enforce-spacing-after-colon-in-declaration")
+    val enforceSpaceAfterColonInDeclaration: Boolean = false,
+    @SerialName("mandatory-single-space-separation")
+    val enforceSingleSpaceSeparation: Boolean = false,
+    @SerialName("mandatory-space-surrounding-operations")
+    val enforceSpaceAroundBinaryOperators: Boolean = false,
+    @SerialName("mandatory-line-break-after-statement")
+    val enforceLineBreakAfterStatement: Boolean = false,
+    @SerialName("line-breaks-after-println")
     val lineBreaksAfterPrintln: Int? = null,
 )

@@ -26,6 +26,7 @@ final class PrintScriptV1FactoriesJavaInterop {
         PrintScriptV1InterpreterFactory.create(output);
 
         PrintScriptV1FormatterFactory.defaultConfiguration();
+        PrintScriptV1FormatterFactory.configurationFrom("{}");
         PrintScriptV1FormatterFactory.create();
 
         PrintScriptV1LinterFactory.defaultConfiguration();
