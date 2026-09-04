@@ -1,5 +1,6 @@
 package printscript.ast.statement
 
+import printscript.ast.DeclarationKind
 import printscript.ast.DeclaredType
 import printscript.ast.Identifier
 import printscript.ast.expression.Expression
@@ -11,4 +12,5 @@ public data class VariableDeclarationStatement(
     public val declaredType: DeclaredType,
     public val initializer: Expression?,
     override val span: SourceSpan,
+    public val declarationKind: DeclarationKind = DeclarationKind.VARIABLE,
 ) : Statement

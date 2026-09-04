@@ -130,10 +130,18 @@ class ErrorWordingCompletenessTest {
 
     @Test
     fun `the engine's own semantic error has its own wording`() {
-        assertNotEquals(
-            illegal = errorReporter.describe(ExtensionSemanticError(anySpan)),
-            actual = errorReporter.describe(SemanticError.UnsupportedStatement(span = anySpan)),
+        val unknownWording = errorReporter.describe(ExtensionSemanticError(anySpan))
+        val errors = listOf(
+            SemanticError.UnsupportedStatement(span = anySpan),
+            SemanticError.UnsupportedExpression(span = anySpan),
         )
+
+        for (error in errors) {
+            assertNotEquals(
+                illegal = unknownWording,
+                actual = errorReporter.describe(error),
+            )
+        }
     }
 
     @Test
@@ -172,6 +180,7 @@ class ErrorWordingCompletenessTest {
         PrintScriptV1SemanticError.UndeclaredVariable(name = "x", span = anySpan),
         PrintScriptV1SemanticError.UninitializedVariable(name = "x", span = anySpan),
         PrintScriptV1SemanticError.AlreadyDeclaredVariable(name = "x", span = anySpan),
+        PrintScriptV1SemanticError.ConstantReassignment(name = "x", span = anySpan),
         PrintScriptV1SemanticError.TypeMismatch(
             name = "x",
             expected = DeclaredType.NUMBER,
@@ -216,6 +225,7 @@ class ErrorWordingCompletenessTest {
             is PrintScriptV1SemanticError.UndeclaredVariable -> "UndeclaredVariable"
             is PrintScriptV1SemanticError.UninitializedVariable -> "UninitializedVariable"
             is PrintScriptV1SemanticError.AlreadyDeclaredVariable -> "AlreadyDeclaredVariable"
+            is PrintScriptV1SemanticError.ConstantReassignment -> "ConstantReassignment"
             is PrintScriptV1SemanticError.TypeMismatch -> "TypeMismatch"
             is PrintScriptV1SemanticError.InvalidBinaryOperands -> "InvalidBinaryOperands"
             is PrintScriptV1SemanticError.InvalidUnaryOperand -> "InvalidUnaryOperand"

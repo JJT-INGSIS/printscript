@@ -96,6 +96,27 @@ class PrintScriptV1LexerTest {
     }
 
     @Test
+    fun `the V1 factory keeps V1_1 keywords as identifiers`() {
+        val tokenSource = lexer.tokenize(
+            sourceReaderFor("const boolean if else readInput readEnv true false"),
+        )
+
+        tokenSource.assertProducesTokenSequence(
+            listOf(
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "const"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "boolean"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "if"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "else"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "readInput"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "readEnv"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "true"),
+                ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "false"),
+                ExpectedToken(PrintScriptV1TokenType.EOF, ""),
+            ),
+        )
+    }
+
+    @Test
     fun `additional scanners have priority over V1 scanners`() {
         val lexerWithExternalScanner =
             PrintScriptV1LexerFactory.create(

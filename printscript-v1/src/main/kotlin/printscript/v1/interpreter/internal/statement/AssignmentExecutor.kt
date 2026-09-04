@@ -35,13 +35,8 @@ internal class AssignmentExecutor(
         val state: Environment = context.state
         val name: String = statement.target.value
 
-        val binding: VariableBinding = state.lookupBinding(name)
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.UndeclaredVariable(
-                    name = name,
-                    span = statement.span,
-                ),
-            )
+        val binding: VariableBinding = findAssignableBinding(statement, state)
+            .orReturn { return it }
 
         val value: RuntimeValue =
             expressionEvaluator.evaluateExpression(statement.expression, state)
@@ -54,13 +49,35 @@ internal class AssignmentExecutor(
         ).orReturn { return it }
 
         return ExecutionResult.Success(
-            state.withBinding(
+            state.reassigning(
                 name = name,
-                binding = VariableBinding(
-                    type = binding.type,
-                    value = value,
-                ),
+                value = value,
             ),
         )
+    }
+
+    private fun findAssignableBinding(
+        statement: AssignmentStatement,
+        state: Environment,
+    ): ExecutionResult<VariableBinding> {
+        val name: String = statement.target.value
+        val binding: VariableBinding = state.lookupBinding(name)
+            ?: return ExecutionResult.Failure(
+                PrintScriptV1SemanticError.UndeclaredVariable(
+                    name = name,
+                    span = statement.span,
+                ),
+            )
+
+        if (!binding.reassignable) {
+            return ExecutionResult.Failure(
+                PrintScriptV1SemanticError.ConstantReassignment(
+                    name = name,
+                    span = statement.span,
+                ),
+            )
+        }
+
+        return ExecutionResult.Success(binding)
     }
 }

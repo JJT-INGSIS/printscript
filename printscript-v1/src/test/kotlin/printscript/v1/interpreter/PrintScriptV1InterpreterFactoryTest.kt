@@ -1,9 +1,11 @@
 package printscript.v1.interpreter
 
+import printscript.ast.DeclarationKind
 import printscript.ast.DeclaredType
 import printscript.ast.Identifier
 import printscript.ast.expression.BinaryExpression
 import printscript.ast.expression.BinaryOperator
+import printscript.ast.expression.BooleanLiteralExpression
 import printscript.ast.expression.Expression
 import printscript.ast.expression.IdentifierExpression
 import printscript.ast.expression.NumberLiteralExpression
@@ -234,6 +236,42 @@ class PrintScriptV1InterpreterFactoryTest {
             expected = listOf("Result: 3"),
             actual = output,
         )
+    }
+
+    @Test
+    fun `a constant cannot be reassigned`() {
+        val error = runExpectingFailure(
+            VariableDeclarationStatement(
+                identifier = name("answer"),
+                declaredType = DeclaredType.NUMBER,
+                initializer = number("42"),
+                span = anySpan,
+                declarationKind = DeclarationKind.CONSTANT,
+            ),
+            AssignmentStatement(
+                target = name("answer"),
+                expression = number("10"),
+                span = anySpan,
+            ),
+        )
+
+        val reassignment = assertIs<PrintScriptV1SemanticError.ConstantReassignment>(error)
+        assertEquals(expected = "answer", actual = reassignment.name)
+    }
+
+    @Test
+    fun `the V1 evaluator rejects V1_1 expressions`() {
+        val error = runExpectingFailure(
+            PrintlnStatement(
+                argument = BooleanLiteralExpression(
+                    value = true,
+                    span = anySpan,
+                ),
+                span = anySpan,
+            ),
+        )
+
+        assertIs<SemanticError.UnsupportedExpression>(error)
     }
 
     @Test

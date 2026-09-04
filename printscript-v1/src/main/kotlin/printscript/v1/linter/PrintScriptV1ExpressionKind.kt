@@ -1,10 +1,13 @@
 package printscript.v1.linter
 
 import printscript.ast.expression.BinaryExpression
+import printscript.ast.expression.BooleanLiteralExpression
 import printscript.ast.expression.Expression
 import printscript.ast.expression.GroupingExpression
 import printscript.ast.expression.IdentifierExpression
 import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.expression.ReadEnvironmentExpression
+import printscript.ast.expression.ReadInputExpression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.UnaryExpression
 
@@ -22,6 +25,8 @@ public enum class PrintScriptV1ExpressionKind {
 
                 is StringLiteralExpression -> LITERAL
 
+                is BooleanLiteralExpression -> LITERAL
+
                 is IdentifierExpression -> VARIABLE
 
                 is BinaryExpression -> COMPOSED
@@ -29,6 +34,10 @@ public enum class PrintScriptV1ExpressionKind {
                 is UnaryExpression -> COMPOSED
 
                 is GroupingExpression -> COMPOSED
+
+                is ReadInputExpression -> COMPOSED
+
+                is ReadEnvironmentExpression -> COMPOSED
             }
         }
     }

@@ -1,14 +1,18 @@
 package printscript.v1.interpreter.internal.expression
 
 import printscript.ast.expression.BinaryExpression
+import printscript.ast.expression.BooleanLiteralExpression
 import printscript.ast.expression.Expression
 import printscript.ast.expression.GroupingExpression
 import printscript.ast.expression.IdentifierExpression
 import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.expression.ReadEnvironmentExpression
+import printscript.ast.expression.ReadInputExpression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.interpreter.ExecutionResult
+import printscript.interpreter.SemanticError
 import printscript.runtime.Environment
 import printscript.runtime.ExpressionEvaluator
 import printscript.runtime.NumberValue
@@ -32,7 +36,16 @@ internal class DefaultExpressionEvaluator(
             is IdentifierExpression -> evaluateIdentifier(expression, environment)
             is UnaryExpression -> evaluateUnary(expression, environment)
             is BinaryExpression -> evaluateBinary(expression, environment)
+            is BooleanLiteralExpression -> unsupportedExpression(expression)
+            is ReadInputExpression -> unsupportedExpression(expression)
+            is ReadEnvironmentExpression -> unsupportedExpression(expression)
         }
+    }
+
+    private fun unsupportedExpression(expression: Expression): ExecutionResult.Failure {
+        return ExecutionResult.Failure(
+            SemanticError.UnsupportedExpression(expression.span),
+        )
     }
 
     private fun evaluateNumberLiteral(expression: NumberLiteralExpression): ExecutionResult<RuntimeValue> {
