@@ -1,5 +1,6 @@
 plugins {
     id("printscript.publishable-library")
+    kotlin("plugin.serialization")
 }
 
 dependencies {
@@ -14,4 +15,6 @@ dependencies {
     api(project(":printscript-ast"))
     api(project(":printscript-runtime"))
     api(project(":common"))
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }

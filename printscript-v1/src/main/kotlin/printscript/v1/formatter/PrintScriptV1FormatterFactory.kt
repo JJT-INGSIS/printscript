@@ -3,6 +3,7 @@ package printscript.v1.formatter
 import printscript.formatter.Formatter
 import printscript.formatter.FormatterFactory
 import printscript.formatter.TokenGapFormattingRule
+import printscript.v1.formatter.internal.configuration.PrintScriptV1FormatterConfigurationReader
 import printscript.v1.formatter.internal.rule.EqualsSpacingRule
 import printscript.v1.formatter.internal.rule.LineBreakAfterPrintlnRule
 import printscript.v1.formatter.internal.rule.LineBreakAfterStatementRule
@@ -18,6 +19,16 @@ public object PrintScriptV1FormatterFactory {
     @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1FormatterConfiguration {
         return PrintScriptV1FormatterConfiguration()
+    }
+
+    /**
+     * Reads a formatter configuration from a JSON document. Missing keys
+     * fall back to [defaultConfiguration]; an invalid document is reported
+     * as a domain error instead of throwing.
+     */
+    @JvmStatic
+    public fun configurationFrom(json: String): PrintScriptV1FormatterConfigurationResult {
+        return PrintScriptV1FormatterConfigurationReader.read(json)
     }
 
     @JvmStatic
