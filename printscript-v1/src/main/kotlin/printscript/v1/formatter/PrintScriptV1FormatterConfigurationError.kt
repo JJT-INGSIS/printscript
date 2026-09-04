@@ -1,17 +1,12 @@
 package printscript.v1.formatter
 
-import printscript.formatter.FormatterConfigurationError
+public sealed interface PrintScriptV1FormatterConfigurationError {
 
-public sealed interface PrintScriptV1FormatterConfigurationError : FormatterConfigurationError {
-
-    public data class MalformedJson(
+    public data class InvalidConfigurationDocument(
         public val reason: String,
     ) : PrintScriptV1FormatterConfigurationError
 
-    public data class UnknownEqualsSpacing(
-        public val value: String,
-        public val supportedValues: Set<String>,
-    ) : PrintScriptV1FormatterConfigurationError
+    public data object ConflictingEqualsSpacingRules : PrintScriptV1FormatterConfigurationError
 
     public data class NegativeLineBreakCount(
         public val providedValue: Int,

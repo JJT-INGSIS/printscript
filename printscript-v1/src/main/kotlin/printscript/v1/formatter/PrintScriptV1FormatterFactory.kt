@@ -21,11 +21,6 @@ public object PrintScriptV1FormatterFactory {
         return PrintScriptV1FormatterConfiguration()
     }
 
-    /**
-     * Reads a formatter configuration from a JSON document. Missing keys
-     * fall back to [defaultConfiguration]; an invalid document is reported
-     * as a domain error instead of throwing.
-     */
     @JvmStatic
     public fun configurationFrom(json: String): PrintScriptV1FormatterConfigurationResult {
         return PrintScriptV1FormatterConfigurationReader.read(json)
