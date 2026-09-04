@@ -30,6 +30,7 @@ final class PrintScriptV1FactoriesJavaInterop {
         PrintScriptV1FormatterFactory.create();
 
         PrintScriptV1LinterFactory.defaultConfiguration();
+        PrintScriptV1LinterFactory.configurationFrom("{}");
         PrintScriptV1LinterFactory.create();
     }
 }
