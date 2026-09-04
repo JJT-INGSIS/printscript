@@ -56,6 +56,9 @@ internal class ErrorReporter {
             is PrintScriptV1SemanticError.AlreadyDeclaredVariable ->
                 "la variable '${error.name}' ya fue declarada"
 
+            is PrintScriptV1SemanticError.ConstantReassignment ->
+                "la constante '${error.name}' no puede reasignarse"
+
             is PrintScriptV1SemanticError.TypeMismatch ->
                 "'${error.name}' es de tipo ${PrintScriptWording.describe(error.expected)} " +
                     "y se le intentó asignar un ${PrintScriptWording.describe(error.actual)}"
@@ -78,6 +81,9 @@ internal class ErrorReporter {
 
             is SemanticError.UnsupportedStatement ->
                 "esta sentencia no está soportada en esta versión"
+
+            is SemanticError.UnsupportedExpression ->
+                "esta expresión no está soportada en esta versión"
 
             else ->
                 "error semántico desconocido"

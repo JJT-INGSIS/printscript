@@ -30,3 +30,14 @@ public data class StringValue(
         return value
     }
 }
+
+public data class BooleanValue(
+    public val value: Boolean,
+) : RuntimeValue {
+
+    override val type: DeclaredType = DeclaredType.BOOLEAN
+
+    override fun asText(): String {
+        return value.toString()
+    }
+}

@@ -36,4 +36,22 @@ class RuntimeValueTest {
         val value = StringValue("x")
         assertEquals(DeclaredType.STRING, value.type)
     }
+
+    @Test
+    fun `a true boolean is printed as true`() {
+        val value = BooleanValue(true)
+        assertEquals("true", value.asText())
+    }
+
+    @Test
+    fun `a false boolean is printed as false`() {
+        val value = BooleanValue(false)
+        assertEquals("false", value.asText())
+    }
+
+    @Test
+    fun `a boolean value has boolean type`() {
+        val value = BooleanValue(true)
+        assertEquals(DeclaredType.BOOLEAN, value.type)
+    }
 }

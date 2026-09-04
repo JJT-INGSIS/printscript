@@ -1,5 +1,6 @@
 package printscript.v1.interpreter.internal.statement
 
+import printscript.ast.DeclarationKind
 import printscript.ast.expression.Expression
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionResult
@@ -43,11 +44,12 @@ internal class DeclarationExecutor(
                 .orReturn { return it }
 
         return ExecutionResult.Success(
-            state.withBinding(
+            state.declaring(
                 name = statement.identifier.value,
                 binding = VariableBinding(
                     type = statement.declaredType,
                     value = initialValue,
+                    reassignable = statement.declarationKind == DeclarationKind.VARIABLE,
                 ),
             ),
         )

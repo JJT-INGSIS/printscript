@@ -9,4 +9,8 @@ public interface SemanticError {
     public data class UnsupportedStatement(
         override val span: SourceSpan,
     ) : SemanticError
+
+    public data class UnsupportedExpression(
+        override val span: SourceSpan,
+    ) : SemanticError
 }

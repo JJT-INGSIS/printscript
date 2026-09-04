@@ -283,18 +283,7 @@ private class CompositeExecutor : StatementExecutor<TestState> {
         context: StatementExecutionContext<TestState>,
     ): ExecutionResult<TestState> {
         val composite = assertIs<CompositeTestStatement>(statement)
-        var currentContext = context
-
-        for (nestedStatement in composite.statements) {
-            when (val result = currentContext.executeStatement(nestedStatement)) {
-                is ExecutionResult.Failure -> return result
-                is ExecutionResult.Success -> {
-                    currentContext = currentContext.withState(result.value)
-                }
-            }
-        }
-
-        return ExecutionResult.Success(currentContext.state)
+        return context.executeStatements(composite.statements)
     }
 }
 
