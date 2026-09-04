@@ -3,6 +3,7 @@ package printscript.v1.linter
 import printscript.linter.LintRule
 import printscript.linter.Linter
 import printscript.linter.LinterFactory
+import printscript.v1.linter.internal.configuration.PrintScriptV1LinterConfigurationReader
 import printscript.v1.linter.rule.PrintScriptV1IdentifierNamingRule
 import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
 
@@ -15,11 +16,14 @@ public object PrintScriptV1LinterFactory {
                 PrintScriptV1RuleConfiguration.IdentifierNaming(
                     convention = PrintScriptV1NamingConvention.CAMEL_CASE,
                 ),
-                PrintScriptV1RuleConfiguration.PrintlnArgument(
-                    acceptanceByKind = defaultPrintlnAcceptance(),
-                ),
+                variableOrLiteralPrintlnArgumentRule(),
             ),
         )
+    }
+
+    @JvmStatic
+    public fun configurationFrom(json: String): PrintScriptV1LinterConfigurationResult {
+        return PrintScriptV1LinterConfigurationReader.read(json)
     }
 
     @JvmStatic
@@ -30,14 +34,6 @@ public object PrintScriptV1LinterFactory {
     ): Linter {
         return LinterFactory.create(
             rules = additionalRules + printScriptV1Rules(configuration),
-        )
-    }
-
-    private fun defaultPrintlnAcceptance(): Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance> {
-        return mapOf(
-            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
         )
     }
 
@@ -54,4 +50,14 @@ public object PrintScriptV1LinterFactory {
                 PrintScriptV1PrintlnArgumentRule(configuration.acceptanceByKind)
         }
     }
+}
+
+internal fun variableOrLiteralPrintlnArgumentRule(): PrintScriptV1RuleConfiguration.PrintlnArgument {
+    return PrintScriptV1RuleConfiguration.PrintlnArgument(
+        acceptanceByKind = mapOf(
+            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+        ),
+    )
 }
