@@ -1,5 +1,6 @@
 package printscript.v1.interpreter.internal.expression
 
+import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryExpression
 import printscript.ast.expression.BooleanLiteralExpression
 import printscript.ast.expression.Expression
@@ -26,19 +27,59 @@ import printscript.v1.interpreter.internal.orReturn
 
 internal class DefaultExpressionEvaluator(
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
+    private val v11ExpressionEvaluation: PrintScriptV11ExpressionEvaluation? = null,
 ) : ExpressionEvaluator {
 
     override fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
+        return evaluateWithExpectedType(
+            expression = expression,
+            environment = environment,
+            expectedType = null,
+        )
+    }
+
+    override fun evaluateExpression(
+        expression: Expression,
+        environment: Environment,
+        expectedType: DeclaredType,
+    ): ExecutionResult<RuntimeValue> {
+        return evaluateWithExpectedType(
+            expression = expression,
+            environment = environment,
+            expectedType = expectedType,
+        )
+    }
+
+    private fun evaluateWithExpectedType(
+        expression: Expression,
+        environment: Environment,
+        expectedType: DeclaredType?,
+    ): ExecutionResult<RuntimeValue> {
         return when (expression) {
             is NumberLiteralExpression -> evaluateNumberLiteral(expression)
             is StringLiteralExpression -> evaluateStringLiteral(expression)
-            is GroupingExpression -> evaluateExpression(expression.expression, environment)
+            is GroupingExpression -> evaluateWithExpectedType(expression.expression, environment, expectedType)
             is IdentifierExpression -> evaluateIdentifier(expression, environment)
-            is UnaryExpression -> evaluateUnary(expression, environment)
-            is BinaryExpression -> evaluateBinary(expression, environment)
-            is BooleanLiteralExpression -> unsupportedExpression(expression)
-            is ReadInputExpression -> unsupportedExpression(expression)
-            is ReadEnvironmentExpression -> unsupportedExpression(expression)
+            is UnaryExpression -> evaluateUnary(expression, environment, expectedType)
+            is BinaryExpression -> evaluateBinary(expression, environment, expectedType)
+            is BooleanLiteralExpression ->
+                v11ExpressionEvaluation?.evaluateBooleanLiteral(expression)
+                    ?: unsupportedExpression(expression)
+
+            is ReadInputExpression ->
+                v11ExpressionEvaluation?.evaluateReadInput(
+                    expression = expression,
+                    environment = environment,
+                    expectedType = expectedType,
+                    evaluateNestedExpression = ::evaluateWithExpectedType,
+                ) ?: unsupportedExpression(expression)
+
+            is ReadEnvironmentExpression ->
+                v11ExpressionEvaluation?.evaluateReadEnvironment(
+                    expression = expression,
+                    environment = environment,
+                    evaluateNestedExpression = ::evaluateWithExpectedType,
+                ) ?: unsupportedExpression(expression)
         }
     }
 
@@ -81,8 +122,12 @@ internal class DefaultExpressionEvaluator(
         return ExecutionResult.Success(value)
     }
 
-    private fun evaluateUnary(expression: UnaryExpression, environment: Environment): ExecutionResult<RuntimeValue> {
-        val operand: RuntimeValue = evaluateExpression(expression.operand, environment)
+    private fun evaluateUnary(
+        expression: UnaryExpression,
+        environment: Environment,
+        expectedType: DeclaredType?,
+    ): ExecutionResult<RuntimeValue> {
+        val operand: RuntimeValue = evaluateWithExpectedType(expression.operand, environment, expectedType)
             .orReturn { return it }
 
         if (operand !is NumberValue) {
@@ -103,11 +148,15 @@ internal class DefaultExpressionEvaluator(
         return ExecutionResult.Success(result)
     }
 
-    private fun evaluateBinary(expression: BinaryExpression, environment: Environment): ExecutionResult<RuntimeValue> {
-        val left: RuntimeValue = evaluateExpression(expression.left, environment)
+    private fun evaluateBinary(
+        expression: BinaryExpression,
+        environment: Environment,
+        expectedType: DeclaredType?,
+    ): ExecutionResult<RuntimeValue> {
+        val left: RuntimeValue = evaluateWithExpectedType(expression.left, environment, expectedType)
             .orReturn { return it }
 
-        val right: RuntimeValue = evaluateExpression(expression.right, environment)
+        val right: RuntimeValue = evaluateWithExpectedType(expression.right, environment, expectedType)
             .orReturn { return it }
 
         val operation: BinaryOperation = operations.forOperator(expression.operator)
