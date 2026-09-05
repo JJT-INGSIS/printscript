@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class PrintScriptV1FormatterConfigurationDocument(
+internal data class PrintScriptV11FormatterConfigurationDocument(
     @SerialName("enforce-no-spacing-around-equals")
     override val enforceNoSpacingAroundEquals: Boolean = false,
     @SerialName("enforce-spacing-around-equals")
@@ -21,4 +21,10 @@ internal data class PrintScriptV1FormatterConfigurationDocument(
     override val enforceLineBreakAfterStatement: Boolean = false,
     @SerialName("line-breaks-after-println")
     override val lineBreaksAfterPrintln: Int? = null,
+    @SerialName("if-brace-same-line")
+    val ifBraceSameLine: Boolean = false,
+    @SerialName("if-brace-below-line")
+    val ifBraceBelowLine: Boolean = false,
+    @SerialName("indent-inside-if")
+    val indentationInsideIf: Int? = null,
 ) : PrintScriptV1FormatterConfigurationValues

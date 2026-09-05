@@ -5,6 +5,7 @@ import printscript.formatter.Formatter
 import printscript.formatter.TokenGapFormattingRule
 import printscript.source.SourceReaderFactory
 import printscript.token.TokenSource
+import printscript.v1.lexer.PrintScriptV11FormattingLexerFactory
 import printscript.v1.lexer.PrintScriptV1FormattingLexerFactory
 
 internal fun formatSource(
@@ -27,6 +28,23 @@ internal fun formatSource(
 internal fun formatSourceWith(formatter: Formatter, sourceCode: String): String {
     val tokens = PrintScriptV1FormattingLexerFactory.create().tokenize(
         SourceReaderFactory.fromString(sourceCode),
+    )
+
+    return collectFormattedText(formatter, tokens)
+}
+
+internal fun formatSourceV11(
+    sourceCode: String,
+    configuration: PrintScriptV11FormatterConfiguration =
+        PrintScriptV11FormatterFactory.defaultConfiguration(),
+    additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
+): String {
+    val tokens = PrintScriptV11FormattingLexerFactory.create().tokenize(
+        SourceReaderFactory.fromString(sourceCode),
+    )
+    val formatter = PrintScriptV11FormatterFactory.create(
+        configuration = configuration,
+        additionalFormattingRules = additionalFormattingRules,
     )
 
     return collectFormattedText(formatter, tokens)
