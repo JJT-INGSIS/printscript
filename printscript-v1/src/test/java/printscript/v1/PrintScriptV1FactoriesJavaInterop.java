@@ -10,6 +10,7 @@ import printscript.v1.lexer.PrintScriptV1FormattingLexerFactory;
 import printscript.v1.lexer.PrintScriptV1LexerFactory;
 import printscript.v1.linter.PrintScriptV1LinterFactory;
 import printscript.v1.parser.PrintScriptV1ParserFactory;
+import printscript.v1.parser.PrintScriptV11ParserFactory;
 
 final class PrintScriptV1FactoriesJavaInterop {
 
@@ -26,6 +27,8 @@ final class PrintScriptV1FactoriesJavaInterop {
 
         PrintScriptV1ParserFactory.defaultConfiguration();
         PrintScriptV1ParserFactory.create();
+        PrintScriptV11ParserFactory.defaultConfiguration();
+        PrintScriptV11ParserFactory.create();
 
         PrintScriptV1ExpressionEvaluatorFactory.create();
         PrintScriptV1InterpreterFactory.create(output);

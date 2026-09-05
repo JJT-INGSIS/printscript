@@ -58,17 +58,33 @@ internal class TokenListBuilder {
 
     fun let() = token(PrintScriptV1TokenType.LET, "let")
 
+    fun constant() = token(PrintScriptV1TokenType.CONST, "const")
+
     fun id(name: String) = token(PrintScriptV1TokenType.IDENTIFIER, name)
 
     fun numberType() = token(PrintScriptV1TokenType.NUMBER_TYPE, "number")
 
     fun stringType() = token(PrintScriptV1TokenType.STRING_TYPE, "string")
 
+    fun booleanType() = token(PrintScriptV1TokenType.BOOLEAN_TYPE, "boolean")
+
     fun println() = token(PrintScriptV1TokenType.PRINTLN, "println")
+
+    fun ifKeyword() = token(PrintScriptV1TokenType.IF, "if")
+
+    fun elseKeyword() = token(PrintScriptV1TokenType.ELSE, "else")
+
+    fun readInput() = token(PrintScriptV1TokenType.READ_INPUT, "readInput")
+
+    fun readEnvironment() = token(PrintScriptV1TokenType.READ_ENV, "readEnv")
 
     fun number(value: String) = token(PrintScriptV1TokenType.NUMBER_LITERAL, value)
 
     fun string(literal: String) = token(PrintScriptV1TokenType.STRING_LITERAL, literal)
+
+    fun trueLiteral() = token(PrintScriptV1TokenType.TRUE, "true")
+
+    fun falseLiteral() = token(PrintScriptV1TokenType.FALSE, "false")
 
     fun assign() = token(PrintScriptV1TokenType.ASSIGN, "=")
 
@@ -87,6 +103,10 @@ internal class TokenListBuilder {
     fun open() = token(PrintScriptV1TokenType.LEFT_PAREN, "(")
 
     fun close() = token(PrintScriptV1TokenType.RIGHT_PAREN, ")")
+
+    fun leftBrace() = token(PrintScriptV1TokenType.LEFT_BRACE, "{")
+
+    fun rightBrace() = token(PrintScriptV1TokenType.RIGHT_BRACE, "}")
 
     fun eof() = token(PrintScriptV1TokenType.EOF, "")
 
