@@ -117,6 +117,14 @@ class PrintScriptV1LexerTest {
     }
 
     @Test
+    fun `the V1 factory rejects braces`() {
+        val failure = lexer.tokenize(sourceReaderFor("{")).nextToken()
+        val lexicalError = failure.assertLexicalError<LexicalError.UnexpectedCharacter>()
+
+        assertEquals(expected = '{', actual = lexicalError.character)
+    }
+
+    @Test
     fun `additional scanners have priority over V1 scanners`() {
         val lexerWithExternalScanner =
             PrintScriptV1LexerFactory.create(
