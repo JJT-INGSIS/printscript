@@ -23,19 +23,25 @@ internal class AnalysisCommand(
 
     private val languageOptions by LanguageOptions()
 
+    private val configurationFilePath by configurationFileOption()
+
     override fun help(context: Context): String {
         return "Reporta problemas de estilo sin modificar el archivo"
     }
 
     override fun run() {
         val toolchain = toolchainFor(languageOptions.version)
+        val linter = configuredToolFrom(
+            configurationFilePath = configurationFilePath,
+            toolConfiguredBy = toolchain.linterConfiguredBy,
+        )
 
         runOnSourceFile(
             sourceFilePath = sourceFilePath,
             errorReporter = errorReporter,
         ) { sourceReader ->
             reportRemainingDiagnostics(
-                source = toolchain.linter().lint(
+                source = linter.lint(
                     toolchain.statementsFrom(sourceReader),
                 ),
                 reportedCount = 0,

@@ -100,6 +100,10 @@ internal class ErrorReporter {
             is PrintScriptV1SemanticError.EnvironmentVariableNotFound ->
                 "no existe la variable de entorno '${error.name}'"
 
+            is PrintScriptV1SemanticError.InvalidEnvironmentVariableValue ->
+                "la variable de entorno '${error.name}' no se puede interpretar como " +
+                    PrintScriptWording.describe(error.expected)
+
             is SemanticError.UnsupportedStatement ->
                 "esta sentencia no está soportada en esta versión"
 

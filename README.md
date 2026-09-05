@@ -35,15 +35,17 @@ El ejecutable queda en `cli/build/install/printscript/bin/printscript`.
 ```bash
 printscript validation ejemplo.ps   # ¿el archivo es válido?
 printscript execution  ejemplo.ps   # correlo
-printscript formatting ejemplo.ps   # reescribilo con el formato configurado
+printscript formatting ejemplo.ps   # muestra el código formateado
 printscript analysis   ejemplo.ps   # reportá problemas de estilo
 ```
 
-Las cuatro operaciones aceptan las mismas opciones:
+Las cuatro operaciones aceptan `--version`. `formatting` y `analysis` también
+aceptan `--config` con la ruta de un archivo JSON.
 
 | Opción | Qué hace |
 |---|---|
-| `--version` | Versión del lenguaje. Hoy solo `1.0`, que es el default. |
+| `--version` | Versión del lenguaje: `1.0` o `1.1`. El valor por defecto es `1.0`. |
+| `--config` | Configuración JSON para `formatting` o `analysis`. |
 | `--help` | Ayuda. Disponible también por operación: `printscript formatting --help`. |
 
 ### Códigos de salida
@@ -195,49 +197,27 @@ archivos.
 
 ### CLI
 
-La CLI está partida en dos capas. El **dominio** —`SourceOperation` y sus cuatro
-implementaciones, `SourceOperationRunner`, los reporters— recibe sentencias y
-una terminal, y devuelve un `OperationOutcome`; no conoce `argv`, ni los flags,
-ni la consola. El **adaptador** son los cuatro comandos de Clikt.
-
-Esa frontera es la que permite que el parseo de argumentos sea una librería en
-lugar de código propio, y que las cuatro operaciones se testeen sin línea de
-comandos.
-
-Los cuatro comandos heredan **directamente de `CliktCommand`**: no hay clase base
-propia. Lo que comparten se reutiliza por composición, con los mecanismos que la
-propia librería ofrece para eso:
+Los cuatro comandos heredan directamente de `CliktCommand`; no hay una clase
+base propia. Lo compartido se reutiliza con funciones y grupos de opciones:
 
 | Qué se comparte | Cómo |
 |---|---|
 | el argumento `<archivo>` | la extensión `sourceFileArgument()` |
 | la opción `--version` | el `OptionGroup` `LanguageOptions` |
-| la orquestación del `run()` | la extensión `runSourceOperation()` |
-| qué operación montar | la `SourceOperationFactory` inyectada |
-
-Se eligió composición sobre herencia por un motivo concreto: con una clase base,
-los cuatro comandos quedaban obligados a exponer **exactamente las mismas
-opciones**. Declarándolas por comando, cada uno puede tener las suyas — algo que
-va a hacer falta cuando vuelva `--config`, que corresponde solo a `formatting` y
-`analysis`.
+| la opción `--config` | la extensión `configurationFileOption()` |
+| la lectura y resultado de una operación | `runOnSourceFile()` y `OperationOutcome` |
 
 `PrintScriptCommandFactory` es la raíz de composición y el único lugar donde se
-instancian los comandos. Producción y tests la comparten: si cada uno armara la
 suya, un test podría quedar en verde verificando un CLI distinto del que se
 distribuye.
 
-Dos decisiones deliberadas en contra de lo que ofrece la librería:
+`PrintScriptToolchainFactory` concentra la selección de versión. Cada toolchain
+agrupa el lexer, parser, interpreter, formatter y linter compatibles, por lo que
+los comandos no necesitan conocer factories concretas de `1.0` o `1.1`.
 
-- **No usamos la validación de archivos de Clikt** (`path(mustExist = true)`).
-  La existencia y los permisos los sigue verificando `SourceReaderFactory`, para
-  conservar los mensajes de error en castellano y con la posición en el código.
-- **El único `throw` del módulo vive en `ProgramTermination`.** Clikt señaliza
-  el código de salida lanzando `ProgramResult`: es su protocolo, no manejo de
-  errores. El dominio sigue devolviendo resultados y nunca lanza ni atrapa.
-
-`Terminal` abstrae la salida: `EchoTerminal` la manda a Clikt en producción y
-`DiscardedProgramOutput` la descarta cuando `validation` corre el programa sin
-mostrar lo que imprimiría.
+La entrada, salida y consulta de variables de entorno se adaptan en la CLI a los
+contratos de `printscript-runtime`. `validation` usa el mismo pipeline de
+ejecución, pero descarta la salida del programa.
 
 ## Gramática de PrintScript 1.0
 

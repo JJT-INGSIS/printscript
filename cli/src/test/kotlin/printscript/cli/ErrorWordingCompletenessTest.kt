@@ -20,6 +20,7 @@ import printscript.token.LexicalError
 import printscript.token.Token
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
+import printscript.v1.linter.PrintScriptV11Diagnostic
 import printscript.v1.linter.PrintScriptV1Diagnostic
 import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.token.PrintScriptV1TokenType
@@ -176,6 +177,19 @@ class ErrorWordingCompletenessTest {
         }
     }
 
+    @Test
+    fun `every V1_1 diagnostic has its own wording`() {
+        val unknownWording = diagnosticReporter.describe(ExtensionDiagnostic(anySpan))
+
+        for (diagnostic in everyV11Diagnostic) {
+            assertNotEquals(
+                illegal = unknownWording,
+                actual = diagnosticReporter.describe(diagnostic),
+                message = "Falta la redacción de ${caseNameOf(diagnostic)} en DiagnosticReporter",
+            )
+        }
+    }
+
     private val everyV1SemanticError = listOf(
         PrintScriptV1SemanticError.UndeclaredVariable(name = "x", span = anySpan),
         PrintScriptV1SemanticError.UninitializedVariable(name = "x", span = anySpan),
@@ -225,6 +239,11 @@ class ErrorWordingCompletenessTest {
             name = "MISSING",
             span = anySpan,
         ),
+        PrintScriptV1SemanticError.InvalidEnvironmentVariableValue(
+            name = "PORT",
+            expected = DeclaredType.NUMBER,
+            span = anySpan,
+        ),
     )
 
     private val everyV1LexicalError = listOf(
@@ -238,6 +257,12 @@ class ErrorWordingCompletenessTest {
             expectedConvention = PrintScriptV1NamingConvention.CAMEL_CASE,
         ),
         PrintScriptV1Diagnostic.UnsupportedPrintlnArgument(
+            argument = NumberLiteralExpression(value = BigDecimal.ONE, span = anySpan),
+        ),
+    )
+
+    private val everyV11Diagnostic = listOf(
+        PrintScriptV11Diagnostic.UnsupportedReadInputArgument(
             argument = NumberLiteralExpression(value = BigDecimal.ONE, span = anySpan),
         ),
     )
@@ -259,6 +284,7 @@ class ErrorWordingCompletenessTest {
             is PrintScriptV1SemanticError.InvalidInputValue -> "InvalidInputValue"
             is PrintScriptV1SemanticError.InvalidEnvironmentVariableName -> "InvalidEnvironmentVariableName"
             is PrintScriptV1SemanticError.EnvironmentVariableNotFound -> "EnvironmentVariableNotFound"
+            is PrintScriptV1SemanticError.InvalidEnvironmentVariableValue -> "InvalidEnvironmentVariableValue"
         }
     }
 
@@ -273,6 +299,12 @@ class ErrorWordingCompletenessTest {
         return when (diagnostic) {
             is PrintScriptV1Diagnostic.NamingConventionViolation -> "NamingConventionViolation"
             is PrintScriptV1Diagnostic.UnsupportedPrintlnArgument -> "UnsupportedPrintlnArgument"
+        }
+    }
+
+    private fun caseNameOf(diagnostic: PrintScriptV11Diagnostic): String {
+        return when (diagnostic) {
+            is PrintScriptV11Diagnostic.UnsupportedReadInputArgument -> "UnsupportedReadInputArgument"
         }
     }
 

@@ -7,10 +7,12 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.runtime.EnvironmentVariableProvider
 import printscript.runtime.ProgramOutput
 
 internal class ValidationCommand(
     private val errorReporter: ErrorReporter,
+    private val environmentVariables: EnvironmentVariableProvider = systemEnvironmentVariables(),
     private val toolchainFor: (LanguageVersion) -> PrintScriptToolchain =
         PrintScriptToolchainFactory::forVersion,
 ) : CliktCommand(name = "validation") {
@@ -31,7 +33,11 @@ internal class ValidationCommand(
             errorReporter = errorReporter,
         ) { sourceReader ->
             interpretationOutcome(
-                interpreter = toolchain.interpreterWriting(discardedOutput()),
+                interpreter = toolchain.interpreterUsing(
+                    discardedOutput(),
+                    terminalInput(),
+                    environmentVariables,
+                ),
                 statements = toolchain.statementsFrom(sourceReader),
                 errorReporter = errorReporter,
                 onSuccess = { echo("El archivo es válido.") },

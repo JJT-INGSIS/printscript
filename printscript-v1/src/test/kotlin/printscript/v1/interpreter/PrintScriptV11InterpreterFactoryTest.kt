@@ -174,6 +174,41 @@ class PrintScriptV11InterpreterFactoryTest {
     }
 
     @Test
+    fun `converts environment variables to the declared type`() {
+        val execution = runSuccessfully(
+            declare("port", DeclaredType.NUMBER, readEnvironment(text("PORT"))),
+            declare("active", DeclaredType.BOOLEAN, readEnvironment(text("ACTIVE"))),
+            print(variable("port")),
+            print(variable("active")),
+            environmentVariables = MapEnvironmentVariables(
+                mapOf(
+                    "PORT" to "8080",
+                    "ACTIVE" to "true",
+                ),
+            ),
+        )
+
+        assertEquals(expected = listOf("8080", "true"), actual = execution.output.lines())
+    }
+
+    @Test
+    fun `reports an environment variable that cannot be converted`() {
+        val error = runExpectingFailure(
+            declare("port", DeclaredType.NUMBER, readEnvironment(text("PORT"))),
+            environmentVariables = MapEnvironmentVariables(mapOf("PORT" to "not a number")),
+        )
+
+        assertEquals(
+            expected = PrintScriptV1SemanticError.InvalidEnvironmentVariableValue(
+                name = "PORT",
+                expected = DeclaredType.NUMBER,
+                span = anySpan,
+            ),
+            actual = error,
+        )
+    }
+
+    @Test
     fun `reports a missing environment variable`() {
         val error = runExpectingFailure(
             declare("value", DeclaredType.STRING, readEnvironment(text("MISSING"))),

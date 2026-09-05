@@ -72,6 +72,7 @@ internal class PrintScriptV11ExpressionEvaluation(
     fun evaluateReadEnvironment(
         expression: ReadEnvironmentExpression,
         environment: Environment,
+        expectedType: DeclaredType?,
         evaluateNestedExpression: NestedExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
         val variableName: RuntimeValue = evaluateNestedExpression(
@@ -97,7 +98,17 @@ internal class PrintScriptV11ExpressionEvaluation(
                 ),
             )
 
-        return ExecutionResult.Success(StringValue(rawValue))
+        val targetType: DeclaredType = expectedType ?: DeclaredType.STRING
+        val value: RuntimeValue = runtimeValueOf(rawValue, targetType)
+            ?: return ExecutionResult.Failure(
+                PrintScriptV1SemanticError.InvalidEnvironmentVariableValue(
+                    name = variableName.value,
+                    expected = targetType,
+                    span = expression.span,
+                ),
+            )
+
+        return ExecutionResult.Success(value)
     }
 
     private fun runtimeValueOf(value: String, expectedType: DeclaredType): RuntimeValue? {
