@@ -4,18 +4,12 @@ import kotlinx.serialization.json.Json
 import printscript.v1.linter.PrintScriptV1LinterConfiguration
 import printscript.v1.linter.PrintScriptV1LinterConfigurationError
 import printscript.v1.linter.PrintScriptV1LinterConfigurationResult
-import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.linter.PrintScriptV1RuleConfiguration
 import printscript.v1.linter.variableOrLiteralPrintlnArgumentRule
 
 private val configurationJson = Json {
     ignoreUnknownKeys = false
 }
-
-private val namingConventionByConfiguredName: Map<String, PrintScriptV1NamingConvention> = mapOf(
-    "camel case" to PrintScriptV1NamingConvention.CAMEL_CASE,
-    "snake case" to PrintScriptV1NamingConvention.SNAKE_CASE,
-)
 
 internal object PrintScriptV1LinterConfigurationReader {
 
