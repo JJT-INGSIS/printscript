@@ -8,16 +8,21 @@ import printscript.ast.expression.Expression
 import printscript.ast.expression.GroupingExpression
 import printscript.ast.expression.IdentifierExpression
 import printscript.ast.expression.NumberLiteralExpression
+import printscript.ast.expression.ReadEnvironmentExpression
+import printscript.ast.expression.ReadInputExpression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.ast.statement.AssignmentStatement
+import printscript.ast.statement.BlockStatement
+import printscript.ast.statement.IfStatement
 import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.DiagnosticReadResult
 import printscript.linter.DiagnosticSource
+import printscript.linter.LintRule
 import printscript.linter.Linter
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
@@ -90,6 +95,20 @@ internal fun grouped(expression: Expression): Expression {
     )
 }
 
+internal fun readInput(prompt: Expression): Expression {
+    return ReadInputExpression(
+        prompt = prompt,
+        span = anySpan,
+    )
+}
+
+internal fun readEnv(variableName: Expression): Expression {
+    return ReadEnvironmentExpression(
+        variableName = variableName,
+        span = anySpan,
+    )
+}
+
 internal fun declare(variableName: String, type: DeclaredType, initializer: Expression?): Statement {
     return VariableDeclarationStatement(
         identifier = name(variableName),
@@ -110,6 +129,22 @@ internal fun assign(variableName: String, expression: Expression): Statement {
 internal fun printOf(argument: Expression): Statement {
     return PrintlnStatement(
         argument = argument,
+        span = anySpan,
+    )
+}
+
+internal fun blockOf(vararg statements: Statement): BlockStatement {
+    return BlockStatement(
+        statements = statements.toList(),
+        span = anySpan,
+    )
+}
+
+internal fun ifStatement(thenBranch: BlockStatement, elseBranch: BlockStatement? = null): Statement {
+    return IfStatement(
+        condition = name("active"),
+        thenBranch = thenBranch,
+        elseBranch = elseBranch,
         span = anySpan,
     )
 }
@@ -135,6 +170,12 @@ internal class ListStatementSource(
     }
 }
 
+internal fun identifierNamingRule(
+    convention: PrintScriptV1NamingConvention = PrintScriptV1NamingConvention.CAMEL_CASE,
+): PrintScriptV1RuleConfiguration {
+    return PrintScriptV1RuleConfiguration.IdentifierNaming(convention)
+}
+
 internal fun printlnArgumentRule(): PrintScriptV1RuleConfiguration {
     return PrintScriptV1RuleConfiguration.PrintlnArgument(
         acceptanceByKind = mapOf(
@@ -150,6 +191,26 @@ internal fun linterWith(vararg rules: PrintScriptV1RuleConfiguration): Linter {
         configuration = PrintScriptV1LinterConfiguration(
             rules = rules.toList(),
         ),
+    )
+}
+
+internal fun readInputArgumentRule(): PrintScriptV1RuleConfiguration {
+    return PrintScriptV1RuleConfiguration.ReadInputArgument(
+        acceptanceByKind = mapOf(
+            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+        ),
+    )
+}
+
+internal fun v11LinterWith(
+    rules: List<PrintScriptV1RuleConfiguration> = emptyList(),
+    additionalRules: List<LintRule> = emptyList(),
+): Linter {
+    return PrintScriptV11LinterFactory.create(
+        configuration = PrintScriptV11LinterConfiguration(rules = rules),
+        additionalRules = additionalRules,
     )
 }
 
