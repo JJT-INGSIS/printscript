@@ -78,6 +78,7 @@ internal class DefaultExpressionEvaluator(
                 v11ExpressionEvaluation?.evaluateReadEnvironment(
                     expression = expression,
                     environment = environment,
+                    expectedType = expectedType,
                     evaluateNestedExpression = ::evaluateWithExpectedType,
                 ) ?: unsupportedExpression(expression)
         }

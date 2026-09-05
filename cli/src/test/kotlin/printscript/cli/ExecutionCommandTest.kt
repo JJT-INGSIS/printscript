@@ -59,15 +59,19 @@ class ExecutionCommandTest {
                 formattingTokensFrom = {
                     error("ExecutionCommand no debería pedir tokens de formato")
                 },
-                interpreterWriting = { output ->
+                interpreterUsing = { output, _, _ ->
                     FixedResultInterpreter(
                         result = result,
                         output = output,
                         printedLine = printedLine,
                     )
                 },
-                formatter = { error("ExecutionCommand no debería pedir el formatter") },
-                linter = { error("ExecutionCommand no debería pedir el linter") },
+                formatterConfiguredBy = {
+                    error("ExecutionCommand no debería pedir el formatter")
+                },
+                linterConfiguredBy = {
+                    error("ExecutionCommand no debería pedir el linter")
+                },
             )
         }
     }
@@ -92,6 +96,15 @@ class ExecutionCommandTest {
         commandWith(factory).test(listOf(scriptFile(), "--version", "1.0"))
 
         assertEquals(expected = LanguageVersion.V1_0, actual = factory.receivedVersion)
+    }
+
+    @Test
+    fun `accepts version 1_1`() {
+        val factory = RecordingToolchainFactory()
+
+        commandWith(factory).test(listOf(scriptFile(), "--version", "1.1"))
+
+        assertEquals(expected = LanguageVersion.V1_1, actual = factory.receivedVersion)
     }
 
     @Test

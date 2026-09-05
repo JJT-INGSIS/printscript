@@ -1,6 +1,7 @@
 package printscript.cli.internal.report
 
 import printscript.linter.Diagnostic
+import printscript.v1.linter.PrintScriptV11Diagnostic
 import printscript.v1.linter.PrintScriptV1Diagnostic
 
 internal class DiagnosticReporter {
@@ -13,6 +14,9 @@ internal class DiagnosticReporter {
 
             is PrintScriptV1Diagnostic.UnsupportedPrintlnArgument ->
                 "println no acepta una expresión como argumento"
+
+            is PrintScriptV11Diagnostic.UnsupportedReadInputArgument ->
+                "readInput no acepta una expresión como mensaje"
 
             else -> "diagnóstico desconocido"
         }

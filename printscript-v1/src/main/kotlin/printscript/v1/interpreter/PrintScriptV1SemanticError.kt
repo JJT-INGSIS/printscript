@@ -86,4 +86,10 @@ public sealed interface PrintScriptV1SemanticError : SemanticError {
         public val name: String,
         override val span: SourceSpan,
     ) : PrintScriptV1SemanticError
+
+    public data class InvalidEnvironmentVariableValue(
+        public val name: String,
+        public val expected: DeclaredType,
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
 }

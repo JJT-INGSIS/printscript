@@ -21,19 +21,25 @@ internal class FormattingCommand(
 
     private val languageOptions by LanguageOptions()
 
+    private val configurationFilePath by configurationFileOption()
+
     override fun help(context: Context): String {
         return "Muestra el código con el formato configurado, sin modificar el archivo"
     }
 
     override fun run() {
         val toolchain = toolchainFor(languageOptions.version)
+        val formatter = configuredToolFrom(
+            configurationFilePath = configurationFilePath,
+            toolConfiguredBy = toolchain.formatterConfiguredBy,
+        )
 
         runOnSourceFile(
             sourceFilePath = sourceFilePath,
             errorReporter = errorReporter,
         ) { sourceReader ->
             writeRemainingFormattedChunks(
-                toolchain.formatter().format(
+                formatter.format(
                     toolchain.formattingTokensFrom(sourceReader),
                 ),
             )

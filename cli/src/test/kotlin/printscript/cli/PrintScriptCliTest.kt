@@ -2,6 +2,9 @@ package printscript.cli
 
 import com.github.ajalt.clikt.testing.test
 import printscript.cli.internal.PrintScriptCommandFactory
+import printscript.cli.internal.command.ExecutionCommand
+import printscript.cli.internal.report.ErrorReporter
+import printscript.runtime.EnvironmentVariableProvider
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -16,6 +19,14 @@ class PrintScriptCliTest {
         val file = Files.createTempFile("printscript", ".ps")
         file.toFile().deleteOnExit()
         Files.writeString(file, sourceCode)
+
+        return file.toString()
+    }
+
+    private fun configurationFile(configuration: String): String {
+        val file = Files.createTempFile("printscript-configuration", ".json")
+        file.toFile().deleteOnExit()
+        Files.writeString(file, configuration)
 
         return file.toString()
     }
@@ -40,6 +51,63 @@ class PrintScriptCliTest {
         val file = scriptFile("println(2 + 3 * 4);")
 
         assertContains(printScriptCli().test(listOf("execution", file)).stdout, "14")
+    }
+
+    @Test
+    fun `executes a version 1_1 conditional`() {
+        val file = scriptFile(
+            """
+            let active: boolean = true;
+            if (active) {
+                println("enabled");
+            }
+            """.trimIndent(),
+        )
+
+        val result = printScriptCli().test(listOf("execution", file, "--version", "1.1"))
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertContains(result.stdout, "enabled")
+    }
+
+    @Test
+    fun `reads program input through the terminal in version 1_1`() {
+        val file = scriptFile(
+            """
+            let value: number = readInput("Number: ");
+            println(value + 1);
+            """.trimIndent(),
+        )
+
+        val result = printScriptCli().test(
+            argv = listOf("execution", file, "--version", "1.1"),
+            stdin = "4\n",
+        )
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertContains(result.stdout, "Number: ")
+        assertContains(result.stdout, "5")
+    }
+
+    @Test
+    fun `reads environment variables through the cli boundary in version 1_1`() {
+        val file = scriptFile(
+            """
+            let port: number = readEnv("PORT");
+            println(port + 1);
+            """.trimIndent(),
+        )
+        val command = ExecutionCommand(
+            errorReporter = ErrorReporter(),
+            environmentVariables = EnvironmentVariableProvider { name ->
+                if (name == "PORT") "4" else null
+            },
+        )
+
+        val result = command.test(listOf(file, "--version", "1.1"))
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertContains(result.stdout, "5")
     }
 
     @Test
@@ -113,6 +181,32 @@ class PrintScriptCliTest {
     }
 
     @Test
+    fun `formatting uses the selected version and its json configuration`() {
+        val file = scriptFile("if (true) {\n}")
+        val configuration = configurationFile("""{"if-brace-below-line": true}""")
+
+        val result = printScriptCli().test(
+            listOf("formatting", file, "--version", "1.1", "--config", configuration),
+        )
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertEquals(expected = "if (true)\n{\n}", actual = result.stdout)
+    }
+
+    @Test
+    fun `formatting reports an invalid json configuration`() {
+        val file = scriptFile("println(1);")
+        val configuration = configurationFile("not json")
+
+        val result = printScriptCli().test(
+            listOf("formatting", file, "--config", configuration),
+        )
+
+        assertEquals(expected = 1, actual = result.statusCode)
+        assertContains(result.stderr, "configuración del formatter no es válida")
+    }
+
+    @Test
     fun `accepts a program that respects the conventions`() {
         val file = scriptFile("let miVariable: number = 5;")
 
@@ -130,6 +224,39 @@ class PrintScriptCliTest {
 
         assertEquals(expected = 3, actual = result.statusCode)
         assertContains(result.stdout, "camelCase")
+    }
+
+    @Test
+    fun `analysis uses the selected version and its json configuration`() {
+        val file = scriptFile("let mi_variable: number = 5;")
+        val configuration = configurationFile("""{"identifier_format": "snake case"}""")
+
+        val result = printScriptCli().test(
+            listOf("analysis", file, "--version", "1.1", "--config", configuration),
+        )
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertContains(result.stdout, "No se encontraron problemas.")
+    }
+
+    @Test
+    fun `analysis reports version 1_1 diagnostics with their own wording`() {
+        val file = scriptFile(
+            """
+            let name: string = "Joe";
+            let answer: string = readInput("Hello " + name);
+            """.trimIndent(),
+        )
+        val configuration = configurationFile(
+            """{"mandatory-variable-or-literal-in-readInput": true}""",
+        )
+
+        val result = printScriptCli().test(
+            listOf("analysis", file, "--version", "1.1", "--config", configuration),
+        )
+
+        assertEquals(expected = 3, actual = result.statusCode)
+        assertContains(result.stdout, "readInput no acepta una expresión como mensaje")
     }
 
     @Test
