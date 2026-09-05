@@ -6,6 +6,7 @@ import printscript.linter.LinterFactory
 import printscript.v1.linter.internal.configuration.PrintScriptV1LinterConfigurationReader
 import printscript.v1.linter.rule.PrintScriptV1IdentifierNamingRule
 import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
+import printscript.v1.linter.rule.PrintScriptV1ReadInputArgumentRule
 
 public object PrintScriptV1LinterFactory {
 
@@ -33,12 +34,12 @@ public object PrintScriptV1LinterFactory {
         additionalRules: List<LintRule> = emptyList(),
     ): Linter {
         return LinterFactory.create(
-            rules = additionalRules + printScriptV1Rules(configuration),
+            rules = additionalRules + rulesFrom(configuration.rules),
         )
     }
 
-    private fun printScriptV1Rules(configuration: PrintScriptV1LinterConfiguration): List<LintRule> {
-        return configuration.rules.map { rule -> ruleFor(rule) }
+    internal fun rulesFrom(rules: List<PrintScriptV1RuleConfiguration>): List<LintRule> {
+        return rules.map { rule -> ruleFor(rule) }
     }
 
     private fun ruleFor(configuration: PrintScriptV1RuleConfiguration): LintRule {
@@ -48,6 +49,9 @@ public object PrintScriptV1LinterFactory {
 
             is PrintScriptV1RuleConfiguration.PrintlnArgument ->
                 PrintScriptV1PrintlnArgumentRule(configuration.acceptanceByKind)
+
+            is PrintScriptV1RuleConfiguration.ReadInputArgument ->
+                PrintScriptV1ReadInputArgumentRule(configuration.acceptanceByKind)
         }
     }
 }
