@@ -55,7 +55,7 @@ public object PrintScriptV1ParserFactory {
         )
     }
 
-    private fun expressionParserFor(configuration: PrintScriptV1ParserConfiguration): ExpressionParser<Expression> {
+    internal fun expressionParserFor(configuration: PrintScriptV1ParserConfiguration): ExpressionParser<Expression> {
         return ExpressionParserFactory.create(
             primaryExpressionParser = configuration.primaryExpressionParser,
             unaryExpressionBuildersByTokenType = configuration.unaryExpressionBuildersByTokenType,
@@ -63,7 +63,7 @@ public object PrintScriptV1ParserFactory {
         )
     }
 
-    private fun printScriptV1StatementParsers(expressionParser: ExpressionParser<Expression>): List<StatementParser> {
+    internal fun printScriptV1StatementParsers(expressionParser: ExpressionParser<Expression>): List<StatementParser> {
         val statementTerminator = StatementTerminator(
             tokenType = PrintScriptV1TokenType.SEMICOLON,
         )

@@ -1,5 +1,6 @@
 package printscript.v1.parser.internal.statement
 
+import printscript.ast.DeclarationKind
 import printscript.ast.DeclaredType
 import printscript.ast.Identifier
 import printscript.ast.expression.Expression
@@ -20,6 +21,8 @@ internal class DeclarationParser(
     private val tokens: DeclarationTokens,
     declaredTypeByToken: Map<TokenType, DeclaredType>,
     private val statementTerminator: StatementTerminator,
+    private val declarationKind: DeclarationKind = DeclarationKind.VARIABLE,
+    private val initializerRequired: Boolean = false,
 ) : StatementParser {
 
     override val startTokenType: TokenType = tokens.keyword
@@ -108,6 +111,10 @@ internal class DeclarationParser(
             .orReturn { return it }
 
         if (peeked.value.type != tokens.initializer) {
+            if (initializerRequired) {
+                return missingInitializer(peeked.value)
+            }
+
             return ParsingResult.Success(
                 value = null,
                 resultingContext = peeked.resultingContext,
@@ -124,6 +131,15 @@ internal class DeclarationParser(
         return expressionParser.parseExpression(assignment.resultingContext)
     }
 
+    private fun missingInitializer(actual: Token): ParsingResult.Failure {
+        return ParsingResult.Failure(
+            ParseError.UnexpectedToken(
+                expected = setOf(tokens.initializer),
+                actual = actual,
+            ),
+        )
+    }
+
     private fun buildStatement(components: DeclarationComponents): Statement {
         return VariableDeclarationStatement(
             identifier = Identifier(
@@ -136,6 +152,7 @@ internal class DeclarationParser(
                 start = components.keywordToken.span.start,
                 end = components.terminatorToken.span.end,
             ),
+            declarationKind = declarationKind,
         )
     }
 
