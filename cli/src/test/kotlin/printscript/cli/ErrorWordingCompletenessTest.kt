@@ -203,6 +203,28 @@ class ErrorWordingCompletenessTest {
             operator = BinaryOperator.MULTIPLY,
             span = anySpan,
         ),
+        PrintScriptV1SemanticError.InvalidIfCondition(
+            name = "condition",
+            actual = DeclaredType.STRING,
+            span = anySpan,
+        ),
+        PrintScriptV1SemanticError.InvalidInputPrompt(
+            actual = DeclaredType.NUMBER,
+            span = anySpan,
+        ),
+        PrintScriptV1SemanticError.InputUnavailable(span = anySpan),
+        PrintScriptV1SemanticError.InvalidInputValue(
+            expected = DeclaredType.BOOLEAN,
+            span = anySpan,
+        ),
+        PrintScriptV1SemanticError.InvalidEnvironmentVariableName(
+            actual = DeclaredType.NUMBER,
+            span = anySpan,
+        ),
+        PrintScriptV1SemanticError.EnvironmentVariableNotFound(
+            name = "MISSING",
+            span = anySpan,
+        ),
     )
 
     private val everyV1LexicalError = listOf(
@@ -231,6 +253,12 @@ class ErrorWordingCompletenessTest {
             is PrintScriptV1SemanticError.InvalidUnaryOperand -> "InvalidUnaryOperand"
             is PrintScriptV1SemanticError.DivisionByZero -> "DivisionByZero"
             is PrintScriptV1SemanticError.UnsupportedBinaryOperator -> "UnsupportedBinaryOperator"
+            is PrintScriptV1SemanticError.InvalidIfCondition -> "InvalidIfCondition"
+            is PrintScriptV1SemanticError.InvalidInputPrompt -> "InvalidInputPrompt"
+            is PrintScriptV1SemanticError.InputUnavailable -> "InputUnavailable"
+            is PrintScriptV1SemanticError.InvalidInputValue -> "InvalidInputValue"
+            is PrintScriptV1SemanticError.InvalidEnvironmentVariableName -> "InvalidEnvironmentVariableName"
+            is PrintScriptV1SemanticError.EnvironmentVariableNotFound -> "EnvironmentVariableNotFound"
         }
     }
 

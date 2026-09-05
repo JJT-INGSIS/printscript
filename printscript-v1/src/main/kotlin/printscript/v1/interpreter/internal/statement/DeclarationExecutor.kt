@@ -81,7 +81,11 @@ internal class DeclarationExecutor(
             ?: return ExecutionResult.Success(null)
 
         val value: RuntimeValue =
-            expressionEvaluator.evaluateExpression(initializer, state)
+            expressionEvaluator.evaluateExpression(
+                expression = initializer,
+                environment = state,
+                expectedType = statement.declaredType,
+            )
                 .orReturn { return it }
 
         statement.declaredType.verifyAccepts(

@@ -39,7 +39,11 @@ internal class AssignmentExecutor(
             .orReturn { return it }
 
         val value: RuntimeValue =
-            expressionEvaluator.evaluateExpression(statement.expression, state)
+            expressionEvaluator.evaluateExpression(
+                expression = statement.expression,
+                environment = state,
+                expectedType = binding.type,
+            )
                 .orReturn { return it }
 
         binding.type.verifyAccepts(

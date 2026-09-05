@@ -79,6 +79,27 @@ internal class ErrorReporter {
                 "el operador '${PrintScriptWording.describe(error.operator)}' no está " +
                     "soportado en esta versión"
 
+            is PrintScriptV1SemanticError.InvalidIfCondition ->
+                "la condición '${error.name}' es de tipo ${PrintScriptWording.describe(error.actual)} " +
+                    "y debe ser boolean"
+
+            is PrintScriptV1SemanticError.InvalidInputPrompt ->
+                "el mensaje de readInput es de tipo ${PrintScriptWording.describe(error.actual)} " +
+                    "y debe ser string"
+
+            is PrintScriptV1SemanticError.InputUnavailable ->
+                "no hay una entrada disponible para readInput"
+
+            is PrintScriptV1SemanticError.InvalidInputValue ->
+                "la entrada no se puede interpretar como ${PrintScriptWording.describe(error.expected)}"
+
+            is PrintScriptV1SemanticError.InvalidEnvironmentVariableName ->
+                "el nombre recibido por readEnv es de tipo ${PrintScriptWording.describe(error.actual)} " +
+                    "y debe ser string"
+
+            is PrintScriptV1SemanticError.EnvironmentVariableNotFound ->
+                "no existe la variable de entorno '${error.name}'"
+
             is SemanticError.UnsupportedStatement ->
                 "esta sentencia no está soportada en esta versión"
 

@@ -56,4 +56,34 @@ public sealed interface PrintScriptV1SemanticError : SemanticError {
         public val operator: BinaryOperator,
         override val span: SourceSpan,
     ) : PrintScriptV1SemanticError
+
+    public data class InvalidIfCondition(
+        public val name: String,
+        public val actual: DeclaredType,
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
+
+    public data class InvalidInputPrompt(
+        public val actual: DeclaredType,
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
+
+    public data class InputUnavailable(
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
+
+    public data class InvalidInputValue(
+        public val expected: DeclaredType,
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
+
+    public data class InvalidEnvironmentVariableName(
+        public val actual: DeclaredType,
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
+
+    public data class EnvironmentVariableNotFound(
+        public val name: String,
+        override val span: SourceSpan,
+    ) : PrintScriptV1SemanticError
 }
