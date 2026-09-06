@@ -203,7 +203,7 @@ class PrintScriptCliTest {
         )
 
         assertEquals(expected = 1, actual = result.statusCode)
-        assertContains(result.stderr, "configuración del formatter no es válida")
+        assertContains(result.stderr, "no es un documento JSON válido")
     }
 
     @Test
@@ -214,7 +214,7 @@ class PrintScriptCliTest {
         val result = printScriptCli().test(listOf("formatting", file, "--config", configuration))
 
         assertEquals(1, result.statusCode)
-        assertContains(result.stderr, "configuración del formatter no es válida")
+        assertContains(result.stderr, "excede el máximo admitido")
         assertEquals("", result.stdout)
     }
 

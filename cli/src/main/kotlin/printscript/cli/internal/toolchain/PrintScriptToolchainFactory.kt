@@ -1,5 +1,6 @@
 package printscript.cli.internal.toolchain
 
+import printscript.cli.internal.report.ConfigurationErrorReporter
 import printscript.formatter.Formatter
 import printscript.linter.Linter
 import printscript.v1.formatter.PrintScriptV11FormatterConfigurationResult
@@ -22,6 +23,8 @@ import printscript.v1.validation.PrintScriptV11ValidatorFactory
 import printscript.v1.validation.PrintScriptV1ValidatorFactory
 
 internal object PrintScriptToolchainFactory {
+
+    private val errorReporter = ConfigurationErrorReporter()
 
     fun forVersion(version: LanguageVersion): PrintScriptToolchain {
         return when (version) {
@@ -79,7 +82,7 @@ internal object PrintScriptToolchainFactory {
 
         return when (val result = PrintScriptV1FormatterFactory.configurationFrom(json)) {
             is PrintScriptV1FormatterConfigurationResult.Failure ->
-                ConfiguredToolResult.Failure(INVALID_FORMATTER_CONFIGURATION)
+                ConfiguredToolResult.Failure(errorReporter.describe(result.error))
 
             is PrintScriptV1FormatterConfigurationResult.Success ->
                 ConfiguredToolResult.Success(
@@ -95,7 +98,7 @@ internal object PrintScriptToolchainFactory {
 
         return when (val result = PrintScriptV11FormatterFactory.configurationFrom(json)) {
             is PrintScriptV11FormatterConfigurationResult.Failure ->
-                ConfiguredToolResult.Failure(INVALID_FORMATTER_CONFIGURATION)
+                ConfiguredToolResult.Failure(errorReporter.describe(result.error))
 
             is PrintScriptV11FormatterConfigurationResult.Success ->
                 ConfiguredToolResult.Success(
@@ -111,7 +114,7 @@ internal object PrintScriptToolchainFactory {
 
         return when (val result = PrintScriptV1LinterFactory.configurationFrom(json)) {
             is PrintScriptV1LinterConfigurationResult.Failure ->
-                ConfiguredToolResult.Failure(INVALID_LINTER_CONFIGURATION)
+                ConfiguredToolResult.Failure(errorReporter.describe(result.error))
 
             is PrintScriptV1LinterConfigurationResult.Success ->
                 ConfiguredToolResult.Success(
@@ -127,7 +130,7 @@ internal object PrintScriptToolchainFactory {
 
         return when (val result = PrintScriptV11LinterFactory.configurationFrom(json)) {
             is PrintScriptV11LinterConfigurationResult.Failure ->
-                ConfiguredToolResult.Failure(INVALID_LINTER_CONFIGURATION)
+                ConfiguredToolResult.Failure(errorReporter.describe(result.error))
 
             is PrintScriptV11LinterConfigurationResult.Success ->
                 ConfiguredToolResult.Success(
@@ -135,7 +138,4 @@ internal object PrintScriptToolchainFactory {
                 )
         }
     }
-
-    private const val INVALID_FORMATTER_CONFIGURATION = "la configuración del formatter no es válida"
-    private const val INVALID_LINTER_CONFIGURATION = "la configuración del linter no es válida"
 }
