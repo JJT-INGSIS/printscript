@@ -120,6 +120,16 @@ class PrintScriptV1LinterConfigurationTest {
         assertIs<PrintScriptV1Diagnostic.NamingConventionViolation>(diagnostics.single())
     }
 
+    @Test
+    fun `is unaffected by mutating the list passed to its constructor`() {
+        val original = mutableListOf(identifierNamingRule())
+
+        val configuration = PrintScriptV1LinterConfiguration(rules = original)
+        original.add(printlnArgumentRule())
+
+        assertEquals(expected = 1, actual = configuration.rules.size)
+    }
+
     private fun configurationFrom(json: String): PrintScriptV1LinterConfiguration {
         val result = PrintScriptV1LinterFactory.configurationFrom(json)
         val success = assertIs<PrintScriptV1LinterConfigurationResult.Success>(result)
