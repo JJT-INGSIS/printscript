@@ -2,6 +2,7 @@ package printscript.v1.formatter.internal.rule
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
+import printscript.formatter.WhitespaceFormattingResult
 import printscript.v1.formatter.internal.SPACE
 import printscript.v1.token.PrintScriptV1TokenType
 
@@ -15,7 +16,7 @@ internal data object SingleSpaceSeparationRule : TokenGapFormattingRule {
             nextToken.type != PrintScriptV1TokenType.SEMICOLON
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return SPACE
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return WhitespaceFormattingResult.Success(SPACE)
     }
 }

@@ -2,24 +2,30 @@ package printscript.v1.formatter.internal.rule
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
+import printscript.formatter.WhitespaceFormattingResult
 import printscript.token.Token
 import printscript.v1.formatter.internal.containsLineBreak
-import printscript.v1.formatter.internal.withTrailingIndentation
+import printscript.v1.formatter.internal.indentedWhitespace
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal data class IfBlockIndentationRule(
     private val indentationSize: UInt,
-    private val blockDepth: UInt = 0u,
+    private val blockDepth: ULong = 0uL,
 ) : TokenGapFormattingRule {
 
     override fun supports(gap: TokenGap): Boolean {
         return gap.originalWhitespace.containsLineBreak() &&
-            (blockDepth > 0u || gap.previousToken?.type == PrintScriptV1TokenType.RIGHT_BRACE)
+            (blockDepth > 0uL || gap.previousToken?.type == PrintScriptV1TokenType.RIGHT_BRACE)
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return gap.originalWhitespace.withTrailingIndentation(
-            indentationSize = indentationWidthBefore(gap),
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        val whitespace = gap.originalWhitespace
+        val indentationStart = maxOf(whitespace.lastIndexOf('\n'), whitespace.lastIndexOf('\r')) + 1
+        return indentedWhitespace(
+            gap = gap,
+            prefix = whitespace.take(indentationStart),
+            indentationSize = indentationSize,
+            depth = depthBefore(gap),
         )
     }
 
@@ -37,21 +43,19 @@ internal data class IfBlockIndentationRule(
         }
     }
 
-    private fun indentationWidthBefore(gap: TokenGap): Int {
-        val targetDepth = if (gap.nextToken?.type == PrintScriptV1TokenType.RIGHT_BRACE) {
+    private fun depthBefore(gap: TokenGap): ULong {
+        return if (gap.nextToken?.type == PrintScriptV1TokenType.RIGHT_BRACE) {
             previousDepth()
         } else {
             blockDepth
         }
-
-        return indentationSize.times(targetDepth).toInt()
     }
 
-    private fun previousDepth(): UInt {
-        return if (blockDepth == 0u) 0u else blockDepth - DEPTH_INCREMENT
+    private fun previousDepth(): ULong {
+        return if (blockDepth == 0uL) 0uL else blockDepth - DEPTH_INCREMENT
     }
 
     private companion object {
-        const val DEPTH_INCREMENT = 1u
+        const val DEPTH_INCREMENT = 1uL
     }
 }

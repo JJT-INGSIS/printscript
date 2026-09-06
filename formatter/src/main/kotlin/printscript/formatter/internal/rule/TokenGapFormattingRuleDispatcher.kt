@@ -2,7 +2,7 @@ package printscript.formatter.internal.rule
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
-import printscript.token.Token
+import printscript.formatter.WhitespaceFormattingResult
 
 internal class TokenGapFormattingRuleDispatcher(
     formattingRules: List<TokenGapFormattingRule>,
@@ -10,18 +10,19 @@ internal class TokenGapFormattingRuleDispatcher(
 
     private val formattingRules: List<TokenGapFormattingRule> = formattingRules.toList()
 
-    fun formatWhitespace(gap: TokenGap): String {
+    fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
         val rule = formattingRules.firstOrNull { candidate ->
             candidate.supports(gap)
         }
 
-        return rule?.formatWhitespace(gap) ?: gap.originalWhitespace
+        return rule?.formatWhitespace(gap) ?: WhitespaceFormattingResult.Success(gap.originalWhitespace)
     }
 
-    fun afterConsuming(token: Token): TokenGapFormattingRuleDispatcher {
+    fun afterFormatting(gap: TokenGap, whitespace: String): TokenGapFormattingRuleDispatcher {
         return TokenGapFormattingRuleDispatcher(
             formattingRules = formattingRules.map { rule ->
-                rule.afterConsuming(token)
+                val updatedRule = rule.afterFormatting(gap, whitespace)
+                gap.nextToken?.let(updatedRule::afterConsuming) ?: updatedRule
             },
         )
     }
