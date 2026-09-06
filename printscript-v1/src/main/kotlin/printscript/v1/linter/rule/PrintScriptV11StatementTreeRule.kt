@@ -2,60 +2,53 @@ package printscript.v1.linter.rule
 
 import printscript.ast.statement.BlockStatement
 import printscript.ast.statement.IfStatement
+import printscript.linter.CompositeRule
 import printscript.linter.Diagnostic
 import printscript.linter.LintRule
 import printscript.linter.RuleInspection
 import printscript.statement.Statement
 
-internal class PrintScriptV11StatementTreeRule(
-    rules: List<LintRule>,
+internal class PrintScriptV11StatementTreeRule private constructor(
+    private val delegate: LintRule,
 ) : LintRule {
 
-    private val rules: List<LintRule> = rules.toList()
+    constructor(rules: List<LintRule>) : this(delegate = CompositeRule(rules))
 
     override fun inspect(statement: Statement): RuleInspection {
-        val (diagnostics, resultingRules) = inspect(statement, rules)
+        val (diagnostics, resultingDelegate) = inspect(statement, delegate)
 
         return RuleInspection(
             diagnostics = diagnostics,
-            resultingRule = PrintScriptV11StatementTreeRule(rules = resultingRules),
+            resultingRule = PrintScriptV11StatementTreeRule(delegate = resultingDelegate),
         )
     }
 
-    private fun inspect(statement: Statement, currentRules: List<LintRule>): Pair<List<Diagnostic>, List<LintRule>> {
-        val inspections = currentRules.map { rule -> rule.inspect(statement) }
-        val ownDiagnostics = inspections.flatMap { inspection -> inspection.diagnostics }
-        val updatedRules = inspections.map { inspection -> inspection.resultingRule }
+    private fun inspect(statement: Statement, currentDelegate: LintRule): Pair<List<Diagnostic>, LintRule> {
+        val inspection = currentDelegate.inspect(statement)
 
-        val (nestedDiagnostics, finalRules) = when (statement) {
-            is IfStatement -> inspectBranches(statement, updatedRules)
-            else -> emptyList<Diagnostic>() to updatedRules
+        val (nestedDiagnostics, finalDelegate) = when (statement) {
+            is IfStatement -> inspectBranches(statement, inspection.resultingRule)
+            else -> emptyList<Diagnostic>() to inspection.resultingRule
         }
 
-        return (ownDiagnostics + nestedDiagnostics) to finalRules
+        return (inspection.diagnostics + nestedDiagnostics) to finalDelegate
     }
 
-    private fun inspectBranches(
-        statement: IfStatement,
-        currentRules: List<LintRule>,
-    ): Pair<List<Diagnostic>, List<LintRule>> {
-        val (thenDiagnostics, rulesAfterThen) = inspectBlock(statement.thenBranch, currentRules)
+    private fun inspectBranches(statement: IfStatement, currentDelegate: LintRule): Pair<List<Diagnostic>, LintRule> {
+        val (thenDiagnostics, delegateAfterThen) = inspectBlock(statement.thenBranch, currentDelegate)
         val elseBranch = statement.elseBranch
-            ?: return thenDiagnostics to rulesAfterThen
+            ?: return thenDiagnostics to delegateAfterThen
 
-        val (elseDiagnostics, rulesAfterElse) = inspectBlock(elseBranch, rulesAfterThen)
+        val (elseDiagnostics, delegateAfterElse) = inspectBlock(elseBranch, delegateAfterThen)
 
-        return (thenDiagnostics + elseDiagnostics) to rulesAfterElse
+        return (thenDiagnostics + elseDiagnostics) to delegateAfterElse
     }
 
-    private fun inspectBlock(
-        block: BlockStatement,
-        currentRules: List<LintRule>,
-    ): Pair<List<Diagnostic>, List<LintRule>> {
-        return block.statements.fold(emptyList<Diagnostic>() to currentRules) { (diagnostics, rules), nested ->
-            val (nestedDiagnostics, updatedRules) = inspect(nested, rules)
+    private fun inspectBlock(block: BlockStatement, currentDelegate: LintRule): Pair<List<Diagnostic>, LintRule> {
+        return block.statements.fold(emptyList<Diagnostic>() to currentDelegate) { (diagnostics, delegate), nested ->
+            val (nestedDiagnostics, updatedDelegate) = inspect(nested, delegate)
 
-            (diagnostics + nestedDiagnostics) to updatedRules
+            (diagnostics + nestedDiagnostics) to updatedDelegate
         }
     }
 }
