@@ -16,7 +16,7 @@ internal class PrintlnParser(
     private val expressionParser: ExpressionParser<Expression>,
     override val startTokenType: TokenType,
     private val argumentDelimiters: ArgumentDelimiters,
-    private val statementTerminator: StatementTerminator,
+    private val statementTerminatorTokenType: TokenType,
 ) : StatementParser {
 
     override fun parseStatement(context: ParsingContext): ParsingResult<Statement> {
@@ -36,7 +36,7 @@ internal class PrintlnParser(
         val argument = readParenthesizedArgument(keyword.resultingContext)
             .orReturn { return it }
 
-        val terminator = statementTerminator.consume(argument.resultingContext)
+        val terminator = argument.resultingContext.expect(statementTerminatorTokenType)
             .orReturn { return it }
 
         return ParsingResult.Success(
