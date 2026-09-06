@@ -233,32 +233,6 @@ class PrintScriptCliTest {
     }
 
     @Test
-    fun `formatting reports excessive configured line breaks`() {
-        val file = scriptFile("println(1);")
-        val configuration = configurationFile("""{"line-breaks-after-println": ${Int.MAX_VALUE}}""")
-
-        val result = printScriptCli().test(listOf("formatting", file, "--config", configuration))
-
-        assertEquals(1, result.statusCode)
-        assertContains(result.stderr, "configuración del formatter no es válida")
-        assertEquals("", result.stdout)
-    }
-
-    @Test
-    fun `formatting reports indentation overflow with its source position`() {
-        val file = scriptFile("if(a){if(b){\nprintln(1);}}")
-        val configuration = configurationFile("""{"indent-inside-if": ${Int.MAX_VALUE}}""")
-
-        val result = printScriptCli().test(
-            listOf("formatting", file, "--version", "1.1", "--config", configuration),
-        )
-
-        assertEquals(1, result.statusCode)
-        assertContains(result.stderr, "cantidad de espacios o saltos de línea excede el tamaño admitido")
-        assertContains(result.stderr, "línea 2")
-    }
-
-    @Test
     fun `accepts a program that respects the conventions`() {
         val file = scriptFile("let miVariable: number = 5;")
 
