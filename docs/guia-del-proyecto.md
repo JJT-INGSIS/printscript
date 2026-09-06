@@ -169,7 +169,7 @@ tiene que terminar el proceso. Está explicada en la [sección 7](#7-el-cli-clas
 
 # 3. Mapa de módulos
 
-El proyecto tiene 13 módulos de Gradle. Se dividen en **cuatro familias**:
+El proyecto tiene 14 módulos de Gradle. Se dividen en **cuatro familias**:
 
 ```
 ┌─ APLICACIÓN ────────────────────────────────────────┐
@@ -357,14 +357,22 @@ una línea.
 
 ## `formatter`
 
-**Qué hace.** Recorre las sentencias y las reescribe como texto con formato.
+> **Nota:** esta sección describía una versión anterior del formatter, basada
+> en `StatementFormatter`. El formatter actual ya no piensa en "sentencias":
+> trabaja gap por gap entre tokens. Ver la sección "Formatter" del
+> [README](../README.md#formatter) para la arquitectura vigente.
 
-**Por qué existe separado.** Mismo patrón: coordina `StatementFormatter`
-públicos y una `StatementSeparationPolicy` que decide qué va entre sentencia y
-sentencia.
+**Qué hace.** Recorre el `TokenSource` (no las sentencias) y decide qué
+whitespace va entre cada par de tokens consecutivos.
 
-**Qué resuelve.** Que el usuario configure espacios y saltos sin que el motor
-tenga reglas quemadas adentro.
+**Por qué existe separado.** Coordina `TokenGapFormattingRule` públicas, cada
+una responsable de un aspecto del formateo (espaciado, saltos de línea,
+indentación), compuestas en un solo pase por gap.
+
+**Qué resuelve.** Que el usuario configure espacios, saltos e indentación sin
+que el motor tenga reglas quemadas adentro, y que un valor de configuración
+inválido (por ejemplo, una cantidad de saltos de línea desbordada) se reporte
+como error de dominio en vez de una excepción.
 
 ## `linter`
 
@@ -379,7 +387,12 @@ hubo regla que supiera qué hacer con esto".
 
 ## `printscript-v1`
 
-Tiene su propia sección: la [5](#5-qué-es-printscript-v1).
+Tiene su propia sección: la [5](#5-qué-es-printscript-v1). Además de las
+reglas concretas de `1.0` y `1.1`, acá vive `validation`: reutiliza el motor
+de `interpreter` con executors que nunca ejecutan de verdad (no imprimen, no
+leen entrada), y que recorren **ambas ramas** de un `if` en vez de solo la que
+tomaría la ejecución real. Por eso `validation` puede detectar un error en una
+rama que la ejecución nunca toma.
 
 ## `cli`
 

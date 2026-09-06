@@ -1,5 +1,9 @@
 # Plan — Simplificación del CLI
 
+> **Documento histórico.** El CLI ya pasó por este refactor; para el estado
+> actual del módulo ver el [README](../README.md#cli). Se conserva como
+> registro de la decisión, no como referencia del diseño vigente.
+
 > Estado del repo al escribir esto: **32 archivos de producción** en `cli`.
 > Objetivo: **~18**, sin perder testabilidad ni ensuciar los módulos core.
 >

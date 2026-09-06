@@ -1,6 +1,7 @@
 # PrintScript
 
-Implementación modular de **PrintScript 1.0** en Kotlin/JVM 21.
+Implementación modular de **PrintScript** en Kotlin/JVM 21, con soporte para
+las versiones `1.0` y `1.1` (superset de `1.0`).
 
 El lenguaje se procesa mediante un pipeline pull y lazy. Cada etapa solicita el
 siguiente elemento cuando lo necesita y entrega también la fuente que representa
@@ -61,11 +62,18 @@ está roto"* de *"el código funciona pero no respeta las convenciones"*.
 
 ### Dependencias externas
 
-`cli` es el único módulo que depende de una librería de terceros:
-[Clikt 5.1.0](https://github.com/ajalt/clikt), que resuelve el parseo de
-argumentos, la generación del `--help` y el autocompletado de shell. Entra como
-`implementation`, así que no se propaga: los módulos motor siguen sin
-dependencias externas.
+`cli` depende de [Clikt 5.1.0](https://github.com/ajalt/clikt), que resuelve el
+parseo de argumentos, la generación del `--help` y el autocompletado de shell.
+
+`printscript-v1` depende de
+[kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) para
+leer la configuración JSON del formatter y del linter. Es la única librería
+JSON del proyecto: no hay un decoder genérico compartido, cada reader interpreta
+sus propias claves.
+
+Ambas dependencias entran como `implementation`, así que no se propagan: los
+módulos motor (`lexer`, `parser`, `interpreter`, `formatter`, `linter`) siguen
+sin dependencias externas.
 
 ## Pipeline
 
@@ -75,7 +83,8 @@ código fuente
     ▼
 SourceReader → Lexer → TokenSource → Parser → StatementSource → Interpreter → ProgramOutput
                                                              ├→ Formatter
-                                                             └→ Linter
+                                                             ├→ Linter
+                                                             └→ Validator
 ```
 
 - `SourceReader` entrega en bloques código proveniente de strings, archivos o
@@ -83,8 +92,11 @@ SourceReader → Lexer → TokenSource → Parser → StatementSource → Interp
 - `TokenSource` produce un token por solicitud.
 - `StatementSource` produce una sentencia por solicitud.
 - El interpreter consume y ejecuta las sentencias en orden.
-- El formatter y el linter consumen la misma `StatementSource`: son
-  consumidores alternativos del mismo pipeline, no etapas nuevas.
+- El formatter, el linter y el validator consumen la misma `StatementSource`:
+  son consumidores alternativos del mismo pipeline, no etapas nuevas. El
+  validator recorre ambas ramas de cada `if` sin ejecutar el programa ni
+  consumir entrada — por eso `validation` puede ejecutarse sobre un script que
+  usa `readInput` sin pedirle nada a la terminal.
 - La CLI arma el pipeline, elige el consumidor según la operación pedida y
   traduce el resultado a un código de salida.
 
@@ -113,7 +125,7 @@ cierra.
 | `printscript-runtime` | Estado, valores y puertos públicos para extender la ejecución de PrintScript. |
 | `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
 | `linter` | Motor lazy de análisis de estilo y contratos públicos para reglas externas. |
-| `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript V1. |
+| `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript, en dos familias: `1.0` y `1.1` (superset de `1.0` — agrega `if`, `const`, `boolean`, `readInput` y `readEnv`). También vive acá el validator, que reutiliza el motor de `interpreter` con executors que no ejecutan de verdad. |
 | `cli` | Aplicación de línea de comandos. Único módulo con dependencias externas. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
 
@@ -128,7 +140,13 @@ PrintScriptV1ParserFactory.create()
 PrintScriptV1FormatterFactory.create()
 PrintScriptV1InterpreterFactory.create(output)
 PrintScriptV1LinterFactory.create()
+PrintScriptV1ValidatorFactory.create()
 ```
+
+Cada factory tiene su par `PrintScriptV11...` — `1.1` es superset de `1.0`, así
+que su factory suele delegar en la de `1.0` y agregar lo propio (ver
+`PrintScriptV11ParserFactory`, que reutiliza `println` y la asignación de `1.0`
+en lugar de reconstruir su lista completa de parsers).
 
 ## Decisiones de diseño
 
@@ -165,15 +183,28 @@ resultado terminal y el consumidor debe detener la lectura.
 
 ### Formatter
 
-El formatter core consume un `TokenSource` lossless de forma lazy. Cada
-`TokenGap` conserva el whitespace original entre dos tokens, y la primera
-`TokenGapFormattingRule` compatible puede reemplazarlo. Cuando ninguna regla
-aplica, el texto original se preserva.
+El formatter core consume un `TokenSource` lossless de forma lazy y no tiene
+noción de "sentencia": trabaja a nivel de `TokenGap`, el whitespace original
+entre dos tokens consecutivos. Cada `TokenGapFormattingRule` decide si le
+interesa un gap (`supports`) y, si le interesa, produce un
+`WhitespaceFormattingResult` — `Success(whitespace)` o `Failure`, para que un
+valor de configuración desbordado (una cantidad de saltos de línea o de
+indentación fuera de rango) se reporte como error de dominio en vez de romper
+en tiempo de ejecución. Cuando ninguna regla aplica, el whitespace original se
+preserva tal cual.
+
+Las reglas no son mutuamente excluyentes: `IndentedFormattingRule` compone en
+un solo gap una regla de salto de línea, una de espaciado y la de indentación,
+así que agregar una indentación no le pisa el resultado a la regla que decidió
+el salto de línea. Las reglas con estado (por ejemplo, "es este el primer
+`println` dentro de un bloque") avanzan con `afterConsuming`/`afterFormatting`
+a medida que el formatter consume tokens, y devuelven una nueva instancia de sí
+mismas — no hay mutación.
 
 El lexer normal de V1 continúa descartando whitespace antes del parser.
 `PrintScriptV1FormattingLexerFactory` crea la variante que lo conserva para el
-formatter. Las reglas concretas de espacios y saltos de línea pertenecen a
-`printscript-v1`; el parser y el AST no participan del formateo.
+formatter. Las reglas concretas de espacios, saltos de línea e indentación
+pertenecen a `printscript-v1`; el parser y el AST no participan del formateo.
 
 ### Interpreter
 
@@ -195,6 +226,25 @@ errores semánticos del lenguaje permanecen en `printscript-v1`. La salida se
 abstrae mediante `ProgramOutput`, por lo que tampoco depende de la consola ni de
 archivos.
 
+`Environment` permite **shadowing** entre scopes: una declaración solo choca
+con otra del mismo scope (`lookupCurrentScopeBinding`); una variable de un
+scope exterior con el mismo nombre no es un error, es una sombra nueva que
+`leavingScope()` descarta al volver. `Environment` en sí mismo solo guarda
+bindings — no valida tipos ni constantes; esas comprobaciones son
+responsabilidad de los executors concretos de `printscript-v1`.
+
+### Validation
+
+`validation` reutiliza el mismo motor de `interpreter`, pero con
+`StatementExecutor<ValidationEnvironment>` que nunca ejecutan de verdad: no
+imprimen, no leen entrada y no consultan variables de entorno. Su
+`IfValidator` es la diferencia clave con la ejecución real — recorre **las dos
+ramas** de todo `if` sin importar el valor de la condición e intersecta el
+estado de inicialización resultante, así que un error semántico en la rama que
+la ejecución real nunca toma igual se reporta. `validation` y `execution`
+comparten el mismo parser y el mismo AST; solo cambia qué `StatementExecutor`
+se conecta al motor genérico.
+
 ### CLI
 
 Los cuatro comandos heredan directamente de `CliktCommand`; no hay una clase
@@ -208,16 +258,18 @@ base propia. Lo compartido se reutiliza con funciones y grupos de opciones:
 | la lectura y resultado de una operación | `runOnSourceFile()` y `OperationOutcome` |
 
 `PrintScriptCommandFactory` es la raíz de composición y el único lugar donde se
-suya, un test podría quedar en verde verificando un CLI distinto del que se
-distribuye.
+arma el grupo completo de comandos. Si un test construyera los comandos por su
+cuenta en lugar de pasar por esta factory, podría quedar en verde verificando
+un CLI distinto del que realmente se distribuye.
 
 `PrintScriptToolchainFactory` concentra la selección de versión. Cada toolchain
 agrupa el lexer, parser, interpreter, formatter y linter compatibles, por lo que
 los comandos no necesitan conocer factories concretas de `1.0` o `1.1`.
 
 La entrada, salida y consulta de variables de entorno se adaptan en la CLI a los
-contratos de `printscript-runtime`. `validation` usa el mismo pipeline de
-ejecución, pero descarta la salida del programa.
+contratos de `printscript-runtime`. `validation` no comparte el motor de
+ejecución: usa el validator descrito en la sección anterior, que recorre el AST
+sin ejecutar el programa.
 
 ## Gramática de PrintScript 1.0
 
@@ -248,6 +300,11 @@ primary        = NUMBER_LITERAL
 El interpreter valida declaraciones, inicializaciones, asignaciones, tipos,
 operandos y división por cero. Los errores incluyen el rango correspondiente del
 código fuente.
+
+`1.1` extiende esta gramática: agrega `const`, el tipo `boolean` con sus
+literales `true`/`false`, `if`/`else` con bloques `{ }`, y las expresiones
+`readInput(...)`/`readEnv(...)` como alternativas de `primary`. Es superset
+estricto de `1.0` — todo programa `1.0` válido también es válido en `1.1`.
 
 ### Ejemplo
 
