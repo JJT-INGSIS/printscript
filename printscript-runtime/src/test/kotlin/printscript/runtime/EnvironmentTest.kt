@@ -29,6 +29,27 @@ class EnvironmentTest {
     }
 
     @Test
+    fun `current scope lookup excludes outer declarations`() {
+        val outer = EnvironmentFactory.empty().declaring("x", five)
+        val inner = outer.enteringScope()
+
+        assertEquals(five, outer.lookupCurrentScopeBinding("x"))
+        assertNull(inner.lookupCurrentScopeBinding("x"))
+        assertEquals(five, inner.lookupBinding("x"))
+    }
+
+    @Test
+    fun `reassigning a shadow leaves the outer binding untouched`() {
+        val outer = EnvironmentFactory.empty().declaring("x", uninitializedNumber)
+        val inner = outer.enteringScope().declaring("x", uninitializedNumber)
+        val reassigned = inner.reassigning("x", fiveValue)
+
+        assertEquals(five, reassigned.lookupCurrentScopeBinding("x"))
+        assertEquals(uninitializedNumber, reassigned.leavingScope().lookupBinding("x"))
+        assertEquals(uninitializedNumber, inner.lookupBinding("x"))
+    }
+
+    @Test
     fun `a variable can be added without initializing it`() {
         val environment = EnvironmentFactory.empty()
             .declaring("x", uninitializedNumber)

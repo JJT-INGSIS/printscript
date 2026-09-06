@@ -18,6 +18,8 @@ import printscript.v1.linter.PrintScriptV1LinterConfigurationResult
 import printscript.v1.linter.PrintScriptV1LinterFactory
 import printscript.v1.parser.PrintScriptV11ParserFactory
 import printscript.v1.parser.PrintScriptV1ParserFactory
+import printscript.v1.validation.PrintScriptV11ValidatorFactory
+import printscript.v1.validation.PrintScriptV1ValidatorFactory
 
 internal object PrintScriptToolchainFactory {
 
@@ -41,6 +43,7 @@ internal object PrintScriptToolchainFactory {
             interpreterUsing = { output, _, _ ->
                 PrintScriptV1InterpreterFactory.create(output)
             },
+            validator = PrintScriptV1ValidatorFactory.create(),
             formatterConfiguredBy = ::printScriptV1FormatterConfiguredBy,
             linterConfiguredBy = ::printScriptV1LinterConfiguredBy,
         )
@@ -63,6 +66,7 @@ internal object PrintScriptToolchainFactory {
                     environmentVariables = environmentVariables,
                 )
             },
+            validator = PrintScriptV11ValidatorFactory.create(),
             formatterConfiguredBy = ::printScriptV11FormatterConfiguredBy,
             linterConfiguredBy = ::printScriptV11LinterConfiguredBy,
         )
