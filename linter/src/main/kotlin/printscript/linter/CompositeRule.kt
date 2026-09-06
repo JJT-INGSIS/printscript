@@ -1,10 +1,8 @@
-package printscript.linter.internal.rule
+package printscript.linter
 
-import printscript.linter.LintRule
-import printscript.linter.RuleInspection
 import printscript.statement.Statement
 
-internal class CompositeRule(
+public class CompositeRule(
     rules: List<LintRule>,
 ) : LintRule {
 

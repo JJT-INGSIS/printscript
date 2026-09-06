@@ -1,9 +1,9 @@
 package printscript.linter.internal
 
+import printscript.linter.CompositeRule
 import printscript.linter.DiagnosticSource
 import printscript.linter.LintRule
 import printscript.linter.Linter
-import printscript.linter.internal.rule.CompositeRule
 import printscript.statement.StatementSource
 
 internal class ConfigurableLinter(

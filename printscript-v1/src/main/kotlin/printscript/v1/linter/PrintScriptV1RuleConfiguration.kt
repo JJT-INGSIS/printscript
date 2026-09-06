@@ -6,11 +6,19 @@ public sealed interface PrintScriptV1RuleConfiguration {
         public val convention: PrintScriptV1NamingConvention,
     ) : PrintScriptV1RuleConfiguration
 
-    public data class PrintlnArgument(
-        public val acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance>,
-    ) : PrintScriptV1RuleConfiguration
+    public class PrintlnArgument(
+        acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance>,
+    ) : PrintScriptV1RuleConfiguration {
 
-    public data class ReadInputArgument(
-        public val acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance>,
-    ) : PrintScriptV1RuleConfiguration
+        public val acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance> =
+            acceptanceByKind.toMap()
+    }
+
+    public class ReadInputArgument(
+        acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance>,
+    ) : PrintScriptV1RuleConfiguration {
+
+        public val acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance> =
+            acceptanceByKind.toMap()
+    }
 }

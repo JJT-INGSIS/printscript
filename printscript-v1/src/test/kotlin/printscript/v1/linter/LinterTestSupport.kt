@@ -215,12 +215,16 @@ internal fun v11LinterWith(
 }
 
 internal fun DiagnosticSource.readAll(): List<Diagnostic> {
-    return generateSequence(nextDiagnostic()) { previous ->
+    val results = generateSequence(nextDiagnostic()) { previous ->
         continuationOf(previous)
+    }.toList()
+
+    results.filterIsInstance<DiagnosticReadResult.Failure>().firstOrNull()?.let { failure ->
+        error("readAll() encontró un error de parsing: ${failure.error}")
     }
-        .filterIsInstance<DiagnosticReadResult.Success>()
+
+    return results.filterIsInstance<DiagnosticReadResult.Success>()
         .map { success -> success.diagnostic }
-        .toList()
 }
 
 private fun continuationOf(result: DiagnosticReadResult): DiagnosticReadResult? {

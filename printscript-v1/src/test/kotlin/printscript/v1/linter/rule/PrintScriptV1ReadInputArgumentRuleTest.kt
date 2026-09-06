@@ -136,8 +136,11 @@ class PrintScriptV1ReadInputArgumentRuleTest {
     }
 
     @Test
-    fun `ignores statements without expressions`() {
-        val diagnostics = diagnosticsOf(linter)
+    fun `ignores a declaration without an initializer`() {
+        val diagnostics = diagnosticsOf(
+            linter,
+            declare("input", DeclaredType.STRING, initializer = null),
+        )
 
         diagnostics.assertNoDiagnostics()
     }
