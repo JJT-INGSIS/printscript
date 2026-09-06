@@ -203,7 +203,33 @@ class PrintScriptCliTest {
         )
 
         assertEquals(expected = 1, actual = result.statusCode)
-        assertContains(result.stderr, "configuración del formatter no es válida")
+        assertContains(result.stderr, "no es un documento JSON válido")
+    }
+
+    @Test
+    fun `formatting reports excessive configured line breaks`() {
+        val file = scriptFile("println(1);")
+        val configuration = configurationFile("""{"line-breaks-after-println": ${Int.MAX_VALUE}}""")
+
+        val result = printScriptCli().test(listOf("formatting", file, "--config", configuration))
+
+        assertEquals(1, result.statusCode)
+        assertContains(result.stderr, "excede el máximo admitido")
+        assertEquals("", result.stdout)
+    }
+
+    @Test
+    fun `formatting reports indentation overflow with its source position`() {
+        val file = scriptFile("if(a){if(b){\nprintln(1);}}")
+        val configuration = configurationFile("""{"indent-inside-if": ${Int.MAX_VALUE}}""")
+
+        val result = printScriptCli().test(
+            listOf("formatting", file, "--version", "1.1", "--config", configuration),
+        )
+
+        assertEquals(1, result.statusCode)
+        assertContains(result.stderr, "cantidad de espacios o saltos de línea excede el tamaño admitido")
+        assertContains(result.stderr, "línea 2")
     }
 
     @Test
