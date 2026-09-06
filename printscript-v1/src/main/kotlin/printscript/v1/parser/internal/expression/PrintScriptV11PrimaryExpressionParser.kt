@@ -10,6 +10,7 @@ import printscript.parser.ParsingResult
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.expression.PrimaryExpressionParser
 import printscript.parser.orReturn
+import printscript.statement.ParseError
 import printscript.token.TokenType
 import printscript.v1.token.PrintScriptV1TokenType
 
@@ -19,6 +20,9 @@ internal class PrintScriptV11PrimaryExpressionParser(
 ) : PrimaryExpressionParser<Expression> {
 
     private val booleanValuesByTokenType = booleanValuesByTokenType.toMap()
+
+    private val additionalPrimaryStartTokens: Set<TokenType> =
+        this.booleanValuesByTokenType.keys + PrintScriptV1TokenType.READ_INPUT + PrintScriptV1TokenType.READ_ENV
 
     override fun parsePrimaryExpression(
         context: ParsingContext,
@@ -51,11 +55,35 @@ internal class PrintScriptV11PrimaryExpressionParser(
                 )
 
             else ->
-                v1Parser.parsePrimaryExpression(
+                parseUsingV1Fallback(
                     context = peeked.resultingContext,
                     nestedExpressionParser = nestedExpressionParser,
                 )
         }
+    }
+
+    private fun parseUsingV1Fallback(
+        context: ParsingContext,
+        nestedExpressionParser: ExpressionParser<Expression>,
+    ): ParsingResult<Expression> {
+        val result = v1Parser.parsePrimaryExpression(
+            context = context,
+            nestedExpressionParser = nestedExpressionParser,
+        )
+
+        if (result !is ParsingResult.Failure) {
+            return result
+        }
+
+        val error = result.error as? ParseError.UnexpectedToken
+            ?: return result
+
+        return ParsingResult.Failure(
+            ParseError.UnexpectedToken(
+                expected = error.expected + additionalPrimaryStartTokens,
+                actual = error.actual,
+            ),
+        )
     }
 
     private fun parseBooleanLiteral(context: ParsingContext, value: Boolean): ParsingResult<Expression> {

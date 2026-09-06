@@ -20,7 +20,7 @@ internal class DeclarationParser(
     private val expressionParser: ExpressionParser<Expression>,
     private val tokens: DeclarationTokens,
     declaredTypeByToken: Map<TokenType, DeclaredType>,
-    private val statementTerminator: StatementTerminator,
+    private val statementTerminatorTokenType: TokenType,
     private val declarationKind: DeclarationKind = DeclarationKind.VARIABLE,
     private val initializerRequired: Boolean = false,
 ) : StatementParser {
@@ -50,7 +50,7 @@ internal class DeclarationParser(
         val initializer = readOptionalInitializer(typedIdentifier.resultingContext)
             .orReturn { return it }
 
-        val terminator = statementTerminator.consume(initializer.resultingContext)
+        val terminator = initializer.resultingContext.expect(statementTerminatorTokenType)
             .orReturn { return it }
 
         return ParsingResult.Success(

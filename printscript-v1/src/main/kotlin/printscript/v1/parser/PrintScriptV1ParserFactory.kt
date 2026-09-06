@@ -6,6 +6,7 @@ import printscript.parser.ParserFactory
 import printscript.parser.StatementParser
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.expression.ExpressionParserFactory
+import printscript.token.TokenType
 import printscript.v1.parser.internal.expression.PrintScriptV1PrimaryExpressionParser
 import printscript.v1.parser.internal.printScriptV1AdditiveExpressionBuildersByTokenType
 import printscript.v1.parser.internal.printScriptV1DeclaredTypesByTokenType
@@ -16,11 +17,10 @@ import printscript.v1.parser.internal.statement.ArgumentDelimiters
 import printscript.v1.parser.internal.statement.AssignmentParser
 import printscript.v1.parser.internal.statement.DeclarationParser
 import printscript.v1.parser.internal.statement.DeclarationTokens
-import printscript.v1.parser.internal.statement.IdentifierStatementParser
 import printscript.v1.parser.internal.statement.PrintlnParser
-import printscript.v1.parser.internal.statement.StatementTerminator
-import printscript.v1.parser.internal.statement.TargetedStatementParser
 import printscript.v1.token.PrintScriptV1TokenType
+
+internal val printScriptV1StatementTerminatorTokenType: TokenType = PrintScriptV1TokenType.SEMICOLON
 
 public object PrintScriptV1ParserFactory {
 
@@ -64,51 +64,45 @@ public object PrintScriptV1ParserFactory {
     }
 
     internal fun printScriptV1StatementParsers(expressionParser: ExpressionParser<Expression>): List<StatementParser> {
-        val statementTerminator = StatementTerminator(
-            tokenType = PrintScriptV1TokenType.SEMICOLON,
-        )
-
         return listOf(
-            DeclarationParser(
-                expressionParser = expressionParser,
-                tokens = DeclarationTokens(
-                    keyword = PrintScriptV1TokenType.LET,
-                    identifier = PrintScriptV1TokenType.IDENTIFIER,
-                    typeSeparator = PrintScriptV1TokenType.COLON,
-                    initializer = PrintScriptV1TokenType.ASSIGN,
-                ),
-                declaredTypeByToken = printScriptV1DeclaredTypesByTokenType,
-                statementTerminator = statementTerminator,
-            ),
-            PrintlnParser(
-                expressionParser = expressionParser,
-                startTokenType = PrintScriptV1TokenType.PRINTLN,
-                argumentDelimiters = ArgumentDelimiters(
-                    opening = PrintScriptV1TokenType.LEFT_PAREN,
-                    closing = PrintScriptV1TokenType.RIGHT_PAREN,
-                ),
-                statementTerminator = statementTerminator,
-            ),
-            IdentifierStatementParser(
-                parsers = printScriptV1TargetedStatementParsers(
-                    expressionParser = expressionParser,
-                    statementTerminator = statementTerminator,
-                ),
-                startTokenType = PrintScriptV1TokenType.IDENTIFIER,
-            ),
+            declarationParser(expressionParser),
+            printlnParser(expressionParser),
+            assignmentParser(expressionParser),
         )
     }
 
-    private fun printScriptV1TargetedStatementParsers(
-        expressionParser: ExpressionParser<Expression>,
-        statementTerminator: StatementTerminator,
-    ): List<TargetedStatementParser> {
-        return listOf(
-            AssignmentParser(
-                expressionParser = expressionParser,
-                followingTokenType = PrintScriptV1TokenType.ASSIGN,
-                statementTerminator = statementTerminator,
+    private fun declarationParser(expressionParser: ExpressionParser<Expression>): StatementParser {
+        return DeclarationParser(
+            expressionParser = expressionParser,
+            tokens = DeclarationTokens(
+                keyword = PrintScriptV1TokenType.LET,
+                identifier = PrintScriptV1TokenType.IDENTIFIER,
+                typeSeparator = PrintScriptV1TokenType.COLON,
+                initializer = PrintScriptV1TokenType.ASSIGN,
             ),
+            declaredTypeByToken = printScriptV1DeclaredTypesByTokenType,
+            statementTerminatorTokenType = printScriptV1StatementTerminatorTokenType,
+        )
+    }
+
+    internal fun printlnParser(expressionParser: ExpressionParser<Expression>): StatementParser {
+        return PrintlnParser(
+            expressionParser = expressionParser,
+            startTokenType = PrintScriptV1TokenType.PRINTLN,
+            argumentDelimiters = ArgumentDelimiters(
+                opening = PrintScriptV1TokenType.LEFT_PAREN,
+                closing = PrintScriptV1TokenType.RIGHT_PAREN,
+            ),
+            statementTerminatorTokenType = printScriptV1StatementTerminatorTokenType,
+        )
+    }
+
+    internal fun assignmentParser(expressionParser: ExpressionParser<Expression>): StatementParser {
+        return AssignmentParser(
+            expressionParser = expressionParser,
+            startTokenType = PrintScriptV1TokenType.IDENTIFIER,
+            assignmentTokenType = PrintScriptV1TokenType.ASSIGN,
+            statementTerminatorTokenType = printScriptV1StatementTerminatorTokenType,
         )
     }
 }

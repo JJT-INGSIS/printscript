@@ -13,7 +13,6 @@ import printscript.v1.parser.internal.statement.DeclarationParser
 import printscript.v1.parser.internal.statement.DeclarationTokens
 import printscript.v1.parser.internal.statement.IfParser
 import printscript.v1.parser.internal.statement.StatementBlockParser
-import printscript.v1.parser.internal.statement.StatementTerminator
 import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV11ParserFactory {
@@ -49,17 +48,11 @@ public object PrintScriptV11ParserFactory {
     }
 
     private fun printScriptV11StatementParsers(expressionParser: ExpressionParser<Expression>): List<StatementParser> {
-        val statementTerminator = StatementTerminator(
-            tokenType = PrintScriptV1TokenType.SEMICOLON,
-        )
         val statementBlockParser = StatementBlockParser(
             openingTokenType = PrintScriptV1TokenType.LEFT_BRACE,
             closingTokenType = PrintScriptV1TokenType.RIGHT_BRACE,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
-        val v1ParsersWithoutDeclaration =
-            PrintScriptV1ParserFactory.printScriptV1StatementParsers(expressionParser)
-                .filterNot { parser -> parser.startTokenType == PrintScriptV1TokenType.LET }
 
         return listOf(
             declarationParser(
@@ -67,17 +60,17 @@ public object PrintScriptV11ParserFactory {
                 declarationKind = DeclarationKind.VARIABLE,
                 initializerRequired = false,
                 expressionParser = expressionParser,
-                statementTerminator = statementTerminator,
             ),
             declarationParser(
                 keyword = PrintScriptV1TokenType.CONST,
                 declarationKind = DeclarationKind.CONSTANT,
                 initializerRequired = true,
                 expressionParser = expressionParser,
-                statementTerminator = statementTerminator,
             ),
             IfParser(statementBlockParser),
-        ) + v1ParsersWithoutDeclaration
+            PrintScriptV1ParserFactory.printlnParser(expressionParser),
+            PrintScriptV1ParserFactory.assignmentParser(expressionParser),
+        )
     }
 
     private fun declarationParser(
@@ -85,7 +78,6 @@ public object PrintScriptV11ParserFactory {
         declarationKind: DeclarationKind,
         initializerRequired: Boolean,
         expressionParser: ExpressionParser<Expression>,
-        statementTerminator: StatementTerminator,
     ): StatementParser {
         return DeclarationParser(
             expressionParser = expressionParser,
@@ -96,7 +88,7 @@ public object PrintScriptV11ParserFactory {
                 initializer = PrintScriptV1TokenType.ASSIGN,
             ),
             declaredTypeByToken = printScriptV11DeclaredTypesByTokenType,
-            statementTerminator = statementTerminator,
+            statementTerminatorTokenType = printScriptV1StatementTerminatorTokenType,
             declarationKind = declarationKind,
             initializerRequired = initializerRequired,
         )
