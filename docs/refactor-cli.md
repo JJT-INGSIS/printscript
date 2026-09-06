@@ -1,5 +1,9 @@
 # Refactor del CLI — de parseo propio a librería
 
+> **Documento histórico.** El refactor descrito acá ya se mergeó a `main`; para
+> el estado actual del módulo ver el [README](../README.md#cli). Se conserva
+> como registro de la decisión, no como referencia del diseño vigente.
+
 > Documento para revisión del equipo.
 > Estado: **refactor completo** en la rama `refactor/cli`. Falta aprobación de las decisiones de la sección 8.
 
