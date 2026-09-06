@@ -33,17 +33,13 @@ public object PrintScriptV1FormatterFactory {
         additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
     ): Formatter {
         return FormatterFactory.create(
-            formattingRules =
-            additionalFormattingRules +
-                printScriptV1FormattingRules(configuration),
+            formattingRules = additionalFormattingRules + lineBreakRules(configuration) + spacingRules(configuration),
             whitespaceTokenType = PrintScriptV1FormattingTokenType.WHITESPACE,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
     }
 
-    private fun printScriptV1FormattingRules(
-        configuration: PrintScriptV1FormatterConfiguration,
-    ): List<TokenGapFormattingRule> {
+    internal fun lineBreakRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
         return listOfNotNull(
             configuration.lineBreaksAfterPrintln?.let { blankLineCount ->
                 LineBreakAfterPrintlnRule(blankLineCount)
@@ -51,6 +47,11 @@ public object PrintScriptV1FormatterFactory {
             LineBreakAfterStatementRule.takeIf {
                 configuration.enforceLineBreakAfterStatement
             },
+        )
+    }
+
+    internal fun spacingRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
+        return listOfNotNull(
             configuration.equalsSpacing?.let(::EqualsSpacingRule),
             SpaceBeforeDeclarationColonRule.takeIf {
                 configuration.enforceSpaceBeforeColonInDeclaration

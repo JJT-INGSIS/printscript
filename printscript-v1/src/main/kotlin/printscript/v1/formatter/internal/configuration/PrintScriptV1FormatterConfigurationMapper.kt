@@ -20,6 +20,7 @@ internal object PrintScriptV1FormatterConfigurationMapper {
 
         val lineBreaksAfterPrintln = values.lineBreaksAfterPrintln?.let { value ->
             if (value < MINIMUM_LINE_BREAK_COUNT) return negativeLineBreakCount(value)
+            if (value.toUInt() > maximumBlankLineCount) return excessiveLineBreakCount(value)
             value.toUInt()
         }
 
@@ -45,6 +46,12 @@ internal object PrintScriptV1FormatterConfigurationMapper {
     private fun negativeLineBreakCount(providedValue: Int): PrintScriptV1FormatterConfigurationResult.Failure {
         return PrintScriptV1FormatterConfigurationResult.Failure(
             PrintScriptV1FormatterConfigurationError.NegativeLineBreakCount(providedValue),
+        )
+    }
+
+    private fun excessiveLineBreakCount(providedValue: Int): PrintScriptV1FormatterConfigurationResult.Failure {
+        return PrintScriptV1FormatterConfigurationResult.Failure(
+            PrintScriptV1FormatterConfigurationError.ExcessiveLineBreakCount(providedValue),
         )
     }
 

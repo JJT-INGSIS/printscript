@@ -2,6 +2,7 @@ package printscript.v1.formatter
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
+import printscript.formatter.WhitespaceFormattingResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -302,7 +303,7 @@ private data object ReplacingEqualsGapRule : TokenGapFormattingRule {
         return gap.previousToken?.lexeme == "=" || gap.nextToken?.lexeme == "="
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return "~"
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return WhitespaceFormattingResult.Success("~")
     }
 }

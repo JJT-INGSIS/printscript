@@ -2,6 +2,7 @@ package printscript.v1.formatter
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
+import printscript.formatter.WhitespaceFormattingResult
 import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -188,7 +189,7 @@ private data object OpeningBraceMarkerRule : TokenGapFormattingRule {
         return gap.nextToken?.type == PrintScriptV1TokenType.LEFT_BRACE
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return "~"
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return WhitespaceFormattingResult.Success("~")
     }
 }

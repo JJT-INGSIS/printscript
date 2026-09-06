@@ -1,10 +1,14 @@
 package printscript.v1.formatter
 
 import printscript.formatter.Formatter
+import printscript.formatter.FormatterFactory
 import printscript.formatter.TokenGapFormattingRule
 import printscript.v1.formatter.internal.configuration.PrintScriptV11FormatterConfigurationReader
 import printscript.v1.formatter.internal.rule.IfBlockIndentationRule
 import printscript.v1.formatter.internal.rule.IfBracePlacementRule
+import printscript.v1.formatter.internal.rule.IndentedFormattingRule
+import printscript.v1.lexer.PrintScriptV1FormattingTokenType
+import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV11FormatterFactory {
 
@@ -26,24 +30,28 @@ public object PrintScriptV11FormatterFactory {
         configuration: PrintScriptV11FormatterConfiguration = defaultConfiguration(),
         additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
     ): Formatter {
-        return PrintScriptV1FormatterFactory.create(
-            configuration = configuration.v1Configuration,
-            additionalFormattingRules =
-            additionalFormattingRules + printScriptV11FormattingRules(configuration),
+        return FormatterFactory.create(
+            formattingRules = additionalFormattingRules + printScriptV11FormattingRule(configuration),
+            whitespaceTokenType = PrintScriptV1FormattingTokenType.WHITESPACE,
+            endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
     }
 
-    private fun printScriptV11FormattingRules(
+    private fun printScriptV11FormattingRule(
         configuration: PrintScriptV11FormatterConfiguration,
-    ): List<TokenGapFormattingRule> {
-        return listOfNotNull(
+    ): TokenGapFormattingRule {
+        val braceRules = listOfNotNull(
             configuration.ifBracePlacement?.let { placement ->
                 IfBracePlacementRule(
                     placement = placement,
-                    indentationSize = configuration.indentationInsideIf,
+                    alignWithIf = configuration.indentationInsideIf == null,
                 )
             },
-            configuration.indentationInsideIf?.let(::IfBlockIndentationRule),
+        )
+        return IndentedFormattingRule(
+            lineRules = braceRules + PrintScriptV1FormatterFactory.lineBreakRules(configuration.v1Configuration),
+            spacingRules = PrintScriptV1FormatterFactory.spacingRules(configuration.v1Configuration),
+            indentationRule = configuration.indentationInsideIf?.let(::IfBlockIndentationRule),
         )
     }
 }

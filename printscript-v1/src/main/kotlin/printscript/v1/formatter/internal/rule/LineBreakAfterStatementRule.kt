@@ -2,6 +2,7 @@ package printscript.v1.formatter.internal.rule
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
+import printscript.formatter.WhitespaceFormattingResult
 import printscript.v1.formatter.internal.LINE_BREAK
 import printscript.v1.token.PrintScriptV1TokenType
 
@@ -12,7 +13,7 @@ internal data object LineBreakAfterStatementRule : TokenGapFormattingRule {
             gap.nextToken != null
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return LINE_BREAK
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return WhitespaceFormattingResult.Success(LINE_BREAK)
     }
 }

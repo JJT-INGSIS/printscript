@@ -131,6 +131,46 @@ class FormatterFactoryTest {
     }
 
     @Test
+    fun `propagates rule failures without consulting lower priority rules`() {
+        val expectedError = FormattingError.TokenReadFailure(TestTokenReadError())
+        val failingRule = object : TokenGapFormattingRule {
+            override fun supports(gap: TokenGap): Boolean = true
+
+            override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+                return WhitespaceFormattingResult.Failure(expectedError)
+            }
+        }
+        val unreachableRule = object : TokenGapFormattingRule {
+            override fun supports(gap: TokenGap): Boolean = error("Unexpected fallback after a rule failure")
+
+            override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult = error("Unexpected formatting")
+        }
+
+        val result = formatterWith(listOf(failingRule, unreachableRule)).format(words("word")).nextFormattedChunk()
+
+        assertSame(expectedError, assertIs<FormattedChunkReadResult.Failure>(result).error)
+    }
+
+    @Test
+    fun `notifies unselected rules of the actual formatted whitespace`() {
+        val observedGaps = mutableListOf<String>()
+        val observingRule = object : TokenGapFormattingRule {
+            override fun supports(gap: TokenGap): Boolean = false
+
+            override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult = error("Unexpected formatting")
+
+            override fun afterFormatting(gap: TokenGap, whitespace: String): TokenGapFormattingRule {
+                observedGaps.add(whitespace)
+                return this
+            }
+        }
+
+        formatAll(formatterWith(listOf(ReplacingGapRule("\n"), observingRule)), words("first", "second"))
+
+        assertEquals(listOf("", "\n"), observedGaps)
+    }
+
+    @Test
     fun `returns trailing whitespace before reporting end of input`() {
         val source = formatterWith().format(
             ListTokenSource(
@@ -280,8 +320,8 @@ private data class ReplacingGapRule(
         return gap.previousToken != null && gap.nextToken != null
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return replacement
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return WhitespaceFormattingResult.Success(replacement)
     }
 }
 
@@ -293,8 +333,8 @@ private data class AfterMarkerRule(
         return markerWasConsumed && gap.nextToken != null
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return "!"
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return WhitespaceFormattingResult.Success("!")
     }
 
     override fun afterConsuming(token: Token): TokenGapFormattingRule {
