@@ -13,6 +13,7 @@ import printscript.model.source.SourceSpan
 import printscript.runtime.ProgramOutput
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
+import printscript.v1.validation.Validator
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -66,6 +67,7 @@ class ExecutionCommandTest {
                         printedLine = printedLine,
                     )
                 },
+                validator = Validator { error("ExecutionCommand no debería pedir el validador") },
                 formatterConfiguredBy = {
                     error("ExecutionCommand no debería pedir el formatter")
                 },

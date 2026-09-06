@@ -61,7 +61,7 @@ internal class DeclarationExecutor(
     ): ExecutionResult<Unit> {
         val name: String = statement.identifier.value
 
-        if (state.lookupBinding(name) != null) {
+        if (state.lookupCurrentScopeBinding(name) != null) {
             return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.AlreadyDeclaredVariable(
                     name = name,

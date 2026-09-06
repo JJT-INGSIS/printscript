@@ -1,5 +1,6 @@
 package printscript.v1.interpreter.internal.operation
 
+import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryOperator
 import printscript.interpreter.ExecutionResult
 import printscript.model.source.SourceSpan
@@ -14,20 +15,16 @@ internal class AddOperation : BinaryOperation {
         right: RuntimeValue,
         span: SourceSpan,
     ): ExecutionResult<RuntimeValue> {
-        if (left is NumberValue && right is NumberValue) {
-            return sum(left, right)
+        return when (BinaryOperator.ADD.resultType(left.type, right.type)) {
+            DeclaredType.NUMBER -> sum(left as NumberValue, right as NumberValue)
+            DeclaredType.STRING -> concatenate(left, right)
+            else -> invalidOperandsFor(
+                operator = BinaryOperator.ADD,
+                left = left,
+                right = right,
+                span = span,
+            )
         }
-
-        if (left is StringValue || right is StringValue) {
-            return concatenate(left, right)
-        }
-
-        return invalidOperandsFor(
-            operator = BinaryOperator.ADD,
-            left = left,
-            right = right,
-            span = span,
-        )
     }
 
     private fun sum(left: NumberValue, right: NumberValue): ExecutionResult<RuntimeValue> {

@@ -3,16 +3,15 @@ package printscript.cli.internal.command
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
+import printscript.cli.internal.OperationOutcome
 import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
-import printscript.runtime.EnvironmentVariableProvider
-import printscript.runtime.ProgramOutput
+import printscript.v1.validation.ValidationResult
 
 internal class ValidationCommand(
     private val errorReporter: ErrorReporter,
-    private val environmentVariables: EnvironmentVariableProvider = systemEnvironmentVariables(),
     private val toolchainFor: (LanguageVersion) -> PrintScriptToolchain =
         PrintScriptToolchainFactory::forVersion,
 ) : CliktCommand(name = "validation") {
@@ -22,7 +21,7 @@ internal class ValidationCommand(
     private val languageOptions by LanguageOptions()
 
     override fun help(context: Context): String {
-        return "Verifica que el archivo sea válido, sin mostrar lo que el programa imprimiría"
+        return "Valida la sintaxis y semántica de ambas ramas sin ejecutar el programa"
     }
 
     override fun run() {
@@ -32,22 +31,15 @@ internal class ValidationCommand(
             sourceFilePath = sourceFilePath,
             errorReporter = errorReporter,
         ) { sourceReader ->
-            interpretationOutcome(
-                interpreter = toolchain.interpreterUsing(
-                    discardedOutput(),
-                    terminalInput(),
-                    environmentVariables,
-                ),
-                statements = toolchain.statementsFrom(sourceReader),
-                errorReporter = errorReporter,
-                onSuccess = { echo("El archivo es válido.") },
-            )
-        }
-    }
+            when (val result = toolchain.validator.validate(toolchain.statementsFrom(sourceReader))) {
+                ValidationResult.Success -> {
+                    echo("El archivo es válido.")
+                    OperationOutcome.Success
+                }
 
-    private fun discardedOutput(): ProgramOutput {
-        return object : ProgramOutput {
-            override fun writeLine(line: String) = Unit
+                is ValidationResult.ParseFailure -> OperationOutcome.Failure(errorReporter.describe(result.error))
+                is ValidationResult.SemanticFailure -> OperationOutcome.Failure(errorReporter.describe(result.error))
+            }
         }
     }
 }

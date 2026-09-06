@@ -2,8 +2,10 @@ package printscript.v1.formatter.internal.rule
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
+import printscript.formatter.WhitespaceFormattingResult
 import printscript.token.Token
 import printscript.v1.formatter.internal.LINE_BREAK
+import printscript.v1.formatter.internal.repeatedWhitespace
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal data class LineBreakAfterPrintlnRule(
@@ -18,11 +20,15 @@ internal data class LineBreakAfterPrintlnRule(
             gap.nextToken != null
     }
 
-    override fun formatWhitespace(gap: TokenGap): String {
-        return LINE_BREAK.repeat(blankLineCount.toInt() + 1)
+    override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
+        return repeatedWhitespace(gap, LINE_BREAK, blankLineCount.toULong() + 1uL)
     }
 
     override fun afterConsuming(token: Token): TokenGapFormattingRule {
+        if (token.type == PrintScriptV1TokenType.LEFT_BRACE || token.type == PrintScriptV1TokenType.RIGHT_BRACE) {
+            return copy(currentStatementStartsWithPrintln = null, completedStatementWasPrintln = false)
+        }
+
         if (token.type == PrintScriptV1TokenType.SEMICOLON) {
             return copy(
                 currentStatementStartsWithPrintln = null,

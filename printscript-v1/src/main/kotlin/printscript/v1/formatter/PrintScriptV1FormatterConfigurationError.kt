@@ -8,6 +8,10 @@ public sealed interface PrintScriptV1FormatterConfigurationError {
 
     public data object ConflictingEqualsSpacingRules : PrintScriptV1FormatterConfigurationError
 
+    public data class ExcessiveLineBreakCount(
+        public val providedValue: Int,
+    ) : PrintScriptV1FormatterConfigurationError
+
     public data class NegativeLineBreakCount(
         public val providedValue: Int,
     ) : PrintScriptV1FormatterConfigurationError

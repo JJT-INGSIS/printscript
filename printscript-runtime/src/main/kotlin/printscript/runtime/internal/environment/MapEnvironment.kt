@@ -10,6 +10,10 @@ internal class MapEnvironment private constructor(
 
     constructor() : this(listOf(emptyMap()))
 
+    override fun lookupCurrentScopeBinding(name: String): VariableBinding? {
+        return scopes.last()[name]
+    }
+
     override fun lookupBinding(name: String): VariableBinding? {
         return scopes
             .asReversed()

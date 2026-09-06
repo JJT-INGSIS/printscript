@@ -3,6 +3,7 @@ package printscript.formatter.internal
 import printscript.formatter.FormattedChunkReadResult
 import printscript.formatter.FormattedSource
 import printscript.formatter.FormattingError
+import printscript.formatter.WhitespaceFormattingResult
 import printscript.formatter.internal.rule.TokenGapFormattingRuleDispatcher
 import printscript.token.Token
 import printscript.token.TokenReadError
@@ -34,7 +35,10 @@ internal data class TokenFormattingSource(
 
     private fun formatGap(gapReadResult: TokenGapReadResult.Success): FormattedChunkReadResult {
         val gap = gapReadResult.gap
-        val formattedWhitespace = ruleDispatcher.formatWhitespace(gap)
+        val formattedWhitespace = when (val result = ruleDispatcher.formatWhitespace(gap)) {
+            is WhitespaceFormattingResult.Success -> result.whitespace
+            is WhitespaceFormattingResult.Failure -> return FormattedChunkReadResult.Failure(result.error)
+        }
         val nextToken = gap.nextToken
 
         if (nextToken == null) {
@@ -48,7 +52,7 @@ internal data class TokenFormattingSource(
             formattedText = formattedWhitespace + nextToken.lexeme,
             remainingSource = copy(
                 tokenSource = gapReadResult.remainingTokenSource,
-                ruleDispatcher = ruleDispatcher.afterConsuming(nextToken),
+                ruleDispatcher = ruleDispatcher.afterFormatting(gap, formattedWhitespace),
                 previousToken = nextToken,
             ),
         )

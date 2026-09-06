@@ -1,5 +1,6 @@
 package printscript.v1.interpreter.internal.operation
 
+import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryOperator
 import printscript.interpreter.ExecutionResult
 import printscript.model.source.SourceSpan
@@ -16,7 +17,7 @@ internal class NumericBinaryOperation(
         right: RuntimeValue,
         span: SourceSpan,
     ): ExecutionResult<RuntimeValue> {
-        if (left !is NumberValue || right !is NumberValue) {
+        if (operator.resultType(left.type, right.type) != DeclaredType.NUMBER) {
             return invalidOperandsFor(
                 operator = operator,
                 left = left,
@@ -25,6 +26,6 @@ internal class NumericBinaryOperation(
             )
         }
 
-        return calculation.calculate(left.value, right.value, span)
+        return calculation.calculate((left as NumberValue).value, (right as NumberValue).value, span)
     }
 }
