@@ -22,7 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-class PrintScriptV1ReadInputArgumentRuleTest {
+class PrintScriptV11ReadInputArgumentRuleTest {
 
     private val linter: Linter = v11LinterWith(rules = listOf(readInputArgumentRule()))
 

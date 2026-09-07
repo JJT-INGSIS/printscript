@@ -24,7 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-class PrintScriptV11StatementTreeRuleTest {
+class PrintScriptV11RecursiveStatementRuleTest {
 
     @Test
     fun `applies configured rules to statements inside a then block`() {

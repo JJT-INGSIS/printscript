@@ -15,7 +15,7 @@ internal class ConfigurableLinter(
     private val search = DiagnosticSearch()
 
     override fun lint(source: StatementSource): DiagnosticSource {
-        return LintingSource.initial(
+        return StatementDiagnosticSource.initial(
             statements = source,
             rule = rule,
             search = search,

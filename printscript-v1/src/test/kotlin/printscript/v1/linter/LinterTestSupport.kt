@@ -179,9 +179,9 @@ internal fun identifierNamingRule(
 internal fun printlnArgumentRule(): PrintScriptV1RuleConfiguration {
     return PrintScriptV1RuleConfiguration.PrintlnArgument(
         acceptanceByKind = mapOf(
-            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
         ),
     )
 }
@@ -197,9 +197,9 @@ internal fun linterWith(vararg rules: PrintScriptV1RuleConfiguration): Linter {
 internal fun readInputArgumentRule(): PrintScriptV1RuleConfiguration {
     return PrintScriptV1RuleConfiguration.ReadInputArgument(
         acceptanceByKind = mapOf(
-            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
         ),
     )
 }

@@ -4,9 +4,9 @@ import printscript.linter.LintRule
 import printscript.linter.Linter
 import printscript.linter.LinterFactory
 import printscript.v1.linter.internal.configuration.PrintScriptV1LinterConfigurationReader
+import printscript.v1.linter.rule.PrintScriptV11ReadInputArgumentRule
 import printscript.v1.linter.rule.PrintScriptV1IdentifierNamingRule
 import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
-import printscript.v1.linter.rule.PrintScriptV1ReadInputArgumentRule
 
 public object PrintScriptV1LinterFactory {
 
@@ -17,7 +17,7 @@ public object PrintScriptV1LinterFactory {
                 PrintScriptV1RuleConfiguration.IdentifierNaming(
                     convention = PrintScriptV1NamingConvention.CAMEL_CASE,
                 ),
-                variableOrLiteralPrintlnArgumentRule(),
+                variableOrLiteralPrintlnArgumentConfiguration(),
             ),
         )
     }
@@ -51,17 +51,17 @@ public object PrintScriptV1LinterFactory {
                 PrintScriptV1PrintlnArgumentRule(configuration.acceptanceByKind)
 
             is PrintScriptV1RuleConfiguration.ReadInputArgument ->
-                PrintScriptV1ReadInputArgumentRule(configuration.acceptanceByKind)
+                PrintScriptV11ReadInputArgumentRule(configuration.acceptanceByKind)
         }
     }
 }
 
-internal fun variableOrLiteralPrintlnArgumentRule(): PrintScriptV1RuleConfiguration.PrintlnArgument {
+internal fun variableOrLiteralPrintlnArgumentConfiguration(): PrintScriptV1RuleConfiguration.PrintlnArgument {
     return PrintScriptV1RuleConfiguration.PrintlnArgument(
         acceptanceByKind = mapOf(
-            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
         ),
     )
 }

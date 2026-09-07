@@ -2,15 +2,15 @@ package printscript.runtime
 
 public interface Environment {
 
-    public fun lookupBinding(name: String): VariableBinding?
+    public fun findBinding(name: String): VariableBinding?
 
-    public fun lookupCurrentScopeBinding(name: String): VariableBinding?
+    public fun findBindingInCurrentScope(name: String): VariableBinding?
 
-    public fun declaring(name: String, binding: VariableBinding): Environment
+    public fun declare(name: String, binding: VariableBinding): Environment
 
-    public fun reassigning(name: String, value: RuntimeValue): Environment
+    public fun reassign(name: String, value: RuntimeValue): Environment
 
-    public fun enteringScope(): Environment
+    public fun enterScope(): Environment
 
-    public fun leavingScope(): Environment
+    public fun leaveScope(): Environment
 }

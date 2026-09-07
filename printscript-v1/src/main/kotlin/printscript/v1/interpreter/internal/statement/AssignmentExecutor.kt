@@ -53,7 +53,7 @@ internal class AssignmentExecutor(
         ).orReturn { return it }
 
         return ExecutionResult.Success(
-            state.reassigning(
+            state.reassign(
                 name = name,
                 value = value,
             ),
@@ -65,7 +65,7 @@ internal class AssignmentExecutor(
         state: Environment,
     ): ExecutionResult<VariableBinding> {
         val name: String = statement.target.value
-        val binding: VariableBinding = state.lookupBinding(name)
+        val binding: VariableBinding = state.findBinding(name)
             ?: return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.UndeclaredVariable(
                     name = name,

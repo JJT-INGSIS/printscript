@@ -15,9 +15,7 @@ public data class NumberValue(
 
     override val type: DeclaredType = DeclaredType.NUMBER
 
-    override fun asText(): String {
-        return value.stripTrailingZeros().toPlainString()
-    }
+    override fun asText(): String = value.stripTrailingZeros().toPlainString()
 }
 
 public data class StringValue(
@@ -26,9 +24,7 @@ public data class StringValue(
 
     override val type: DeclaredType = DeclaredType.STRING
 
-    override fun asText(): String {
-        return value
-    }
+    override fun asText(): String = value
 }
 
 public data class BooleanValue(
@@ -37,7 +33,5 @@ public data class BooleanValue(
 
     override val type: DeclaredType = DeclaredType.BOOLEAN
 
-    override fun asText(): String {
-        return value.toString()
-    }
+    override fun asText(): String = value.toString()
 }

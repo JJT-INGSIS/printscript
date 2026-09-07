@@ -9,13 +9,19 @@ public class CompositeRule(
     private val rules: List<LintRule> = rules.toList()
 
     override fun inspect(statement: Statement): RuleInspection {
-        val inspections = rules.map { rule -> rule.inspect(statement) }
+        val diagnostics = mutableListOf<Diagnostic>()
+        val resultingRules = mutableListOf<LintRule>()
+
+        for (rule in rules) {
+            val inspection = rule.inspect(statement)
+
+            diagnostics.addAll(inspection.diagnostics)
+            resultingRules.add(inspection.resultingRule)
+        }
 
         return RuleInspection(
-            diagnostics = inspections.flatMap { inspection -> inspection.diagnostics },
-            resultingRule = CompositeRule(
-                rules = inspections.map { inspection -> inspection.resultingRule },
-            ),
+            diagnostics = diagnostics,
+            resultingRule = CompositeRule(resultingRules),
         )
     }
 }

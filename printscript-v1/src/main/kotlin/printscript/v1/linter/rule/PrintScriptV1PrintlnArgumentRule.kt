@@ -7,18 +7,18 @@ import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.StatelessLintRule
 import printscript.statement.Statement
-import printscript.v1.linter.PrintScriptV1ArgumentAcceptance
-import printscript.v1.linter.PrintScriptV1ArgumentAcceptancePolicy
+import printscript.v1.linter.PrintScriptArgumentAcceptance
+import printscript.v1.linter.PrintScriptArgumentAcceptancePolicy
+import printscript.v1.linter.PrintScriptExpressionKind
 import printscript.v1.linter.PrintScriptV1Diagnostic
-import printscript.v1.linter.PrintScriptV1ExpressionKind
 
 public class PrintScriptV1PrintlnArgumentRule(
-    acceptanceByKind: Map<PrintScriptV1ExpressionKind, PrintScriptV1ArgumentAcceptance>,
-) : StatelessLintRule() {
+    acceptanceByKind: Map<PrintScriptExpressionKind, PrintScriptArgumentAcceptance>,
+) : StatelessLintRule {
 
-    private val acceptancePolicy = PrintScriptV1ArgumentAcceptancePolicy(acceptanceByKind)
+    private val acceptancePolicy = PrintScriptArgumentAcceptancePolicy(acceptanceByKind)
 
-    protected override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
+    public override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return when (statement) {
             is PrintlnStatement -> inspectArgument(statement.argument)
 
@@ -32,9 +32,9 @@ public class PrintScriptV1PrintlnArgumentRule(
 
     private fun inspectArgument(argument: Expression): List<Diagnostic> {
         return when (acceptancePolicy.acceptanceOf(argument)) {
-            PrintScriptV1ArgumentAcceptance.ACCEPTED -> emptyList()
+            PrintScriptArgumentAcceptance.ACCEPTED -> emptyList()
 
-            PrintScriptV1ArgumentAcceptance.REJECTED -> listOf(
+            PrintScriptArgumentAcceptance.REJECTED -> listOf(
                 PrintScriptV1Diagnostic.UnsupportedPrintlnArgument(argument),
             )
         }

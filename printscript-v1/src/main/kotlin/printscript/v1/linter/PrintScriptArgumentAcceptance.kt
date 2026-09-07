@@ -1,6 +1,6 @@
 package printscript.v1.linter
 
-public enum class PrintScriptV1ArgumentAcceptance {
+public enum class PrintScriptArgumentAcceptance {
     ACCEPTED,
     REJECTED,
 }

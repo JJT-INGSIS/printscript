@@ -47,9 +47,9 @@ internal class NameReportingRule(
     private val label: String,
     private val reportedNames: Set<String>,
     private val reportCount: Int = SINGLE_DIAGNOSTIC,
-) : StatelessLintRule() {
+) : StatelessLintRule {
 
-    protected override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
+    override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return statement
             .takeIf { candidate -> nameOf(candidate) in reportedNames }
             ?.let { reported -> diagnosticsFor(reported) }

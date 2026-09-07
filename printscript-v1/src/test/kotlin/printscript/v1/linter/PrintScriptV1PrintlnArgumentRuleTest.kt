@@ -90,9 +90,9 @@ class PrintScriptV1PrintlnArgumentRuleTest {
         val permissiveLinter = linterWith(
             PrintScriptV1RuleConfiguration.PrintlnArgument(
                 acceptanceByKind = mapOf(
-                    PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-                    PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-                    PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+                    PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+                    PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+                    PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.ACCEPTED,
                 ),
             ),
         )
@@ -109,9 +109,9 @@ class PrintScriptV1PrintlnArgumentRuleTest {
         val strictLinter = linterWith(
             PrintScriptV1RuleConfiguration.PrintlnArgument(
                 acceptanceByKind = mapOf(
-                    PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.REJECTED,
-                    PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-                    PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+                    PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.REJECTED,
+                    PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+                    PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
                 ),
             ),
         )
@@ -127,7 +127,7 @@ class PrintScriptV1PrintlnArgumentRuleTest {
     fun `fails to build when the configuration leaves a kind uncovered`() {
         val incompleteConfiguration = PrintScriptV1RuleConfiguration.PrintlnArgument(
             acceptanceByKind = mapOf(
-                PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+                PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
             ),
         )
 
@@ -137,7 +137,7 @@ class PrintScriptV1PrintlnArgumentRuleTest {
 
         assertContains(
             charSequence = failure.message.orEmpty(),
-            other = PrintScriptV1ExpressionKind.COMPOSED.name,
+            other = PrintScriptExpressionKind.COMPOSED.name,
         )
     }
 

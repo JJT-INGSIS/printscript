@@ -67,12 +67,12 @@ internal class IfExecutor : StatementExecutor<Environment> {
         context: StatementExecutionContext<Environment>,
     ): ExecutionResult<Environment> {
         val scopedContext: StatementExecutionContext<Environment> = context.withState(
-            context.state.enteringScope(),
+            context.state.enterScope(),
         )
 
         return when (val result = scopedContext.executeStatements(branch.statements)) {
             is ExecutionResult.Failure -> result
-            is ExecutionResult.Success -> ExecutionResult.Success(result.value.leavingScope())
+            is ExecutionResult.Success -> ExecutionResult.Success(result.value.leaveScope())
         }
     }
 }

@@ -1,10 +1,10 @@
 package printscript.runtime
 
-import printscript.runtime.internal.environment.MapEnvironment
+import printscript.runtime.internal.environment.ScopedEnvironment
 
 public object EnvironmentFactory {
 
     public fun empty(): Environment {
-        return MapEnvironment()
+        return ScopedEnvironment()
     }
 }

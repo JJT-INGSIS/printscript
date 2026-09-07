@@ -44,7 +44,7 @@ internal class DeclarationExecutor(
                 .orReturn { return it }
 
         return ExecutionResult.Success(
-            state.declaring(
+            state.declare(
                 name = statement.identifier.value,
                 binding = VariableBinding(
                     type = statement.declaredType,
@@ -61,7 +61,7 @@ internal class DeclarationExecutor(
     ): ExecutionResult<Unit> {
         val name: String = statement.identifier.value
 
-        if (state.lookupCurrentScopeBinding(name) != null) {
+        if (state.findBindingInCurrentScope(name) != null) {
             return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.AlreadyDeclaredVariable(
                     name = name,

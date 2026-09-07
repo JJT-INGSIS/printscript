@@ -8,7 +8,7 @@ import printscript.linter.LintRule
 import printscript.linter.RuleInspection
 import printscript.statement.Statement
 
-internal class PrintScriptV11StatementTreeRule private constructor(
+internal class PrintScriptV11RecursiveStatementRule private constructor(
     private val delegate: LintRule,
 ) : LintRule {
 
@@ -19,7 +19,7 @@ internal class PrintScriptV11StatementTreeRule private constructor(
 
         return RuleInspection(
             diagnostics = diagnostics,
-            resultingRule = PrintScriptV11StatementTreeRule(delegate = resultingDelegate),
+            resultingRule = PrintScriptV11RecursiveStatementRule(delegate = resultingDelegate),
         )
     }
 

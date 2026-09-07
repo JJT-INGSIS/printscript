@@ -1,9 +1,9 @@
 package printscript.v1.linter.internal.configuration
 
 import printscript.v1.linter.PrintScriptV1RuleConfiguration
-import printscript.v1.linter.variableOrLiteralPrintlnArgumentRule
+import printscript.v1.linter.variableOrLiteralPrintlnArgumentConfiguration
 
-internal inline fun sharedLinterRules(
+internal inline fun sharedRuleConfigurations(
     identifierFormat: String?,
     mandatoryVariableOrLiteralInPrintln: Boolean,
     onUnknownIdentifierFormat: (String) -> Nothing,
@@ -14,7 +14,7 @@ internal inline fun sharedLinterRules(
         PrintScriptV1RuleConfiguration.IdentifierNaming(convention)
     }
     val printlnArgumentRule = if (mandatoryVariableOrLiteralInPrintln) {
-        variableOrLiteralPrintlnArgumentRule()
+        variableOrLiteralPrintlnArgumentConfiguration()
     } else {
         null
     }

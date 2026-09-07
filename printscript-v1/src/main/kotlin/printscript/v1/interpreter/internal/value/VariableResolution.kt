@@ -7,7 +7,7 @@ import printscript.runtime.RuntimeValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 
 internal fun Environment.resolveInitializedValue(name: String, span: SourceSpan): ExecutionResult<RuntimeValue> {
-    val binding = lookupBinding(name)
+    val binding = findBinding(name)
         ?: return ExecutionResult.Failure(PrintScriptV1SemanticError.UndeclaredVariable(name, span))
     val value = binding.value
         ?: return ExecutionResult.Failure(PrintScriptV1SemanticError.UninitializedVariable(name, span))
