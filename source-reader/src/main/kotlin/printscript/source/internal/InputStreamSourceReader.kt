@@ -8,7 +8,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.CharacterCodingException
-import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 
 internal class InputStreamSourceReader(
@@ -18,17 +17,14 @@ internal class InputStreamSourceReader(
 
     private val characterReader = InputStreamReader(
         inputStream,
-        StandardCharsets.UTF_8
-            .newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT),
+        StandardCharsets.UTF_8.newDecoder(),
     )
 
     override fun readChunk(): SourceChunkReadResult {
         val buffer = CharArray(bufferSizeInCharacters)
 
         return try {
-            readInto(buffer)
+            readFromStream(buffer)
         } catch (_: CharacterCodingException) {
             SourceChunkReadResult.Failure(
                 error = SourceReadError.InvalidInputStreamEncoding,
@@ -44,7 +40,7 @@ internal class InputStreamSourceReader(
         }
     }
 
-    private fun readInto(buffer: CharArray): SourceChunkReadResult {
+    private fun readFromStream(buffer: CharArray): SourceChunkReadResult {
         val readCharacterCount = characterReader.read(buffer)
 
         if (readCharacterCount == END_OF_INPUT) {

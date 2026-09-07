@@ -4,7 +4,6 @@ import printscript.formatter.FormattingError
 import printscript.interpreter.SemanticError
 import printscript.lexer.SourceReadingError
 import printscript.model.source.SourceSpan
-import printscript.source.SourceAccessError
 import printscript.source.SourceReadError
 import printscript.source.SourceReaderCreationError
 import printscript.statement.ParseError
@@ -13,19 +12,34 @@ import printscript.token.TokenReadError
 import printscript.v1.formatter.PrintScriptFormattingError
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
+import java.nio.file.Path
 
 internal class ErrorReporter {
 
     fun describe(error: SourceReaderCreationError): String {
         val description = when (error) {
-            is SourceAccessError -> describeSourceAccess(error)
-
             is SourceReaderCreationError.InvalidBufferSize ->
                 "el tamaño del buffer debe ser mayor que cero " +
                     "(se recibió ${error.providedSize})"
         }
 
         return "error: $description"
+    }
+
+    fun describeMissingSourceFile(path: Path): String {
+        return "error: no se encontró el archivo '$path'"
+    }
+
+    fun describeInvalidSourceFile(path: Path): String {
+        return "error: '$path' no es un archivo"
+    }
+
+    fun describeUnreadableSourceFile(path: Path): String {
+        return "error: no hay permisos de lectura sobre '$path'"
+    }
+
+    fun describeSourceFileAccessFailure(path: Path, reason: String): String {
+        return "error: no se pudo leer '$path': $reason"
     }
 
     fun describe(error: ParseError): String {
@@ -43,7 +57,7 @@ internal class ErrorReporter {
                 "error sintáctico desconocido"
         }
 
-        return format(description, error.span)
+        return formatError(description, error.span)
     }
 
     fun describe(error: SemanticError): String {
@@ -115,19 +129,19 @@ internal class ErrorReporter {
                 "error semántico desconocido"
         }
 
-        return format(description, error.span)
+        return formatError(description, error.span)
     }
 
     fun describe(error: FormattingError): String {
         return when (error) {
             is PrintScriptFormattingError.WhitespaceSizeOverflow ->
-                format("la cantidad de espacios o saltos de línea excede el tamaño admitido", error.span)
+                formatError("la cantidad de espacios o saltos de línea excede el tamaño admitido", error.span)
 
             is FormattingError.TokenReadFailure ->
-                format(describeTokenRead(error.tokenReadError), error.span)
+                formatError(describeTokenRead(error.tokenReadError), error.span)
 
             else ->
-                format("error de formateo desconocido", error.span)
+                formatError("error de formateo desconocido", error.span)
         }
     }
 
@@ -154,42 +168,20 @@ internal class ErrorReporter {
             else -> "error desconocido al leer el próximo token"
         }
     }
+}
 
-    private fun describeSourceReading(error: SourceReadingError): String {
-        return when (val sourceError = error.sourceError) {
-            is SourceAccessError -> describeSourceAccess(sourceError)
+private fun formatError(description: String, span: SourceSpan): String {
+    return "error: $description — ${SpanRenderer.render(span)}"
+}
 
-            is SourceReadError.InvalidEncoding ->
-                "el archivo '${sourceError.path}' no contiene UTF-8 válido " +
-                    "desde el byte ${sourceError.byteOffset}"
+private fun describeSourceReading(error: SourceReadingError): String {
+    return when (val sourceError = error.sourceError) {
+        SourceReadError.InvalidInputStreamEncoding ->
+            "el flujo de entrada no contiene UTF-8 válido"
 
-            SourceReadError.InvalidInputStreamEncoding ->
-                "el flujo de entrada no contiene UTF-8 válido"
+        is SourceReadError.InputStreamReadFailed ->
+            "no se pudo leer el flujo de entrada: ${sourceError.reason}"
 
-            is SourceReadError.InputStreamReadFailed ->
-                "no se pudo leer el flujo de entrada: ${sourceError.reason}"
-
-            else -> "no se pudo continuar leyendo el código fuente"
-        }
-    }
-
-    private fun describeSourceAccess(error: SourceAccessError): String {
-        return when (error) {
-            is SourceAccessError.NotFound ->
-                "no se encontró el archivo '${error.path}'"
-
-            is SourceAccessError.NotAFile ->
-                "'${error.path}' no es un archivo"
-
-            is SourceAccessError.NotReadable ->
-                "no hay permisos de lectura sobre '${error.path}'"
-
-            is SourceAccessError.ReadFailed ->
-                "no se pudo leer '${error.path}': ${error.reason}"
-        }
-    }
-
-    private fun format(description: String, span: SourceSpan): String {
-        return "error: $description — ${SpanRenderer.render(span)}"
+        else -> "no se pudo continuar leyendo el código fuente"
     }
 }

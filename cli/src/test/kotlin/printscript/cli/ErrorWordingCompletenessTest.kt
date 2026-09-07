@@ -26,7 +26,6 @@ import printscript.v1.linter.PrintScriptV1Diagnostic
 import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.token.PrintScriptV1TokenType
 import java.math.BigDecimal
-import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertNotEquals
 
@@ -80,15 +79,6 @@ class ErrorWordingCompletenessTest {
 
         val errors = listOf(
             ParseError.TokenRead(LexicalError.UnexpectedCharacter(character = '@', span = anySpan)),
-            ParseError.TokenRead(
-                SourceReadingError(
-                    sourceError = SourceReadError.InvalidEncoding(
-                        path = Path.of("program.ps"),
-                        byteOffset = 0L,
-                    ),
-                    span = anySpan,
-                ),
-            ),
             ParseError.TokenRead(
                 SourceReadingError(
                     sourceError = SourceReadError.InvalidInputStreamEncoding,

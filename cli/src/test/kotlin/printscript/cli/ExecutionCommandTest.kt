@@ -13,6 +13,8 @@ import printscript.model.source.SourceSpan
 import printscript.runtime.ProgramOutput
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -161,6 +163,28 @@ class ExecutionCommandTest {
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "no se encontró el archivo")
+    }
+
+    @Test
+    fun `reports a directory instead of trying to read it`() {
+        val directory = Files.createTempDirectory("printscript-source")
+        directory.toFile().deleteOnExit()
+
+        val result = commandWith(RecordingToolchainFactory()).test(listOf(directory.toString()))
+
+        assertEquals(expected = 1, actual = result.statusCode)
+        assertContains(result.stderr, "no es un archivo")
+    }
+
+    @Test
+    fun `closes the source file when the operation does not consume it`() {
+        val sourceFilePath = Path.of(anySourceFile())
+
+        val result = commandWith(RecordingToolchainFactory()).test(listOf(sourceFilePath.toString()))
+        Files.delete(sourceFilePath)
+
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertFalse(Files.exists(sourceFilePath))
     }
 
     @Test

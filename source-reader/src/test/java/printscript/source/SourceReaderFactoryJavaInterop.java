@@ -1,16 +1,14 @@
 package printscript.source;
 
 import java.io.InputStream;
-import java.nio.file.Path;
 
 final class SourceReaderFactoryJavaInterop {
 
     private SourceReaderFactoryJavaInterop() {
     }
 
-    static void consumeFactoryFromJava(InputStream inputStream, Path path) {
+    static void consumeFactoryFromJava(InputStream inputStream) {
         SourceReaderFactory.fromString("");
         SourceReaderFactory.fromInputStream(inputStream);
-        SourceReaderFactory.fromPath(path);
     }
 }
