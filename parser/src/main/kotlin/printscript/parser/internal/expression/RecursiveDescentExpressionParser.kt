@@ -11,14 +11,14 @@ import printscript.token.TokenType
 internal class RecursiveDescentExpressionParser<E>(
     private val primaryExpressionParser: PrimaryExpressionParser<E>,
     unaryExpressionBuildersByTokenType: Map<TokenType, UnaryExpressionBuilder<E>>,
-    binaryExpressionBuildersByPrecedence: List<Map<TokenType, BinaryExpressionBuilder<E>>>,
+    binaryExpressionBuildersByDescendingPrecedence: List<Map<TokenType, BinaryExpressionBuilder<E>>>,
 ) : ExpressionParser<E> {
 
     private val unaryExpressionBuildersByTokenType =
         unaryExpressionBuildersByTokenType.toMap()
 
-    private val binaryExpressionBuildersByPrecedence =
-        binaryExpressionBuildersByPrecedence.map { builders -> builders.toMap() }
+    private val binaryExpressionBuildersByDescendingPrecedence =
+        binaryExpressionBuildersByDescendingPrecedence.map { builders -> builders.toMap() }
 
     private val topLevelParser: ExpressionParser<E> = buildPrecedenceChain()
 
@@ -27,7 +27,7 @@ internal class RecursiveDescentExpressionParser<E>(
     }
 
     private fun buildPrecedenceChain(): ExpressionParser<E> {
-        return binaryExpressionBuildersByPrecedence.fold(
+        return binaryExpressionBuildersByDescendingPrecedence.fold(
             initial = unaryExpressionParser(),
         ) { operandParser, expressionBuilders ->
             LeftAssociativeBinaryExpressionParser(

@@ -21,9 +21,7 @@ internal data class ScanningTokenSource(
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
-        val nextCharacterResult = readNextRelevantCharacter(characterCursor)
-
-        return when (nextCharacterResult) {
+        return when (val nextCharacterResult = readNextRelevantCharacter(characterCursor)) {
             is ScannerCharacterReadResult.EndOfInput -> {
                 createEndOfInputResult(
                     cursor = nextCharacterResult.resultingCursor,

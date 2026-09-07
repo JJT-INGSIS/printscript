@@ -110,7 +110,7 @@ internal class DeclarationParser(
         val peeked = context.peek()
             .orReturn { return it }
 
-        if (peeked.value.type != tokens.initializer) {
+        if (peeked.value.type != tokens.initializerOperator) {
             if (initializerRequired) {
                 return missingInitializer(peeked.value)
             }
@@ -125,7 +125,7 @@ internal class DeclarationParser(
     }
 
     private fun readInitializer(context: ParsingContext): ParsingResult<Expression?> {
-        val assignment = context.expect(tokens.initializer)
+        val assignment = context.expect(tokens.initializerOperator)
             .orReturn { return it }
 
         return expressionParser.parseExpression(assignment.resultingContext)
@@ -134,7 +134,7 @@ internal class DeclarationParser(
     private fun missingInitializer(actual: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
             ParseError.UnexpectedToken(
-                expected = setOf(tokens.initializer),
+                expected = setOf(tokens.initializerOperator),
                 actual = actual,
             ),
         )
