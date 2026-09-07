@@ -13,11 +13,12 @@ import printscript.model.source.SourceSpan
 import printscript.runtime.ProgramOutput
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
-import printscript.v1.validation.Validator
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 
 class ExecutionCommandTest {
@@ -67,7 +68,7 @@ class ExecutionCommandTest {
                         printedLine = printedLine,
                     )
                 },
-                validator = Validator { error("ExecutionCommand no debería pedir el validador") },
+                validator = { error("ExecutionCommand no debería pedir el validador") },
                 formatterConfiguredBy = {
                     error("ExecutionCommand no debería pedir el formatter")
                 },
@@ -124,7 +125,7 @@ class ExecutionCommandTest {
 
         val result = commandWith(factory).test(listOf(scriptFile(), "--version", "9.9"))
 
-        assertEquals(expected = false, actual = result.statusCode == 0)
+        assertNotEquals(illegal = 0, actual = result.statusCode)
         assertNull(factory.receivedVersion)
     }
 
@@ -179,6 +180,6 @@ class ExecutionCommandTest {
     fun `no longer offers a configuration option`() {
         val result = commandWith(RecordingToolchainFactory()).test("--help")
 
-        assertEquals(expected = false, actual = result.stdout.contains("--config"))
+        assertFalse(result.stdout.contains("--config"))
     }
 }

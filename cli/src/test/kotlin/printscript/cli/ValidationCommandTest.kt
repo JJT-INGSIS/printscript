@@ -23,15 +23,15 @@ class ValidationCommandTest {
             errorReporter = ErrorReporter(),
             toolchainFor = { version ->
                 selectedVersion = version
-                toolchainWithValidator(Validator { ValidationResult.Success })
+                toolchainWithValidator { ValidationResult.Success }
             },
         )
 
         val result = command.test(listOf(scriptFile(""), "--version", "1.1"))
 
-        assertEquals(LanguageVersion.V1_1, selectedVersion)
-        assertEquals(0, result.statusCode)
-        assertEquals("El archivo es válido.\n", result.stdout)
+        assertEquals(expected = LanguageVersion.V1_1, actual = selectedVersion)
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertEquals(expected = "El archivo es válido.\n", actual = result.stdout)
     }
 
     @Test
@@ -44,9 +44,9 @@ class ValidationCommandTest {
 
         val result = cli().test(listOf("validation", scriptFile(source), "--version", "1.1"))
 
-        assertEquals(0, result.statusCode)
-        assertEquals("El archivo es válido.\n", result.stdout)
-        assertEquals("", result.stderr)
+        assertEquals(expected = 0, actual = result.statusCode)
+        assertEquals(expected = "El archivo es válido.\n", actual = result.stdout)
+        assertEquals(expected = "", actual = result.stderr)
     }
 
     @Test
@@ -55,10 +55,10 @@ class ValidationCommandTest {
 
         val result = cli().test(listOf("validation", scriptFile(source), "--version", "1.1"))
 
-        assertEquals(1, result.statusCode)
+        assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "'missing' no fue declarada")
         assertContains(result.stderr, "línea 2")
-        assertEquals("", result.stdout)
+        assertEquals(expected = "", actual = result.stdout)
     }
 
     @Test
@@ -67,29 +67,36 @@ class ValidationCommandTest {
 
         val result = cli().test(listOf("validation", scriptFile(source)))
 
-        assertEquals(1, result.statusCode)
+        assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "línea 2")
-        assertEquals("", result.stdout)
+        assertEquals(expected = "", actual = result.stdout)
     }
 
     @Test
     fun `runtime arithmetic errors do not fail static validation`() {
         val file = scriptFile("println(1 / 0);")
 
-        assertEquals(0, cli().test(listOf("validation", file)).statusCode)
-        assertEquals(1, cli().test(listOf("execution", file)).statusCode)
+        assertEquals(expected = 0, actual = cli().test(listOf("validation", file)).statusCode)
+        assertEquals(expected = 1, actual = cli().test(listOf("execution", file)).statusCode)
     }
 
     @Test
     fun `checks version specific syntax`() {
         val file = scriptFile("const active: boolean = true; if (active) { println(active); }")
 
-        assertEquals(1, cli().test(listOf("validation", file, "--version", "1.0")).statusCode)
-        assertEquals(0, cli().test(listOf("validation", file, "--version", "1.1")).statusCode)
+        assertEquals(
+            expected = 1,
+            actual = cli().test(listOf("validation", file, "--version", "1.0")).statusCode,
+        )
+        assertEquals(
+            expected = 0,
+            actual = cli().test(listOf("validation", file, "--version", "1.1")).statusCode,
+        )
     }
 
     private fun toolchainWithValidator(validator: Validator): PrintScriptToolchain {
         val base = PrintScriptToolchainFactory.forVersion(LanguageVersion.V1_1)
+
         return PrintScriptToolchain(
             statementsFrom = base.statementsFrom,
             formattingTokensFrom = { error("Unexpected formatting tokens") },
@@ -104,6 +111,7 @@ class ValidationCommandTest {
         val file = Files.createTempFile("printscript-validation", ".ps")
         file.toFile().deleteOnExit()
         Files.writeString(file, source)
+
         return file.toString()
     }
 
