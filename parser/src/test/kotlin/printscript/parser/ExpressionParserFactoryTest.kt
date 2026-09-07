@@ -106,7 +106,7 @@ class ExpressionParserFactoryTest {
         val expressionParser = ExpressionParserFactory.create(
             primaryExpressionParser = TestPrimaryExpressionParser(),
             unaryExpressionBuildersByTokenType = unaryBuilders,
-            binaryExpressionBuildersByPrecedence = precedence,
+            binaryExpressionBuildersByDescendingPrecedence = precedence,
         )
 
         unaryBuilders.clear()
@@ -179,7 +179,7 @@ class ExpressionParserFactoryTest {
             unaryExpressionBuildersByTokenType = mapOf(
                 TestTokenType.MINUS to unaryBuilder,
             ),
-            binaryExpressionBuildersByPrecedence = listOf(
+            binaryExpressionBuildersByDescendingPrecedence = listOf(
                 mapOf(TestTokenType.STAR to binaryBuilder),
                 mapOf(TestTokenType.PLUS to binaryBuilder),
             ),

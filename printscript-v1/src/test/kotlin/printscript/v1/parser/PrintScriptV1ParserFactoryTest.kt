@@ -40,14 +40,14 @@ class PrintScriptV1ParserFactoryTest {
     fun `configuration copies operator collections defensively`() {
         val defaults = PrintScriptV1ParserFactory.defaultConfiguration()
         val unaryBuilders = defaults.unaryExpressionBuildersByTokenType.toMutableMap()
-        val firstBinaryLevel = defaults.binaryExpressionBuildersByPrecedence.first().toMutableMap()
+        val firstBinaryLevel = defaults.binaryExpressionBuildersByDescendingPrecedence.first().toMutableMap()
         val binaryLevels = mutableListOf<Map<TokenType, BinaryExpressionBuilder<Expression>>>(
             firstBinaryLevel,
         )
-        val configuration = PrintScriptV1ParserConfiguration(
+        val configuration = PrintScriptExpressionParserConfiguration(
             primaryExpressionParser = defaults.primaryExpressionParser,
             unaryExpressionBuildersByTokenType = unaryBuilders,
-            binaryExpressionBuildersByPrecedence = binaryLevels,
+            binaryExpressionBuildersByDescendingPrecedence = binaryLevels,
         )
 
         unaryBuilders.clear()
@@ -55,7 +55,7 @@ class PrintScriptV1ParserFactoryTest {
         binaryLevels.clear()
 
         assertTrue(configuration.unaryExpressionBuildersByTokenType.isNotEmpty())
-        assertTrue(configuration.binaryExpressionBuildersByPrecedence.single().isNotEmpty())
+        assertTrue(configuration.binaryExpressionBuildersByDescendingPrecedence.single().isNotEmpty())
     }
 
     @Test

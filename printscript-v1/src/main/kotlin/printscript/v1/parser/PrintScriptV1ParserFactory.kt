@@ -25,14 +25,14 @@ internal val printScriptV1StatementTerminatorTokenType: TokenType = PrintScriptV
 public object PrintScriptV1ParserFactory {
 
     @JvmStatic
-    public fun defaultConfiguration(): PrintScriptV1ParserConfiguration {
-        return PrintScriptV1ParserConfiguration(
+    public fun defaultConfiguration(): PrintScriptExpressionParserConfiguration {
+        return PrintScriptExpressionParserConfiguration(
             primaryExpressionParser = PrintScriptV1PrimaryExpressionParser(
                 quoteStyleByDelimiter = printScriptV1QuoteStylesByDelimiter,
             ),
             unaryExpressionBuildersByTokenType =
             printScriptV1UnaryExpressionBuildersByTokenType,
-            binaryExpressionBuildersByPrecedence = listOf(
+            binaryExpressionBuildersByDescendingPrecedence = listOf(
                 printScriptV1MultiplicativeExpressionBuildersByTokenType,
                 printScriptV1AdditiveExpressionBuildersByTokenType,
             ),
@@ -42,7 +42,7 @@ public object PrintScriptV1ParserFactory {
     @JvmStatic
     @JvmOverloads
     public fun create(
-        configuration: PrintScriptV1ParserConfiguration = defaultConfiguration(),
+        configuration: PrintScriptExpressionParserConfiguration = defaultConfiguration(),
         additionalStatementParsers: List<StatementParser> = emptyList(),
     ): Parser {
         val expressionParser = expressionParserFor(configuration)
@@ -55,11 +55,14 @@ public object PrintScriptV1ParserFactory {
         )
     }
 
-    internal fun expressionParserFor(configuration: PrintScriptV1ParserConfiguration): ExpressionParser<Expression> {
+    internal fun expressionParserFor(
+        configuration: PrintScriptExpressionParserConfiguration,
+    ): ExpressionParser<Expression> {
         return ExpressionParserFactory.create(
             primaryExpressionParser = configuration.primaryExpressionParser,
             unaryExpressionBuildersByTokenType = configuration.unaryExpressionBuildersByTokenType,
-            binaryExpressionBuildersByPrecedence = configuration.binaryExpressionBuildersByPrecedence,
+            binaryExpressionBuildersByDescendingPrecedence =
+            configuration.binaryExpressionBuildersByDescendingPrecedence,
         )
     }
 
@@ -78,7 +81,7 @@ public object PrintScriptV1ParserFactory {
                 keyword = PrintScriptV1TokenType.LET,
                 identifier = PrintScriptV1TokenType.IDENTIFIER,
                 typeSeparator = PrintScriptV1TokenType.COLON,
-                initializer = PrintScriptV1TokenType.ASSIGN,
+                initializerOperator = PrintScriptV1TokenType.ASSIGN,
             ),
             declaredTypeByToken = printScriptV1DeclaredTypesByTokenType,
             statementTerminatorTokenType = printScriptV1StatementTerminatorTokenType,

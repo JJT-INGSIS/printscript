@@ -18,23 +18,24 @@ import printscript.v1.token.PrintScriptV1TokenType
 public object PrintScriptV11ParserFactory {
 
     @JvmStatic
-    public fun defaultConfiguration(): PrintScriptV1ParserConfiguration {
+    public fun defaultConfiguration(): PrintScriptExpressionParserConfiguration {
         val v1Configuration = PrintScriptV1ParserFactory.defaultConfiguration()
 
-        return PrintScriptV1ParserConfiguration(
+        return PrintScriptExpressionParserConfiguration(
             primaryExpressionParser = PrintScriptV11PrimaryExpressionParser(
-                v1Parser = v1Configuration.primaryExpressionParser,
+                v1PrimaryExpressionParser = v1Configuration.primaryExpressionParser,
                 booleanValuesByTokenType = printScriptV11BooleanValuesByTokenType,
             ),
             unaryExpressionBuildersByTokenType = v1Configuration.unaryExpressionBuildersByTokenType,
-            binaryExpressionBuildersByPrecedence = v1Configuration.binaryExpressionBuildersByPrecedence,
+            binaryExpressionBuildersByDescendingPrecedence =
+            v1Configuration.binaryExpressionBuildersByDescendingPrecedence,
         )
     }
 
     @JvmStatic
     @JvmOverloads
     public fun create(
-        configuration: PrintScriptV1ParserConfiguration = defaultConfiguration(),
+        configuration: PrintScriptExpressionParserConfiguration = defaultConfiguration(),
         additionalStatementParsers: List<StatementParser> = emptyList(),
     ): Parser {
         val expressionParser = PrintScriptV1ParserFactory.expressionParserFor(configuration)
@@ -85,7 +86,7 @@ public object PrintScriptV11ParserFactory {
                 keyword = keyword,
                 identifier = PrintScriptV1TokenType.IDENTIFIER,
                 typeSeparator = PrintScriptV1TokenType.COLON,
-                initializer = PrintScriptV1TokenType.ASSIGN,
+                initializerOperator = PrintScriptV1TokenType.ASSIGN,
             ),
             declaredTypeByToken = printScriptV11DeclaredTypesByTokenType,
             statementTerminatorTokenType = printScriptV1StatementTerminatorTokenType,

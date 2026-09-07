@@ -6,5 +6,5 @@ internal data class DeclarationTokens(
     val keyword: TokenType,
     val identifier: TokenType,
     val typeSeparator: TokenType,
-    val initializer: TokenType,
+    val initializerOperator: TokenType,
 )

@@ -13,7 +13,8 @@ internal class StatementParserDispatcher(
     parsers: List<StatementParser>,
 ) {
 
-    private val parsers: List<StatementParser> = parsers.toList()
+    private val parsers: List<StatementParser> =
+        parsers.toList()
 
     private val expectedStartTokenTypes: Set<TokenType> =
         this.parsers
@@ -24,17 +25,18 @@ internal class StatementParserDispatcher(
         val peeked = context.peek()
             .orReturn { return it }
 
-        val parser = parsers.firstOrNull { parser ->
-            parser.startTokenType == peeked.value.type
+        for (parser in parsers) {
+            if (parser.startTokenType == peeked.value.type) {
+                return parser.parseStatement(peeked.resultingContext)
+            }
         }
-            ?: return unrecognizedStatement(peeked.value)
 
-        return parser.parseStatement(peeked.resultingContext)
+        return createUnexpectedTokenFailure(peeked.value)
     }
 
-    private fun unrecognizedStatement(token: Token): ParsingResult.Failure {
+    private fun createUnexpectedTokenFailure(token: Token): ParsingResult.Failure {
         return ParsingResult.Failure(
-            ParseError.UnexpectedToken(
+            error = ParseError.UnexpectedToken(
                 expected = expectedStartTokenTypes,
                 actual = token,
             ),

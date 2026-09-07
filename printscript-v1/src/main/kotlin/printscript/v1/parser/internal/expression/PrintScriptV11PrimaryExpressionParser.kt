@@ -15,7 +15,7 @@ import printscript.token.TokenType
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal class PrintScriptV11PrimaryExpressionParser(
-    private val v1Parser: PrimaryExpressionParser<Expression>,
+    private val v1PrimaryExpressionParser: PrimaryExpressionParser<Expression>,
     booleanValuesByTokenType: Map<TokenType, Boolean>,
 ) : PrimaryExpressionParser<Expression> {
 
@@ -66,7 +66,7 @@ internal class PrintScriptV11PrimaryExpressionParser(
         context: ParsingContext,
         nestedExpressionParser: ExpressionParser<Expression>,
     ): ParsingResult<Expression> {
-        val result = v1Parser.parsePrimaryExpression(
+        val result = v1PrimaryExpressionParser.parsePrimaryExpression(
             context = context,
             nestedExpressionParser = nestedExpressionParser,
         )
