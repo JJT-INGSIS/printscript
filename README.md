@@ -93,8 +93,8 @@ SourceReader
     └─ Lexer con whitespace → TokenSource → Formatter → FormattedSource
 ```
 
-- `SourceReader` entrega en bloques código proveniente de strings, archivos o
-  streams de entrada.
+- `SourceReader` entrega en bloques código proveniente de strings o streams de
+  entrada. El CLI abre y cierra los archivos que procesa.
 - `TokenSource` produce un token por solicitud.
 - `StatementSource` produce una sentencia por solicitud.
 - El interpreter consume y ejecuta las sentencias en orden.

@@ -9,7 +9,6 @@ import printscript.interpreter.SemanticError
 import printscript.lexer.SourceReadingError
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
-import printscript.source.SourceAccessError
 import printscript.source.SourceReadError
 import printscript.source.SourceReaderCreationError
 import printscript.statement.ParseError
@@ -38,25 +37,23 @@ class ErrorReporterTest {
     private fun tokenOf(type: TokenType, lexeme: String) = Token(type = type, lexeme = lexeme, span = anySpan)
 
     @Test
-    fun `describes every source access error mentioning the path`() {
-        val errors = listOf(
-            SourceAccessError.NotFound(anyPath),
-            SourceAccessError.NotAFile(anyPath),
-            SourceAccessError.NotReadable(anyPath),
-            SourceAccessError.ReadFailed(anyPath, "disco desconectado"),
+    fun `describes every source file access failure mentioning the path`() {
+        val messages = listOf(
+            reporter.describeMissingSourceFile(anyPath),
+            reporter.describeInvalidSourceFile(anyPath),
+            reporter.describeUnreadableSourceFile(anyPath),
+            reporter.describeSourceFileAccessFailure(anyPath, "disco desconectado"),
         )
 
-        for (error in errors) {
-            val message = reporter.describe(error)
-
+        for (message in messages) {
             assertContains(message, "error:")
             assertContains(message, "ejemplo.ps")
         }
     }
 
     @Test
-    fun `source access errors have no position because nothing was read`() {
-        val message = reporter.describe(SourceAccessError.NotFound(anyPath))
+    fun `source file access failures have no position because nothing was read`() {
+        val message = reporter.describeMissingSourceFile(anyPath)
 
         assertFalse(message.contains("línea"))
     }
@@ -83,23 +80,6 @@ class ErrorReporterTest {
             assertContains(message, "error:")
             assertContains(message, "línea 3")
         }
-    }
-
-    @Test
-    fun `describes a source reading error with its position`() {
-        val error = SourceReadingError(
-            sourceError = SourceReadError.InvalidEncoding(
-                path = anyPath,
-                byteOffset = 17L,
-            ),
-            span = anySpan,
-        )
-
-        val message = reporter.describe(ParseError.TokenRead(error))
-
-        assertContains(message, "UTF-8")
-        assertContains(message, "byte 17")
-        assertContains(message, "línea 3")
     }
 
     @Test
