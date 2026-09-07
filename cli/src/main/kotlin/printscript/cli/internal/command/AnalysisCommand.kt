@@ -44,12 +44,14 @@ internal class AnalysisCommand(
                 source = linter.lint(
                     toolchain.statementsFrom(sourceReader),
                 ),
-                reportedCount = 0,
             )
         }
     }
 
-    private tailrec fun reportRemainingDiagnostics(source: DiagnosticSource, reportedCount: Int): OperationOutcome {
+    private tailrec fun reportRemainingDiagnostics(
+        source: DiagnosticSource,
+        reportedCount: Int = 0,
+    ): OperationOutcome {
         return when (val readResult = source.nextDiagnostic()) {
             DiagnosticReadResult.EndOfInput -> summaryOf(reportedCount)
 

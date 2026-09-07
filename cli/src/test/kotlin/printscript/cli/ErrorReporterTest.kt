@@ -22,7 +22,7 @@ import printscript.v1.token.PrintScriptV1TokenType
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
-import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 class ErrorReporterTest {
 
@@ -58,7 +58,7 @@ class ErrorReporterTest {
     fun `source access errors have no position because nothing was read`() {
         val message = reporter.describe(SourceAccessError.NotFound(anyPath))
 
-        assertTrue(!message.contains("línea"))
+        assertFalse(message.contains("línea"))
     }
 
     @Test

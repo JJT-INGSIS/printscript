@@ -13,11 +13,11 @@ import printscript.model.source.SourceSpan
 import printscript.runtime.ProgramOutput
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
-import printscript.v1.validation.Validator
-import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 
 class ExecutionCommandTest {
@@ -60,14 +60,14 @@ class ExecutionCommandTest {
                 formattingTokensFrom = {
                     error("ExecutionCommand no debería pedir tokens de formato")
                 },
-                interpreterUsing = { output, _, _ ->
+                interpreterUsing = { environment ->
                     FixedResultInterpreter(
                         result = result,
-                        output = output,
+                        output = environment.output,
                         printedLine = printedLine,
                     )
                 },
-                validator = Validator { error("ExecutionCommand no debería pedir el validador") },
+                validator = { error("ExecutionCommand no debería pedir el validador") },
                 formatterConfiguredBy = {
                     error("ExecutionCommand no debería pedir el formatter")
                 },
@@ -83,19 +83,15 @@ class ExecutionCommandTest {
         toolchainFor = factory,
     )
 
-    private fun scriptFile(sourceCode: String = "let a: number = 5;"): String {
-        val file = Files.createTempFile("printscript", ".ps")
-        file.toFile().deleteOnExit()
-        Files.writeString(file, sourceCode)
-
-        return file.toString()
+    private fun anySourceFile(): String {
+        return scriptFile("let a: number = 5;")
     }
 
     @Test
     fun `asks the toolchain for the requested version`() {
         val factory = RecordingToolchainFactory()
 
-        commandWith(factory).test(listOf(scriptFile(), "--version", "1.0"))
+        commandWith(factory).test(listOf(anySourceFile(), "--version", "1.0"))
 
         assertEquals(expected = LanguageVersion.V1_0, actual = factory.receivedVersion)
     }
@@ -104,7 +100,7 @@ class ExecutionCommandTest {
     fun `accepts version 1_1`() {
         val factory = RecordingToolchainFactory()
 
-        commandWith(factory).test(listOf(scriptFile(), "--version", "1.1"))
+        commandWith(factory).test(listOf(anySourceFile(), "--version", "1.1"))
 
         assertEquals(expected = LanguageVersion.V1_1, actual = factory.receivedVersion)
     }
@@ -113,7 +109,7 @@ class ExecutionCommandTest {
     fun `defaults the version when it is not given`() {
         val factory = RecordingToolchainFactory()
 
-        commandWith(factory).test(listOf(scriptFile()))
+        commandWith(factory).test(listOf(anySourceFile()))
 
         assertEquals(expected = LanguageVersion.DEFAULT, actual = factory.receivedVersion)
     }
@@ -122,9 +118,9 @@ class ExecutionCommandTest {
     fun `rejects an unsupported version before asking for a toolchain`() {
         val factory = RecordingToolchainFactory()
 
-        val result = commandWith(factory).test(listOf(scriptFile(), "--version", "9.9"))
+        val result = commandWith(factory).test(listOf(anySourceFile(), "--version", "9.9"))
 
-        assertEquals(expected = false, actual = result.statusCode == 0)
+        assertNotEquals(illegal = 0, actual = result.statusCode)
         assertNull(factory.receivedVersion)
     }
 
@@ -132,7 +128,7 @@ class ExecutionCommandTest {
     fun `prints what the program writes`() {
         val factory = RecordingToolchainFactory(printedLine = "hola mundo")
 
-        val result = commandWith(factory).test(listOf(scriptFile()))
+        val result = commandWith(factory).test(listOf(anySourceFile()))
 
         assertEquals(expected = 0, actual = result.statusCode)
         assertContains(result.stdout, "hola mundo")
@@ -140,7 +136,7 @@ class ExecutionCommandTest {
 
     @Test
     fun `exits with zero when interpretation succeeds`() {
-        val result = commandWith(RecordingToolchainFactory()).test(listOf(scriptFile()))
+        val result = commandWith(RecordingToolchainFactory()).test(listOf(anySourceFile()))
 
         assertEquals(expected = 0, actual = result.statusCode)
     }
@@ -153,7 +149,7 @@ class ExecutionCommandTest {
             ),
         )
 
-        val result = commandWith(factory).test(listOf(scriptFile()))
+        val result = commandWith(factory).test(listOf(anySourceFile()))
 
         assertEquals(expected = 1, actual = result.statusCode)
         assertContains(result.stderr, "error:")
@@ -179,6 +175,6 @@ class ExecutionCommandTest {
     fun `no longer offers a configuration option`() {
         val result = commandWith(RecordingToolchainFactory()).test("--help")
 
-        assertEquals(expected = false, actual = result.stdout.contains("--config"))
+        assertFalse(result.stdout.contains("--config"))
     }
 }

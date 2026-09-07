@@ -3,12 +3,15 @@ package printscript.cli.internal.command
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
+import printscript.cli.internal.OperationOutcome
 import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.interpreter.InterpretationResult
+import printscript.interpreter.Interpreter
 import printscript.runtime.EnvironmentVariableProvider
-import printscript.runtime.ProgramOutput
+import printscript.statement.StatementSource
 
 internal class ExecutionCommand(
     private val errorReporter: ErrorReporter,
@@ -34,21 +37,23 @@ internal class ExecutionCommand(
         ) { sourceReader ->
             interpretationOutcome(
                 interpreter = toolchain.interpreterUsing(
-                    terminalOutput(),
-                    terminalInput(),
-                    environmentVariables,
+                    terminalProgramEnvironment(environmentVariables),
                 ),
                 statements = toolchain.statementsFrom(sourceReader),
-                errorReporter = errorReporter,
             )
         }
     }
 
-    private fun terminalOutput(): ProgramOutput {
-        return object : ProgramOutput {
-            override fun writeLine(line: String) {
-                echo(line)
-            }
+    private fun interpretationOutcome(interpreter: Interpreter, statements: StatementSource): OperationOutcome {
+        return when (val result = interpreter.interpret(statements)) {
+            InterpretationResult.Success ->
+                OperationOutcome.Success
+
+            is InterpretationResult.ParseFailure ->
+                OperationOutcome.Failure(errorReporter.describe(result.error))
+
+            is InterpretationResult.SemanticFailure ->
+                OperationOutcome.Failure(errorReporter.describe(result.error))
         }
     }
 }
