@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 class ExpressionEvaluatorTest {
 
     @Test
-    fun `expected type evaluation delegates to the basic operation by default`() {
+    fun `basic evaluation delegates without an expected type`() {
         val expression = StringLiteralExpression(
             value = "value",
             quoteStyle = StringQuoteStyle.DOUBLE,
@@ -26,11 +26,33 @@ class ExpressionEvaluatorTest {
         val result = ConstantExpressionEvaluator.evaluateExpression(
             expression = expression,
             environment = EnvironmentFactory.empty(),
-            expectedType = DeclaredType.STRING,
         )
 
         assertEquals(
-            expected = ExecutionResult.Success(StringValue("configured")),
+            expected = ExecutionResult.Success(StringValue("without expected type")),
+            actual = result,
+        )
+    }
+
+    @Test
+    fun `contextual evaluation forwards the expected type`() {
+        val expression = StringLiteralExpression(
+            value = "value",
+            quoteStyle = StringQuoteStyle.DOUBLE,
+            span = SourceSpan(
+                start = SourcePosition(line = 1, column = 1, offset = 0),
+                end = SourcePosition(line = 1, column = 8, offset = 7),
+            ),
+        )
+
+        val result = ConstantExpressionEvaluator.evaluateExpression(
+            expression = expression,
+            environment = EnvironmentFactory.empty(),
+            expectedType = DeclaredType.NUMBER,
+        )
+
+        assertEquals(
+            expected = ExecutionResult.Success(StringValue("NUMBER")),
             actual = result,
         )
     }
@@ -38,7 +60,13 @@ class ExpressionEvaluatorTest {
 
 private data object ConstantExpressionEvaluator : ExpressionEvaluator {
 
-    override fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
-        return ExecutionResult.Success(StringValue("configured"))
+    override fun evaluateExpression(
+        expression: Expression,
+        environment: Environment,
+        expectedType: DeclaredType?,
+    ): ExecutionResult<RuntimeValue> {
+        val description = expectedType?.name ?: "without expected type"
+
+        return ExecutionResult.Success(StringValue(description))
     }
 }

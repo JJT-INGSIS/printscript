@@ -26,15 +26,15 @@ class PrintScriptV11LexerDefaultsTest {
     }
 
     @Test
-    fun `extends V1 symbol lexemes with braces`() {
+    fun `extends V1 symbol characters with braces`() {
         val expectedAdditions = mapOf(
-            "{" to PrintScriptV1TokenType.LEFT_BRACE,
-            "}" to PrintScriptV1TokenType.RIGHT_BRACE,
+            '{' to PrintScriptV1TokenType.LEFT_BRACE,
+            '}' to PrintScriptV1TokenType.RIGHT_BRACE,
         )
 
         assertEquals(
-            expected = printScriptV1SymbolTokenTypesByLexeme + expectedAdditions,
-            actual = printScriptV11SymbolTokenTypesByLexeme,
+            expected = printScriptV1SymbolTokenTypesByCharacter + expectedAdditions,
+            actual = printScriptV11SymbolTokenTypesByCharacter,
         )
     }
 }

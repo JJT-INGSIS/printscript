@@ -5,7 +5,7 @@ import printscript.token.TokenType
 
 public class PrintScriptV1LexerConfiguration(
     keywordTokenTypesByLexeme: Map<String, TokenType>,
-    symbolTokenTypesByLexeme: Map<String, TokenType>,
+    symbolTokenTypesByCharacter: Map<Char, TokenType>,
     stringQuoteDelimiters: Set<Char>,
     public val ignoredCharacterPolicy: IgnoredCharacterPolicy,
 ) {
@@ -13,8 +13,8 @@ public class PrintScriptV1LexerConfiguration(
     public val keywordTokenTypesByLexeme: Map<String, TokenType> =
         keywordTokenTypesByLexeme.toMap()
 
-    public val symbolTokenTypesByLexeme: Map<String, TokenType> =
-        symbolTokenTypesByLexeme.toMap()
+    public val symbolTokenTypesByCharacter: Map<Char, TokenType> =
+        symbolTokenTypesByCharacter.toMap()
 
     public val stringQuoteDelimiters: Set<Char> =
         stringQuoteDelimiters.toSet()

@@ -11,6 +11,6 @@ internal object PrintScriptV11Lexemes {
     const val TRUE_LITERAL: String = "true"
     const val FALSE_LITERAL: String = "false"
 
-    const val LEFT_BRACE: String = "{"
-    const val RIGHT_BRACE: String = "}"
+    const val LEFT_BRACE: Char = '{'
+    const val RIGHT_BRACE: Char = '}'
 }

@@ -6,7 +6,7 @@ import printscript.lexer.scanning.TokenScanner
 import printscript.v1.lexer.internal.PrintScriptV1IgnoredCharacterPolicy
 import printscript.v1.lexer.internal.printScriptV1KeywordTokenTypesByLexeme
 import printscript.v1.lexer.internal.printScriptV1StringQuoteDelimiters
-import printscript.v1.lexer.internal.printScriptV1SymbolTokenTypesByLexeme
+import printscript.v1.lexer.internal.printScriptV1SymbolTokenTypesByCharacter
 import printscript.v1.lexer.internal.printScriptV1TokenScanners
 import printscript.v1.token.PrintScriptV1TokenType
 
@@ -16,7 +16,7 @@ public object PrintScriptV1LexerFactory {
     public fun defaultConfiguration(): PrintScriptV1LexerConfiguration {
         return PrintScriptV1LexerConfiguration(
             keywordTokenTypesByLexeme = printScriptV1KeywordTokenTypesByLexeme,
-            symbolTokenTypesByLexeme = printScriptV1SymbolTokenTypesByLexeme,
+            symbolTokenTypesByCharacter = printScriptV1SymbolTokenTypesByCharacter,
             stringQuoteDelimiters = printScriptV1StringQuoteDelimiters,
             ignoredCharacterPolicy = PrintScriptV1IgnoredCharacterPolicy,
         )

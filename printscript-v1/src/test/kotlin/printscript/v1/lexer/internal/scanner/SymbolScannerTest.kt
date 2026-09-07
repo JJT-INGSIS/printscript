@@ -15,32 +15,31 @@ import kotlin.test.assertTrue
 
 class SymbolScannerTest {
 
-    private val configuredTokenTypesByLexeme = mapOf(
-        "+" to PrintScriptV1TokenType.PLUS,
-        ";" to PrintScriptV1TokenType.SEMICOLON,
+    private val configuredTokenTypesByCharacter = mapOf(
+        '+' to PrintScriptV1TokenType.PLUS,
+        ';' to PrintScriptV1TokenType.SEMICOLON,
     )
 
     private val scanner = SymbolScanner(
-        configuredTokenTypesByLexeme,
+        configuredTokenTypesByCharacter,
     )
 
     @Test
     fun `scans each configured symbol and consumes exactly one character`() {
         for (
-        (symbolLexeme, expectedTokenType)
-        in configuredTokenTypesByLexeme
+        (symbolCharacter, expectedTokenType)
+        in configuredTokenTypesByCharacter
         ) {
-            val startingCharacter = symbolLexeme.single()
-            val cursor = cursorFor("${symbolLexeme}remaining")
+            val cursor = cursorFor("${symbolCharacter}remaining")
 
             assertTrue(
-                actual = scanner.canStartWith(startingCharacter),
-                message = "Scanner should accept '$symbolLexeme'",
+                actual = scanner.canStartWith(symbolCharacter),
+                message = "Scanner should accept '$symbolCharacter'",
             )
 
             val scanResult = scanner.scan(
                 cursor = cursor,
-                startingCharacter = startingCharacter,
+                startingCharacter = symbolCharacter,
             )
 
             val token = scanResult.assertSuccessToken()
@@ -51,7 +50,7 @@ class SymbolScannerTest {
             )
 
             assertEquals(
-                expected = symbolLexeme,
+                expected = symbolCharacter.toString(),
                 actual = token.lexeme,
             )
 
@@ -86,14 +85,14 @@ class SymbolScannerTest {
 
     @Test
     fun `keeps initial symbol configuration after input map is mutated`() {
-        val mutableTokenTypesByLexeme = mutableMapOf(
-            "+" to PrintScriptV1TokenType.PLUS,
+        val mutableTokenTypesByCharacter = mutableMapOf(
+            '+' to PrintScriptV1TokenType.PLUS,
         )
         val scannerWithMutableConfiguration = SymbolScanner(
-            tokenTypeByLexeme = mutableTokenTypesByLexeme,
+            tokenTypeByCharacter = mutableTokenTypesByCharacter,
         )
 
-        mutableTokenTypesByLexeme.clear()
+        mutableTokenTypesByCharacter.clear()
 
         assertTrue(scannerWithMutableConfiguration.canStartWith('+'))
     }

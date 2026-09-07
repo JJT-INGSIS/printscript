@@ -17,8 +17,8 @@ internal val printScriptV11KeywordTokenTypesByLexeme: Map<String, TokenType> =
             PrintScriptV11Lexemes.FALSE_LITERAL to PrintScriptV1TokenType.FALSE,
         )
 
-internal val printScriptV11SymbolTokenTypesByLexeme: Map<String, TokenType> =
-    printScriptV1SymbolTokenTypesByLexeme +
+internal val printScriptV11SymbolTokenTypesByCharacter: Map<Char, TokenType> =
+    printScriptV1SymbolTokenTypesByCharacter +
         mapOf(
             PrintScriptV11Lexemes.LEFT_BRACE to PrintScriptV1TokenType.LEFT_BRACE,
             PrintScriptV11Lexemes.RIGHT_BRACE to PrintScriptV1TokenType.RIGHT_BRACE,

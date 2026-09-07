@@ -10,16 +10,14 @@ import printscript.token.Token
 import printscript.token.TokenType
 
 internal class SymbolScanner(
-    tokenTypeByLexeme: Map<String, TokenType>,
+    tokenTypeByCharacter: Map<Char, TokenType>,
 ) : TokenScanner {
 
-    private val tokenTypeByLexeme: Map<String, TokenType> =
-        tokenTypeByLexeme.toMap()
+    private val tokenTypeByCharacter: Map<Char, TokenType> =
+        tokenTypeByCharacter.toMap()
 
     override fun canStartWith(character: Char): Boolean {
-        return tokenTypeByLexeme.containsKey(
-            character.toString(),
-        )
+        return tokenTypeByCharacter.containsKey(character)
     }
 
     override fun scan(cursor: ScannerCursor, startingCharacter: Char): TokenScanResult {
@@ -28,8 +26,7 @@ internal class SymbolScanner(
         val resultingCursor =
             cursor.advance().resultingCursor
 
-        val matchedTokenType =
-            tokenTypeByLexeme[symbolLexeme]
+        val matchedTokenType = tokenTypeByCharacter[startingCharacter]
 
         return createScanResult(
             tokenType = matchedTokenType,

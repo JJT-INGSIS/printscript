@@ -73,8 +73,8 @@ class PrintScriptV1LexerTest {
                     defaultConfiguration.keywordTokenTypesByLexeme
                         .minus("let")
                         .plus("var" to PrintScriptV1TokenType.LET),
-                    symbolTokenTypesByLexeme =
-                    defaultConfiguration.symbolTokenTypesByLexeme,
+                    symbolTokenTypesByCharacter =
+                    defaultConfiguration.symbolTokenTypesByCharacter,
                     stringQuoteDelimiters =
                     defaultConfiguration.stringQuoteDelimiters,
                     ignoredCharacterPolicy =
