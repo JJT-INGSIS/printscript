@@ -8,14 +8,17 @@ internal class TokenGapFormattingRuleDispatcher(
     formattingRules: List<TokenGapFormattingRule>,
 ) {
 
-    private val formattingRules: List<TokenGapFormattingRule> = formattingRules.toList()
+    private val formattingRules: List<TokenGapFormattingRule> =
+        formattingRules.toList()
 
     fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
-        val rule = formattingRules.firstOrNull { candidate ->
-            candidate.supports(gap)
+        for (rule in formattingRules) {
+            if (rule.supports(gap)) {
+                return rule.formatWhitespace(gap)
+            }
         }
 
-        return rule?.formatWhitespace(gap) ?: WhitespaceFormattingResult.Success(gap.originalWhitespace)
+        return WhitespaceFormattingResult.Success(gap.originalWhitespace)
     }
 
     fun afterFormatting(gap: TokenGap, whitespace: String): TokenGapFormattingRuleDispatcher {

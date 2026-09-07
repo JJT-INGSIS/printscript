@@ -25,7 +25,7 @@ internal object PrintScriptV1LinterConfigurationReader {
     }
 
     private fun build(document: PrintScriptV1LinterConfigurationDocument): PrintScriptV1LinterConfigurationResult {
-        val rules = sharedLinterRules(
+        val rules = sharedRuleConfigurations(
             identifierFormat = document.identifierFormat,
             mandatoryVariableOrLiteralInPrintln = document.mandatoryVariableOrLiteralInPrintln,
             onUnknownIdentifierFormat = { return unknownIdentifierFormat(it) },

@@ -11,7 +11,7 @@ import printscript.ast.expression.ReadInputExpression
 import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.UnaryExpression
 
-public enum class PrintScriptV1ExpressionKind {
+public enum class PrintScriptExpressionKind {
     LITERAL,
     VARIABLE,
     COMPOSED,
@@ -19,7 +19,7 @@ public enum class PrintScriptV1ExpressionKind {
 
     public companion object {
 
-        public fun of(expression: Expression): PrintScriptV1ExpressionKind {
+        public fun of(expression: Expression): PrintScriptExpressionKind {
             return when (expression) {
                 is NumberLiteralExpression -> LITERAL
 

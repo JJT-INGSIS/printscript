@@ -25,36 +25,36 @@ class EnvironmentTest {
 
     @Test
     fun `an undeclared variable does not exist`() {
-        assertNull(EnvironmentFactory.empty().lookupBinding("x"))
+        assertNull(EnvironmentFactory.empty().findBinding("x"))
     }
 
     @Test
     fun `current scope lookup excludes outer declarations`() {
-        val outer = EnvironmentFactory.empty().declaring("x", five)
-        val inner = outer.enteringScope()
+        val outer = EnvironmentFactory.empty().declare("x", five)
+        val inner = outer.enterScope()
 
-        assertEquals(five, outer.lookupCurrentScopeBinding("x"))
-        assertNull(inner.lookupCurrentScopeBinding("x"))
-        assertEquals(five, inner.lookupBinding("x"))
+        assertEquals(five, outer.findBindingInCurrentScope("x"))
+        assertNull(inner.findBindingInCurrentScope("x"))
+        assertEquals(five, inner.findBinding("x"))
     }
 
     @Test
     fun `reassigning a shadow leaves the outer binding untouched`() {
-        val outer = EnvironmentFactory.empty().declaring("x", uninitializedNumber)
-        val inner = outer.enteringScope().declaring("x", uninitializedNumber)
-        val reassigned = inner.reassigning("x", fiveValue)
+        val outer = EnvironmentFactory.empty().declare("x", uninitializedNumber)
+        val inner = outer.enterScope().declare("x", uninitializedNumber)
+        val reassigned = inner.reassign("x", fiveValue)
 
-        assertEquals(five, reassigned.lookupCurrentScopeBinding("x"))
-        assertEquals(uninitializedNumber, reassigned.leavingScope().lookupBinding("x"))
-        assertEquals(uninitializedNumber, inner.lookupBinding("x"))
+        assertEquals(five, reassigned.findBindingInCurrentScope("x"))
+        assertEquals(uninitializedNumber, reassigned.leaveScope().findBinding("x"))
+        assertEquals(uninitializedNumber, inner.findBinding("x"))
     }
 
     @Test
     fun `a variable can be added without initializing it`() {
         val environment = EnvironmentFactory.empty()
-            .declaring("x", uninitializedNumber)
+            .declare("x", uninitializedNumber)
 
-        val binding = environment.lookupBinding("x")
+        val binding = environment.findBinding("x")
 
         assertNotNull(binding)
 
@@ -70,24 +70,24 @@ class EnvironmentTest {
     fun `adding a binding leaves the original environment untouched`() {
         val original = EnvironmentFactory.empty()
 
-        original.declaring("x", uninitializedNumber)
+        original.declare("x", uninitializedNumber)
 
-        assertNull(original.lookupBinding("x"))
+        assertNull(original.findBinding("x"))
     }
 
     @Test
     fun `replacing a binding does not affect the previous environment`() {
         val declared = EnvironmentFactory.empty()
-            .declaring("x", uninitializedNumber)
+            .declare("x", uninitializedNumber)
 
         val initialized = declared
-            .reassigning("x", fiveValue)
+            .reassign("x", fiveValue)
 
-        assertNull(declared.lookupBinding("x")?.value)
+        assertNull(declared.findBinding("x")?.value)
 
         assertEquals(
             expected = NumberValue(BigDecimal("5")),
-            actual = initialized.lookupBinding("x")?.value,
+            actual = initialized.findBinding("x")?.value,
         )
     }
 
@@ -95,25 +95,25 @@ class EnvironmentTest {
     fun `a binding declared in a nested scope disappears after leaving it`() {
         val outer = EnvironmentFactory.empty()
         val inner = outer
-            .enteringScope()
-            .declaring("local", five)
+            .enterScope()
+            .declare("local", five)
 
-        assertEquals(expected = five, actual = inner.lookupBinding("local"))
-        assertNull(inner.leavingScope().lookupBinding("local"))
-        assertNull(outer.lookupBinding("local"))
+        assertEquals(expected = five, actual = inner.findBinding("local"))
+        assertNull(inner.leaveScope().findBinding("local"))
+        assertNull(outer.findBinding("local"))
     }
 
     @Test
     fun `reassigning an outer binding from a nested scope survives after leaving it`() {
         val outer = EnvironmentFactory.empty()
-            .declaring("x", uninitializedNumber)
+            .declare("x", uninitializedNumber)
         val reassigned = outer
-            .enteringScope()
-            .reassigning("x", fiveValue)
-            .leavingScope()
+            .enterScope()
+            .reassign("x", fiveValue)
+            .leaveScope()
 
-        assertEquals(expected = five, actual = reassigned.lookupBinding("x"))
-        assertEquals(expected = uninitializedNumber, actual = outer.lookupBinding("x"))
+        assertEquals(expected = five, actual = reassigned.findBinding("x"))
+        assertEquals(expected = uninitializedNumber, actual = outer.findBinding("x"))
     }
 
     @Test
@@ -123,12 +123,12 @@ class EnvironmentTest {
             value = NumberValue(BigDecimal.ONE),
         )
         val environment = EnvironmentFactory.empty()
-            .declaring("x", outerValue)
-            .enteringScope()
-            .declaring("x", five)
+            .declare("x", outerValue)
+            .enterScope()
+            .declare("x", five)
 
-        assertEquals(expected = five, actual = environment.lookupBinding("x"))
-        assertEquals(expected = outerValue, actual = environment.leavingScope().lookupBinding("x"))
+        assertEquals(expected = five, actual = environment.findBinding("x"))
+        assertEquals(expected = outerValue, actual = environment.leaveScope().findBinding("x"))
     }
 
     @Test
@@ -139,12 +139,12 @@ class EnvironmentTest {
             reassignable = false,
         )
         val environment = EnvironmentFactory.empty()
-            .declaring("answer", constant)
-            .reassigning("answer", fiveValue)
+            .declare("answer", constant)
+            .reassign("answer", fiveValue)
 
         assertEquals(
             expected = constant.copy(value = fiveValue),
-            actual = environment.lookupBinding("answer"),
+            actual = environment.findBinding("answer"),
         )
     }
 }

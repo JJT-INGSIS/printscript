@@ -4,7 +4,7 @@ import kotlinx.serialization.json.Json
 import printscript.v1.linter.PrintScriptV11LinterConfiguration
 import printscript.v1.linter.PrintScriptV11LinterConfigurationError
 import printscript.v1.linter.PrintScriptV11LinterConfigurationResult
-import printscript.v1.linter.variableOrLiteralReadInputArgumentRule
+import printscript.v1.linter.variableOrLiteralReadInputArgumentConfiguration
 
 private val configurationJson = Json {
     ignoreUnknownKeys = false
@@ -26,21 +26,21 @@ internal object PrintScriptV11LinterConfigurationReader {
     }
 
     private fun build(document: PrintScriptV11LinterConfigurationDocument): PrintScriptV11LinterConfigurationResult {
-        val sharedRules = sharedLinterRules(
+        val sharedConfigurations = sharedRuleConfigurations(
             identifierFormat = document.identifierFormat,
             mandatoryVariableOrLiteralInPrintln = document.mandatoryVariableOrLiteralInPrintln,
             onUnknownIdentifierFormat = { return unknownIdentifierFormat(it) },
         )
 
-        val readInputArgumentRule = if (document.mandatoryVariableOrLiteralInReadInput) {
-            variableOrLiteralReadInputArgumentRule()
+        val readInputArgumentConfiguration = if (document.mandatoryVariableOrLiteralInReadInput) {
+            variableOrLiteralReadInputArgumentConfiguration()
         } else {
             null
         }
 
         return PrintScriptV11LinterConfigurationResult.Success(
             PrintScriptV11LinterConfiguration(
-                rules = sharedRules + listOfNotNull(readInputArgumentRule),
+                rules = sharedConfigurations + listOfNotNull(readInputArgumentConfiguration),
             ),
         )
     }

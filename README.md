@@ -241,14 +241,14 @@ abstrae mediante `ProgramOutput`, por lo que tampoco depende de la consola ni de
 archivos.
 
 `Environment` permite **shadowing** entre scopes: una declaración solo choca
-con otra del mismo scope (`lookupCurrentScopeBinding`); una variable de un
+con otra del mismo scope (`findBindingInCurrentScope`); una variable de un
 scope exterior con el mismo nombre no es un error, es una sombra nueva que
-`leavingScope()` descarta al volver. `Environment` en sí mismo solo guarda
+`leaveScope()` descarta al volver. `Environment` en sí mismo solo guarda
 bindings — no valida tipos ni constantes; esas comprobaciones son
 responsabilidad de los executors concretos de `printscript-v1`.
 
-Quien extienda la ejecución debe comprobar duplicados antes de `declaring` y
-existencia, mutabilidad y tipos antes de `reassigning`. Se reasigna el binding
+Quien extienda la ejecución debe comprobar duplicados antes de `declare` y
+existencia, mutabilidad y tipos antes de `reassign`. Se reasigna el binding
 visible más cercano. No se puede abandonar el scope global. El evaluador y
 `IfExecutor` comparten la resolución de variables inicializadas; la condición
 del `if` mantiene además su comprobación de tipo booleano.
@@ -283,7 +283,7 @@ Estas clases de `printscript.v1.linter.rule` son API pública de composición:
 |---|---|
 | `PrintScriptV1IdentifierNamingRule` | Comprueba el nombre de las variables declaradas. |
 | `PrintScriptV1PrintlnArgumentRule` | Comprueba la categoría del argumento de `println`. |
-| `PrintScriptV1ReadInputArgumentRule` | Encuentra llamadas a `readInput` en las expresiones de una sentencia y comprueba sus prompts. |
+| `PrintScriptV11ReadInputArgumentRule` | Encuentra llamadas a `readInput` en las expresiones de una sentencia y comprueba sus prompts. |
 
 Se conservan públicas para que un consumidor pueda construir una política propia
 sin copiar las reglas. Las dos reglas de argumentos reciben un mapa que debe
@@ -295,24 +295,24 @@ Ejemplo de composición para V1.1, con el recorrido de bloques provisto por su f
 ```kotlin
 import printscript.v1.linter.PrintScriptV11LinterConfiguration
 import printscript.v1.linter.PrintScriptV11LinterFactory
-import printscript.v1.linter.PrintScriptV1ArgumentAcceptance
-import printscript.v1.linter.PrintScriptV1ExpressionKind
+import printscript.v1.linter.PrintScriptArgumentAcceptance
+import printscript.v1.linter.PrintScriptExpressionKind
 import printscript.v1.linter.PrintScriptV1NamingConvention
 import printscript.v1.linter.rule.PrintScriptV1IdentifierNamingRule
 import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
-import printscript.v1.linter.rule.PrintScriptV1ReadInputArgumentRule
+import printscript.v1.linter.rule.PrintScriptV11ReadInputArgumentRule
 
 val argumentPolicy = mapOf(
-    PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-    PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-    PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+    PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+    PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+    PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
 )
 val linter = PrintScriptV11LinterFactory.create(
     configuration = PrintScriptV11LinterConfiguration(rules = emptyList()),
     additionalRules = listOf(
         PrintScriptV1IdentifierNamingRule(PrintScriptV1NamingConvention.CAMEL_CASE),
         PrintScriptV1PrintlnArgumentRule(argumentPolicy),
-        PrintScriptV1ReadInputArgumentRule(argumentPolicy),
+        PrintScriptV11ReadInputArgumentRule(argumentPolicy),
     ),
 )
 ```

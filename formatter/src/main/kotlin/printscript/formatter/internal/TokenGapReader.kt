@@ -12,15 +12,15 @@ internal class TokenGapReader(
     private val endOfInputTokenType: TokenType,
 ) {
 
-    fun nextGap(tokenSource: TokenSource, previousToken: Token?): TokenGapReadResult {
-        return readGap(
+    fun readNextGap(tokenSource: TokenSource, previousToken: Token?): TokenGapReadResult {
+        return readUntilNextToken(
             source = tokenSource,
             previousToken = previousToken,
             accumulatedWhitespace = "",
         )
     }
 
-    private tailrec fun readGap(
+    private tailrec fun readUntilNextToken(
         source: TokenSource,
         previousToken: Token?,
         accumulatedWhitespace: String,
@@ -32,7 +32,7 @@ internal class TokenGapReader(
             is TokenReadResult.Success -> {
                 when (tokenReadResult.token.type) {
                     endOfInputTokenType ->
-                        gapReadSuccess(
+                        createGapReadSuccess(
                             previousToken = previousToken,
                             whitespace = accumulatedWhitespace,
                             nextToken = null,
@@ -40,14 +40,14 @@ internal class TokenGapReader(
                         )
 
                     whitespaceTokenType ->
-                        readGap(
+                        readUntilNextToken(
                             source = tokenReadResult.remainingSource,
                             previousToken = previousToken,
                             accumulatedWhitespace = accumulatedWhitespace + tokenReadResult.token.lexeme,
                         )
 
                     else ->
-                        gapReadSuccess(
+                        createGapReadSuccess(
                             previousToken = previousToken,
                             whitespace = accumulatedWhitespace,
                             nextToken = tokenReadResult.token,
@@ -58,7 +58,7 @@ internal class TokenGapReader(
         }
     }
 
-    private fun gapReadSuccess(
+    private fun createGapReadSuccess(
         previousToken: Token?,
         whitespace: String,
         nextToken: Token?,

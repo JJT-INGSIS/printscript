@@ -8,7 +8,7 @@ import printscript.statement.StatementSource
 
 private const val DELIVERED_DIAGNOSTIC_COUNT = 1
 
-internal data class LintingSource(
+internal data class StatementDiagnosticSource(
     private val statements: StatementSource,
     private val rule: LintRule,
     private val search: DiagnosticSearch,
@@ -69,8 +69,8 @@ internal data class LintingSource(
 
     companion object {
 
-        fun initial(statements: StatementSource, rule: LintRule, search: DiagnosticSearch): LintingSource {
-            return LintingSource(
+        fun initial(statements: StatementSource, rule: LintRule, search: DiagnosticSearch): StatementDiagnosticSource {
+            return StatementDiagnosticSource(
                 statements = statements,
                 rule = rule,
                 search = search,

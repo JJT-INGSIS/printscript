@@ -103,9 +103,9 @@ private data class ForbiddenNameDiagnostic(
 
 private class ForbiddenNameRule(
     private val forbiddenName: String,
-) : StatelessLintRule() {
+) : StatelessLintRule {
 
-    protected override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
+    override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return declaredNameOf(statement)
             ?.takeIf { declaredName -> declaredName == forbiddenName }
             ?.let { listOf(ForbiddenNameDiagnostic(statement.span)) }

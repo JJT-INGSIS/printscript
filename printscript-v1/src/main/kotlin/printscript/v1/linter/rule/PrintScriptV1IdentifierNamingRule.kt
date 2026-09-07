@@ -12,9 +12,9 @@ import printscript.v1.linter.PrintScriptV1NamingConvention
 
 public class PrintScriptV1IdentifierNamingRule(
     private val convention: PrintScriptV1NamingConvention,
-) : StatelessLintRule() {
+) : StatelessLintRule {
 
-    protected override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
+    public override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return declaredIdentifiersOf(statement)
             .filterNot { identifier -> convention.matches(identifier.value) }
             .map { identifier -> violationOf(identifier) }

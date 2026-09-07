@@ -23,7 +23,7 @@ internal data class TokenFormattingSource(
         }
 
         return when (
-            val gapReadResult = gapReader.nextGap(
+            val gapReadResult = gapReader.readNextGap(
                 tokenSource = tokenSource,
                 previousToken = previousToken,
             )
@@ -39,14 +39,10 @@ internal data class TokenFormattingSource(
             is WhitespaceFormattingResult.Success -> result.whitespace
             is WhitespaceFormattingResult.Failure -> return FormattedChunkReadResult.Failure(result.error)
         }
-        val nextToken = gap.nextToken
-
-        if (nextToken == null) {
-            return completeFormatting(
-                trailingWhitespace = formattedWhitespace,
-                remainingTokenSource = gapReadResult.remainingTokenSource,
-            )
-        }
+        val nextToken = gap.nextToken ?: return completeFormatting(
+            trailingWhitespace = formattedWhitespace,
+            remainingTokenSource = gapReadResult.remainingTokenSource,
+        )
 
         return FormattedChunkReadResult.Success(
             formattedText = formattedWhitespace + nextToken.lexeme,

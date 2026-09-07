@@ -2,9 +2,9 @@ package printscript.v1.linter
 
 import printscript.source.SourceReaderFactory
 import printscript.v1.lexer.PrintScriptV11LexerFactory
+import printscript.v1.linter.rule.PrintScriptV11ReadInputArgumentRule
 import printscript.v1.linter.rule.PrintScriptV1IdentifierNamingRule
 import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
-import printscript.v1.linter.rule.PrintScriptV1ReadInputArgumentRule
 import printscript.v1.parser.PrintScriptV11ParserFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,16 +15,16 @@ class PublicLinterCompositionTest {
     @Test
     fun `README composition applies all three public rules inside blocks`() {
         val argumentPolicy = mapOf(
-            PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
-            PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
         )
         val linter = PrintScriptV11LinterFactory.create(
             configuration = PrintScriptV11LinterConfiguration(rules = emptyList()),
             additionalRules = listOf(
                 PrintScriptV1IdentifierNamingRule(PrintScriptV1NamingConvention.CAMEL_CASE),
                 PrintScriptV1PrintlnArgumentRule(argumentPolicy),
-                PrintScriptV1ReadInputArgumentRule(argumentPolicy),
+                PrintScriptV11ReadInputArgumentRule(argumentPolicy),
             ),
         )
         val source = """
