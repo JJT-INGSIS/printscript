@@ -101,7 +101,7 @@ class PrintScriptVersionCompatibilityTest {
     @Test
     fun `a third party statement extension works through the parser and the interpreter together`() {
         val tokens = ListTokenSource(
-            listOf(
+            tokens = listOf(
                 token(PrintScriptV1TokenType.LET),
                 token(PrintScriptV1TokenType.IDENTIFIER, "value"),
                 token(PrintScriptV1TokenType.COLON),
@@ -116,8 +116,8 @@ class PrintScriptVersionCompatibilityTest {
                 token(PrintScriptV1TokenType.IDENTIFIER, "value"),
                 token(PrintScriptV1TokenType.RIGHT_PAREN),
                 token(PrintScriptV1TokenType.SEMICOLON),
-                token(PrintScriptV1TokenType.EOF),
             ),
+            endOfInput = token(PrintScriptV1TokenType.EOF),
         )
 
         val output = RecordingProgramOutput()
@@ -185,15 +185,16 @@ class PrintScriptVersionCompatibilityTest {
 
     private class ListTokenSource(
         private val tokens: List<Token>,
+        private val endOfInput: Token,
     ) : TokenSource {
 
         override fun nextToken(): TokenReadResult {
-            val token = tokens.first()
-            val remaining = if (tokens.size == 1) tokens else tokens.drop(1)
-
             return TokenReadResult.Success(
-                token = token,
-                remainingSource = ListTokenSource(remaining),
+                token = tokens.firstOrNull() ?: endOfInput,
+                remainingSource = ListTokenSource(
+                    tokens = tokens.drop(1),
+                    endOfInput = endOfInput,
+                ),
             )
         }
     }

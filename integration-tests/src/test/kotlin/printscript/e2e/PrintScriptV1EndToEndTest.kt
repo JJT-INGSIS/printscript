@@ -106,6 +106,38 @@ class PrintScriptV1EndToEndTest {
     }
 
     @Test
+    fun `evaluates subtraction and division from left to right`() {
+        val execution = runV1Script(
+            sourceCode = """
+                let result: number = 20 / 2 - 3;
+                println(result);
+            """.trimIndent(),
+        )
+
+        assertSuccessfulExecution(
+            execution = execution,
+            expectedOutputLines = listOf("7"),
+        )
+    }
+
+    @Test
+    fun `uses latest assigned value`() {
+        val execution = runV1Script(
+            sourceCode = """
+                let value: number = 10;
+                value = 20;
+                value = value + 5;
+                println(value);
+            """.trimIndent(),
+        )
+
+        assertSuccessfulExecution(
+            execution = execution,
+            expectedOutputLines = listOf("25"),
+        )
+    }
+
+    @Test
     fun `executes multiple output statements in order`() {
         val execution = runV1Script(
             sourceCode = """
@@ -127,140 +159,45 @@ class PrintScriptV1EndToEndTest {
 
     @Test
     fun `propagates lexical errors through the complete pipeline`() {
-        val execution = runV1Script(
-            sourceCode = """
-                println(@);
-            """.trimIndent(),
-        )
+        val execution = runV1Script(sourceCode = "println(@);")
 
-        val interpretationFailure =
-            assertIs<InterpretationResult.ParseFailure>(
-                execution.result,
-            )
+        val failure = assertIs<InterpretationResult.ParseFailure>(execution.result)
+        val parseError = assertIs<ParseError.TokenRead>(failure.error)
+        val lexicalError = assertIs<LexicalError.UnexpectedCharacter>(parseError.error)
 
-        val parseError =
-            assertIs<ParseError.TokenRead>(
-                interpretationFailure.error,
-            )
-
-        val lexicalError =
-            assertIs<LexicalError.UnexpectedCharacter>(
-                parseError.error,
-            )
-
-        assertEquals(
-            expected = '@',
-            actual = lexicalError.character,
-        )
-
+        assertEquals(expected = '@', actual = lexicalError.character)
         assertNoOutputWasProduced(execution)
     }
 
     @Test
     fun `propagates syntax errors through the complete pipeline`() {
-        val execution = runV1Script(
-            sourceCode = """
-                println(1)
-            """.trimIndent(),
-        )
+        val execution = runV1Script(sourceCode = "println(1)")
 
-        val interpretationFailure =
-            assertIs<InterpretationResult.ParseFailure>(
-                execution.result,
-            )
+        val failure = assertIs<InterpretationResult.ParseFailure>(execution.result)
+        val parseError = assertIs<ParseError.UnexpectedToken>(failure.error)
 
-        val parseError =
-            assertIs<ParseError.UnexpectedToken>(
-                interpretationFailure.error,
-            )
-
-        assertEquals(
-            expected = setOf(PrintScriptV1TokenType.SEMICOLON),
-            actual = parseError.expected,
-        )
-
-        assertEquals(
-            expected = PrintScriptV1TokenType.EOF,
-            actual = parseError.actual.type,
-        )
-
+        assertEquals(expected = setOf(PrintScriptV1TokenType.SEMICOLON), actual = parseError.expected)
+        assertEquals(expected = PrintScriptV1TokenType.EOF, actual = parseError.actual.type)
         assertNoOutputWasProduced(execution)
     }
 
     @Test
     fun `propagates semantic errors through the complete pipeline`() {
-        val execution = runV1Script(
-            sourceCode = """
-                println(missingVariable);
-            """.trimIndent(),
-        )
+        val execution = runV1Script(sourceCode = "println(missingVariable);")
 
-        val interpretationFailure =
-            assertIs<InterpretationResult.SemanticFailure>(
-                execution.result,
-            )
+        val failure = assertIs<InterpretationResult.SemanticFailure>(execution.result)
+        val semanticError = assertIs<PrintScriptV1SemanticError.UndeclaredVariable>(failure.error)
 
-        val semanticError =
-            assertIs<PrintScriptV1SemanticError.UndeclaredVariable>(
-                interpretationFailure.error,
-            )
-
-        assertEquals(
-            expected = "missingVariable",
-            actual = semanticError.name,
-        )
-
+        assertEquals(expected = "missingVariable", actual = semanticError.name)
         assertNoOutputWasProduced(execution)
     }
 
-    @Test
-    fun `evaluates subtraction and division from left to right`() {
-        val execution = runV1Script(
-            """
-        let result: number = 20 / 2 - 3;
-        println(result);
-            """.trimIndent(),
-        )
-
-        assertSuccessfulExecution(
-            execution,
-            listOf("7"),
-        )
-    }
-
-    @Test
-    fun `uses latest assigned value`() {
-        val execution = runV1Script(
-            """
-        let value: number = 10;
-        value = 20;
-        value = value + 5;
-        println(value);
-            """.trimIndent(),
-        )
-
-        assertSuccessfulExecution(
-            execution,
-            listOf("25"),
-        )
-    }
-
     private fun assertSuccessfulExecution(execution: ProgramExecution, expectedOutputLines: List<String>) {
-        assertEquals(
-            expected = InterpretationResult.Success,
-            actual = execution.result,
-        )
-
-        assertEquals(
-            expected = expectedOutputLines,
-            actual = execution.outputLines,
-        )
+        assertEquals(expected = InterpretationResult.Success, actual = execution.result)
+        assertEquals(expected = expectedOutputLines, actual = execution.outputLines)
     }
 
     private fun assertNoOutputWasProduced(execution: ProgramExecution) {
-        assertEquals(
-            expected = emptyList<String>(),
-            actual = execution.outputLines,
-        )
+        assertEquals(expected = emptyList(), actual = execution.outputLines)
     }
 }
