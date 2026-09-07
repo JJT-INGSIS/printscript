@@ -18,8 +18,8 @@ internal val printScriptV1KeywordTokenTypesByLexeme:
         PrintScriptV1Lexemes.PRINTLN_FUNCTION_NAME to PrintScriptV1TokenType.PRINTLN,
     )
 
-internal val printScriptV1SymbolTokenTypesByLexeme:
-    Map<String, TokenType> = mapOf(
+internal val printScriptV1SymbolTokenTypesByCharacter:
+    Map<Char, TokenType> = mapOf(
         PrintScriptV1Lexemes.ADDITION_OPERATOR to PrintScriptV1TokenType.PLUS,
         PrintScriptV1Lexemes.SUBTRACTION_OPERATOR to PrintScriptV1TokenType.MINUS,
         PrintScriptV1Lexemes.MULTIPLICATION_OPERATOR to PrintScriptV1TokenType.STAR,

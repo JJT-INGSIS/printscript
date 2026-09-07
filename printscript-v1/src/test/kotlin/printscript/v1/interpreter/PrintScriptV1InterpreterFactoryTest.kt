@@ -584,7 +584,11 @@ private class OverridingPrintlnExecutor(
 
 private data object ConstantExpressionEvaluator : ExpressionEvaluator {
 
-    override fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
+    override fun evaluateExpression(
+        expression: Expression,
+        environment: Environment,
+        expectedType: DeclaredType?,
+    ): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(StringValue("configured"))
     }
 }

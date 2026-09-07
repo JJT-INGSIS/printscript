@@ -22,7 +22,7 @@ internal fun printScriptV1TokenScanners(configuration: PrintScriptV1LexerConfigu
             identifierTokenType = PrintScriptV1TokenType.IDENTIFIER,
         ),
         SymbolScanner(
-            tokenTypeByLexeme = configuration.symbolTokenTypesByLexeme,
+            tokenTypeByCharacter = configuration.symbolTokenTypesByCharacter,
         ),
     )
 }

@@ -4,7 +4,7 @@ import printscript.lexer.Lexer
 import printscript.lexer.scanning.TokenScanner
 import printscript.v1.lexer.internal.PrintScriptV1IgnoredCharacterPolicy
 import printscript.v1.lexer.internal.printScriptV11KeywordTokenTypesByLexeme
-import printscript.v1.lexer.internal.printScriptV11SymbolTokenTypesByLexeme
+import printscript.v1.lexer.internal.printScriptV11SymbolTokenTypesByCharacter
 import printscript.v1.lexer.internal.printScriptV1StringQuoteDelimiters
 
 public object PrintScriptV11LexerFactory {
@@ -13,7 +13,7 @@ public object PrintScriptV11LexerFactory {
     public fun defaultConfiguration(): PrintScriptV1LexerConfiguration {
         return PrintScriptV1LexerConfiguration(
             keywordTokenTypesByLexeme = printScriptV11KeywordTokenTypesByLexeme,
-            symbolTokenTypesByLexeme = printScriptV11SymbolTokenTypesByLexeme,
+            symbolTokenTypesByCharacter = printScriptV11SymbolTokenTypesByCharacter,
             stringQuoteDelimiters = printScriptV1StringQuoteDelimiters,
             ignoredCharacterPolicy = PrintScriptV1IgnoredCharacterPolicy,
         )

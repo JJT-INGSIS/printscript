@@ -35,22 +35,22 @@ class PrintScriptV1LexerDefaultsTest {
     }
 
     @Test
-    fun `contains all PrintScript V1 symbol lexemes`() {
-        val expectedSymbolTokenTypesByLexeme = mapOf(
-            "+" to PrintScriptV1TokenType.PLUS,
-            "-" to PrintScriptV1TokenType.MINUS,
-            "*" to PrintScriptV1TokenType.STAR,
-            "/" to PrintScriptV1TokenType.SLASH,
-            "=" to PrintScriptV1TokenType.ASSIGN,
-            ":" to PrintScriptV1TokenType.COLON,
-            ";" to PrintScriptV1TokenType.SEMICOLON,
-            "(" to PrintScriptV1TokenType.LEFT_PAREN,
-            ")" to PrintScriptV1TokenType.RIGHT_PAREN,
+    fun `contains all PrintScript V1 symbol characters`() {
+        val expectedSymbolTokenTypesByCharacter = mapOf(
+            '+' to PrintScriptV1TokenType.PLUS,
+            '-' to PrintScriptV1TokenType.MINUS,
+            '*' to PrintScriptV1TokenType.STAR,
+            '/' to PrintScriptV1TokenType.SLASH,
+            '=' to PrintScriptV1TokenType.ASSIGN,
+            ':' to PrintScriptV1TokenType.COLON,
+            ';' to PrintScriptV1TokenType.SEMICOLON,
+            '(' to PrintScriptV1TokenType.LEFT_PAREN,
+            ')' to PrintScriptV1TokenType.RIGHT_PAREN,
         )
 
         assertEquals(
-            expected = expectedSymbolTokenTypesByLexeme,
-            actual = printScriptV1SymbolTokenTypesByLexeme,
+            expected = expectedSymbolTokenTypesByCharacter,
+            actual = printScriptV1SymbolTokenTypesByCharacter,
         )
     }
 }

@@ -117,6 +117,30 @@ class PrintScriptV11InterpreterFactoryTest {
     }
 
     @Test
+    fun `uses string input type inside an untyped println expression`() {
+        val error = runExpectingFailure(
+            print(
+                binary(
+                    left = readInput(text("Value:")),
+                    operator = BinaryOperator.MULTIPLY,
+                    right = number("2"),
+                ),
+            ),
+            input = QueueProgramInput(listOf("3")),
+        )
+
+        assertEquals(
+            expected = PrintScriptV1SemanticError.InvalidBinaryOperands(
+                operator = BinaryOperator.MULTIPLY,
+                left = DeclaredType.STRING,
+                right = DeclaredType.NUMBER,
+                span = anySpan,
+            ),
+            actual = error,
+        )
+    }
+
+    @Test
     fun `reports an input value that cannot be interpreted`() {
         val error = runExpectingFailure(
             declare("active", DeclaredType.BOOLEAN, readInput(text("Active:"))),

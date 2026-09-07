@@ -30,18 +30,10 @@ internal class DefaultExpressionEvaluator(
     private val v11ExpressionEvaluation: PrintScriptV11ExpressionEvaluation? = null,
 ) : ExpressionEvaluator {
 
-    override fun evaluateExpression(expression: Expression, environment: Environment): ExecutionResult<RuntimeValue> {
-        return evaluateWithExpectedType(
-            expression = expression,
-            environment = environment,
-            expectedType = null,
-        )
-    }
-
     override fun evaluateExpression(
         expression: Expression,
         environment: Environment,
-        expectedType: DeclaredType,
+        expectedType: DeclaredType?,
     ): ExecutionResult<RuntimeValue> {
         return evaluateWithExpectedType(
             expression = expression,
