@@ -120,19 +120,19 @@ private fun programExecution(
     )
 }
 
-private fun v1StatementsFrom(sourceReader: SourceReader): StatementSource {
+internal fun v1StatementsFrom(sourceReader: SourceReader): StatementSource {
     return PrintScriptV1ParserFactory.create().parse(
         tokens = PrintScriptV1LexerFactory.create().tokenize(sourceReader = sourceReader),
     )
 }
 
-private fun v11StatementsFrom(sourceReader: SourceReader): StatementSource {
+internal fun v11StatementsFrom(sourceReader: SourceReader): StatementSource {
     return PrintScriptV11ParserFactory.create().parse(
         tokens = PrintScriptV11LexerFactory.create().tokenize(sourceReader = sourceReader),
     )
 }
 
-private fun streamReaderFor(sourceCode: String, bufferSizeInCharacters: Int): SourceReader {
+internal fun streamReaderFor(sourceCode: String, bufferSizeInCharacters: Int): SourceReader {
     val creation = SourceReaderFactory.fromInputStream(
         inputStream = ByteArrayInputStream(sourceCode.toByteArray(Charsets.UTF_8)),
         bufferSizeInCharacters = bufferSizeInCharacters,
