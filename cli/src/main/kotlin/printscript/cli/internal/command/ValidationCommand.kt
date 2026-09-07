@@ -8,7 +8,9 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.statement.StatementSource
 import printscript.v1.validation.ValidationResult
+import printscript.v1.validation.Validator
 
 internal class ValidationCommand(
     private val errorReporter: ErrorReporter,
@@ -31,15 +33,26 @@ internal class ValidationCommand(
             sourceFilePath = sourceFilePath,
             errorReporter = errorReporter,
         ) { sourceReader ->
-            when (val result = toolchain.validator.validate(toolchain.statementsFrom(sourceReader))) {
-                ValidationResult.Success -> {
-                    echo("El archivo es válido.")
-                    OperationOutcome.Success
-                }
+            validationOutcome(
+                validator = toolchain.validator,
+                statements = toolchain.statementsFrom(sourceReader),
+            )
+        }
+    }
 
-                is ValidationResult.ParseFailure -> OperationOutcome.Failure(errorReporter.describe(result.error))
-                is ValidationResult.SemanticFailure -> OperationOutcome.Failure(errorReporter.describe(result.error))
+    private fun validationOutcome(validator: Validator, statements: StatementSource): OperationOutcome {
+        return when (val result = validator.validate(statements)) {
+            ValidationResult.Success -> {
+                echo("El archivo es válido.")
+
+                OperationOutcome.Success
             }
+
+            is ValidationResult.ParseFailure ->
+                OperationOutcome.Failure(errorReporter.describe(result.error))
+
+            is ValidationResult.SemanticFailure ->
+                OperationOutcome.Failure(errorReporter.describe(result.error))
         }
     }
 }
