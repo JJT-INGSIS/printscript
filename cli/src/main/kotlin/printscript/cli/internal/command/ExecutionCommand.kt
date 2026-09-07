@@ -37,9 +37,7 @@ internal class ExecutionCommand(
         ) { sourceReader ->
             interpretationOutcome(
                 interpreter = toolchain.interpreterUsing(
-                    terminalOutput(),
-                    terminalInput(),
-                    environmentVariables,
+                    terminalProgramEnvironment(environmentVariables),
                 ),
                 statements = toolchain.statementsFrom(sourceReader),
             )

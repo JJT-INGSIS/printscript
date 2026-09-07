@@ -43,8 +43,8 @@ internal object PrintScriptToolchainFactory {
             formattingTokensFrom = { sourceReader ->
                 PrintScriptV1FormattingLexerFactory.create().tokenize(sourceReader)
             },
-            interpreterUsing = { output, _, _ ->
-                PrintScriptV1InterpreterFactory.create(output)
+            interpreterUsing = { environment ->
+                PrintScriptV1InterpreterFactory.create(environment.output)
             },
             validator = PrintScriptV1ValidatorFactory.create(),
             formatterConfiguredBy = ::printScriptV1FormatterConfiguredBy,
@@ -62,11 +62,11 @@ internal object PrintScriptToolchainFactory {
             formattingTokensFrom = { sourceReader ->
                 PrintScriptV11FormattingLexerFactory.create().tokenize(sourceReader)
             },
-            interpreterUsing = { output, input, environmentVariables ->
+            interpreterUsing = { environment ->
                 PrintScriptV11InterpreterFactory.create(
-                    output = output,
-                    input = input,
-                    environmentVariables = environmentVariables,
+                    output = environment.output,
+                    input = environment.input,
+                    environmentVariables = environment.variables,
                 )
             },
             validator = PrintScriptV11ValidatorFactory.create(),

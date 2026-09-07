@@ -60,10 +60,10 @@ class ExecutionCommandTest {
                 formattingTokensFrom = {
                     error("ExecutionCommand no debería pedir tokens de formato")
                 },
-                interpreterUsing = { output, _, _ ->
+                interpreterUsing = { environment ->
                     FixedResultInterpreter(
                         result = result,
-                        output = output,
+                        output = environment.output,
                         printedLine = printedLine,
                     )
                 },

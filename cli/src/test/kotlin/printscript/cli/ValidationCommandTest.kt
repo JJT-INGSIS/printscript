@@ -37,7 +37,7 @@ class ValidationCommandTest {
         return PrintScriptToolchain(
             statementsFrom = base.statementsFrom,
             formattingTokensFrom = { error("ValidationCommand no debería pedir tokens de formato") },
-            interpreterUsing = { _, _, _ -> error("ValidationCommand no debería construir un intérprete") },
+            interpreterUsing = { error("ValidationCommand no debería construir un intérprete") },
             validator = validator,
             formatterConfiguredBy = { error("ValidationCommand no debería pedir el formatter") },
             linterConfiguredBy = { error("ValidationCommand no debería pedir el linter") },
