@@ -9,9 +9,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-private const val SINGLE_CHARACTER_BUFFER = 1
-private const val TWO_CHARACTER_BUFFER = 2
-
 class PrintScriptPipelineBoundaryTest {
 
     @Test

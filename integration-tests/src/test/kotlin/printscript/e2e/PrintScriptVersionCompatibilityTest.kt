@@ -70,7 +70,7 @@ class PrintScriptVersionCompatibilityTest {
         """.trimIndent()
 
         assertIs<InterpretationResult.ParseFailure>(runV1Script(sourceCode).result)
-        assertEquals(InterpretationResult.Success, runV11Script(sourceCode).result)
+        assertEquals(expected = InterpretationResult.Success, actual = runV11Script(sourceCode).result)
     }
 
     @Test
@@ -78,7 +78,7 @@ class PrintScriptVersionCompatibilityTest {
         val sourceCode = "const value: number = 1; println(value);"
 
         assertIs<InterpretationResult.ParseFailure>(runV1Script(sourceCode).result)
-        assertEquals(InterpretationResult.Success, runV11Script(sourceCode).result)
+        assertEquals(expected = InterpretationResult.Success, actual = runV11Script(sourceCode).result)
     }
 
     @Test
@@ -86,8 +86,9 @@ class PrintScriptVersionCompatibilityTest {
         val sourceCode = "println(true);"
 
         val v1Failure = assertIs<InterpretationResult.SemanticFailure>(runV1Script(sourceCode).result)
+
         assertIs<PrintScriptV1SemanticError.UndeclaredVariable>(v1Failure.error)
-        assertEquals(InterpretationResult.Success, runV11Script(sourceCode).result)
+        assertEquals(expected = InterpretationResult.Success, actual = runV11Script(sourceCode).result)
     }
 
     @Test
@@ -119,7 +120,7 @@ class PrintScriptVersionCompatibilityTest {
             ),
         )
 
-        val output = RecordingOutput()
+        val output = RecordingProgramOutput()
         val parser = PrintScriptV1ParserFactory.create(
             additionalStatementParsers = listOf(HaltParser),
         )
@@ -194,19 +195,6 @@ class PrintScriptVersionCompatibilityTest {
                 token = token,
                 remainingSource = ListTokenSource(remaining),
             )
-        }
-    }
-
-    private class RecordingOutput : ProgramOutput {
-
-        private val emittedLines = mutableListOf<String>()
-
-        override fun writeLine(line: String) {
-            emittedLines.add(line)
-        }
-
-        fun lines(): List<String> {
-            return emittedLines.toList()
         }
     }
 
