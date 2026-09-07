@@ -19,11 +19,11 @@ import printscript.runtime.ExpressionEvaluator
 import printscript.runtime.NumberValue
 import printscript.runtime.RuntimeValue
 import printscript.runtime.StringValue
-import printscript.runtime.VariableBinding
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.interpreter.internal.operation.BinaryOperation
 import printscript.v1.interpreter.internal.operation.BinaryOperationRegistry
 import printscript.v1.interpreter.internal.orReturn
+import printscript.v1.interpreter.internal.value.resolveInitializedValue
 
 internal class DefaultExpressionEvaluator(
     private val operations: BinaryOperationRegistry = BinaryOperationRegistry(),
@@ -59,7 +59,7 @@ internal class DefaultExpressionEvaluator(
             is NumberLiteralExpression -> evaluateNumberLiteral(expression)
             is StringLiteralExpression -> evaluateStringLiteral(expression)
             is GroupingExpression -> evaluateWithExpectedType(expression.expression, environment, expectedType)
-            is IdentifierExpression -> evaluateIdentifier(expression, environment)
+            is IdentifierExpression -> environment.resolveInitializedValue(expression.identifier.value, expression.span)
             is UnaryExpression -> evaluateUnary(expression, environment, expectedType)
             is BinaryExpression -> evaluateBinary(expression, environment, expectedType)
             is BooleanLiteralExpression ->
@@ -96,31 +96,6 @@ internal class DefaultExpressionEvaluator(
 
     private fun evaluateStringLiteral(expression: StringLiteralExpression): ExecutionResult<RuntimeValue> {
         return ExecutionResult.Success(StringValue(expression.value))
-    }
-
-    private fun evaluateIdentifier(
-        expression: IdentifierExpression,
-        environment: Environment,
-    ): ExecutionResult<RuntimeValue> {
-        val name: String = expression.identifier.value
-
-        val binding: VariableBinding = environment.lookupBinding(name)
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.UndeclaredVariable(
-                    name = name,
-                    span = expression.span,
-                ),
-            )
-
-        val value: RuntimeValue = binding.value
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.UninitializedVariable(
-                    name = name,
-                    span = expression.span,
-                ),
-            )
-
-        return ExecutionResult.Success(value)
     }
 
     private fun evaluateUnary(

@@ -8,11 +8,10 @@ import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.runtime.BooleanValue
 import printscript.runtime.Environment
-import printscript.runtime.RuntimeValue
-import printscript.runtime.VariableBinding
 import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.interpreter.internal.orReturn
+import printscript.v1.interpreter.internal.value.resolveInitializedValue
 
 internal class IfExecutor : StatementExecutor<Environment> {
 
@@ -48,21 +47,7 @@ internal class IfExecutor : StatementExecutor<Environment> {
 
     private fun evaluateCondition(statement: IfStatement, environment: Environment): ExecutionResult<BooleanValue> {
         val name: String = statement.condition.value
-        val binding: VariableBinding = environment.lookupBinding(name)
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.UndeclaredVariable(
-                    name = name,
-                    span = statement.condition.span,
-                ),
-            )
-
-        val value: RuntimeValue = binding.value
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.UninitializedVariable(
-                    name = name,
-                    span = statement.condition.span,
-                ),
-            )
+        val value = environment.resolveInitializedValue(name, statement.condition.span).orReturn { return it }
 
         if (value !is BooleanValue) {
             return ExecutionResult.Failure(

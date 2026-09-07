@@ -1,275 +1,137 @@
 @startuml printscript-estructura
-title PrintScript — Qué expone y qué consume cada módulo
-
-skinparam backgroundColor #FFFFFF
+title PrintScript — Contratos y puntos de extensión
 skinparam shadowing false
-skinparam DefaultFontName Helvetica
-skinparam ClassAttributeIconSize 0
-skinparam ArrowFontSize 11
-skinparam PackageFontSize 15
-skinparam PackageTitleAlignment left
-skinparam PackageBorderColor #85929E
-skinparam PackageBackgroundColor #FDFEFE
-skinparam NoteBackgroundColor #FEF9E7
-skinparam NoteBorderColor #B7950B
-skinparam NoteFontSize 11
-
 hide empty members
 
-skinparam class {
-  FontColor #1B2631
-  BackgroundColor<<contrato>> #D6EAF8
-  BorderColor<<contrato>> #2471A3
-  BackgroundColor<<factory>> #E8DAEF
-  BorderColor<<factory>> #6C3483
-  BackgroundColor<<datos>> #EAEDED
-  BorderColor<<datos>> #566573
-  BackgroundColor<<config>> #D4EFDF
-  BorderColor<<config>> #1E8449
-  BackgroundColor<<app>> #FADBD8
-  BorderColor<<app>> #A93226
-}
-
-legend top right
-  |= Color |= Rol del tipo |
-  | <back:#D6EAF8>   </back> | contrato: la interfaz que cruza el límite del módulo |
-  | <back:#E8DAEF>   </back> | factory: el único modo de obtener una implementación |
-  | <back:#EAEDED>   </back> | datos que viajan por el contrato |
-  | <back:#D4EFDF>   </back> | configuración que aporta el cliente |
-  | <back:#FADBD8>   </back> | aplicación: el que cablea todo |
-  --
-  Cada **motor** consume un contrato y produce otro.
-  Nunca consume otro motor.
-endlegend
-
-' ==================== APLICACIÓN ====================
-package "cli" {
-  class PrintScriptCommandGroup <<app>> {
-    +subcommands(validation, execution, formatting, analyzing)
-  }
-  abstract class SourceFileOperationCommand <<app>> {
-    #operationFor(request): SourceOperation
-    +run()
-  }
-  interface SourceOperation <<contrato>> {
-    +outcomeFor(statements, terminal): OperationOutcome
-  }
-  class "ExitCode\n0 ok · 1 error · 3 hallazgos" as EXIT <<datos>>
-  PrintScriptCommandGroup ..> SourceFileOperationCommand : agrupa
-  SourceFileOperationCommand ..> SourceOperation : monta
-  SourceFileOperationCommand ..> EXIT : traduce a
-}
-
-' ==================== ENTRADA ====================
 package "source-reader" {
-  interface SourceReader <<contrato>> {
+  interface SourceReader {
     +readChunk(): SourceChunkReadResult
   }
-  class SourceReaderFactory <<factory>> {
-    +fromString(code: String): SourceReader
-    +fromPath(path: Path): SourceReaderCreationResult
-  }
-  class SourceAccessError <<datos>>
-  SourceReaderFactory ..> SourceReader : crea
-  SourceReaderFactory ..> SourceAccessError : reporta
 }
-
-' ==================== ETAPA 1 ====================
-package "lexer" {
-  interface Lexer <<contrato>> {
-    +tokenize(reader: SourceReader): TokenSource
-  }
-  interface TokenScanner <<contrato>> {
-    +scanToken(cursor): TokenScanResult
-  }
-  class LexerFactory <<factory>> {
-    +create(scanners, ignoredPolicy, endOfInput): Lexer
-  }
-  LexerFactory ..> Lexer : crea
-  LexerFactory ..> TokenScanner : configura
-}
-
-' ==================== CONTRATO 1 ====================
 package "token-source" {
-  interface TokenSource <<contrato>> {
+  interface TokenSource {
     +nextToken(): TokenReadResult
   }
-  class "Token · TokenType\nLexicalError" as TOKENDATA <<datos>>
-  TokenSource ..> TOKENDATA
 }
-
-' ==================== ETAPA 2 ====================
-package "parser" {
-  interface Parser <<contrato>> {
-    +parse(tokens: TokenSource): StatementSource
+package "lexer" {
+  interface Lexer {
+    +tokenize(reader: SourceReader): TokenSource
   }
-  interface StatementParser <<contrato>> {
-    +parseStatement(context): ParsingResult
+  interface TokenScanner {
+    +canStartWith(character: Char): Boolean
+    +scan(cursor, startingCharacter): TokenScanResult
   }
-  class ParserFactory <<factory>> {
-    +create(statementParsers, endOfInput): Parser
-  }
-  ParserFactory ..> Parser : crea
-  ParserFactory ..> StatementParser : configura
 }
-
-' ==================== CONTRATO 2 ====================
 package "statement-source" {
-  interface Statement <<contrato>> {
+  interface Statement {
     +span: SourceSpan
   }
-  interface StatementSource <<contrato>> {
+  interface StatementSource {
     +nextStatement(): StatementReadResult
   }
-  class ParseError <<datos>>
-  StatementSource ..> Statement
-  StatementSource ..> ParseError
 }
-
 package "printscript-ast" {
-  class "AST oficial compartido\nExpression (sealed)\nIdentifier · DeclaredType\nstatements concretos" as AST <<datos>>
+  class "Expression (sealed)" as Expression
+  class "Statements oficiales\nBlockStatement, IfStatement, ..." as AST
   AST ..|> Statement
 }
-
-' ==================== ETAPA 3a ====================
+package "parser" {
+  interface Parser {
+    +parse(tokens: TokenSource): StatementSource
+  }
+  interface StatementParser {
+    +startTokenType: TokenType
+    +parseStatement(context): ParsingResult
+  }
+}
 package "interpreter" {
-  interface Interpreter <<contrato>> {
+  interface Interpreter {
     +interpret(source: StatementSource): InterpretationResult
   }
-  interface "StatementExecutor<S>" as StatementExecutor <<contrato>> {
+  interface "StatementExecutor<S>" as Executor {
     +supportsStatement(statement): Boolean
-    +executeStatement(statement, state: S): ExecutionResult<S>
+    +executeStatement(statement, context): ExecutionResult<S>
   }
-  class InterpreterFactory <<factory>> {
-    +create<S>(initialState, executors): Interpreter
+  class "StatementExecutionContext<S>" as Context {
+    +state: S
+    +withState(state): StatementExecutionContext<S>
+    +executeStatements(statements): ExecutionResult<S>
   }
-  class "InterpretationResult\nExecutionResult<S>\nSemanticError" as IRES <<datos>>
-  InterpreterFactory ..> Interpreter : crea
-  InterpreterFactory ..> StatementExecutor : configura
-  Interpreter ..> IRES : devuelve
+  Executor ..> Context
 }
-
-' ==================== ETAPA 3b ====================
+package "printscript-runtime" {
+  interface Environment
+  interface ExpressionEvaluator
+  interface ProgramInput
+  interface ProgramOutput
+  interface EnvironmentVariableProvider
+  class "RuntimeValue (sealed)" as Value
+  ExpressionEvaluator ..> Environment
+  ExpressionEvaluator ..> Value
+}
 package "formatter" {
-  interface Formatter <<contrato>> {
-    +format(source: StatementSource): FormattedSource
+  interface Formatter {
+    +format(tokens: TokenSource): FormattedSource
   }
-  interface StatementFormatter <<contrato>> {
-    +formatStatement(statement): StatementFormattingResult
+  interface TokenGapFormattingRule {
+    +supports(gap): Boolean
+    +formatWhitespace(gap): WhitespaceFormattingResult
+    +afterFormatting(gap, whitespace): TokenGapFormattingRule
+    +afterConsuming(token): TokenGapFormattingRule
   }
-  interface StatementSeparationPolicy <<config>> {
-    +separationBefore(statement): String
-  }
-  class FormatterFactory <<factory>> {
-    +create(formatters, separationPolicy): Formatter
-  }
-  FormatterFactory ..> Formatter : crea
-  FormatterFactory ..> StatementFormatter : configura
-  FormatterFactory ..> StatementSeparationPolicy : recibe
 }
-
-' ==================== ETAPA 3c ====================
 package "linter" {
-  interface Linter <<contrato>> {
+  interface Linter {
     +lint(source: StatementSource): DiagnosticSource
   }
-  interface DiagnosticSource <<contrato>> {
-    +nextDiagnostic(): DiagnosticReadResult
-  }
-  interface LintRule <<contrato>> {
+  interface LintRule {
     +inspect(statement): RuleInspection
   }
-  class LinterFactory <<factory>> {
-    +create(rules): Linter
-  }
-  class Diagnostic <<datos>>
-  LinterFactory ..> Linter : crea
-  LinterFactory ..> LintRule : configura
-  DiagnosticSource ..> Diagnostic
+  class CompositeRule
+  CompositeRule ..|> LintRule
+  CompositeRule o--> LintRule
 }
-
-' ==================== IMPLEMENTACIÓN DE LENGUAJE ====================
 package "printscript-v1" {
-  class "PrintScriptV1LexerFactory\nPrintScriptV1ParserFactory\nPrintScriptV1FormatterFactory\nPrintScriptV1InterpreterFactory\nPrintScriptV1LinterFactory" as V1FACTORIES <<factory>>
-  interface PrintScriptV1ProgramOutput <<config>> {
-    +writeLine(line: String)
+  class "Factories V1 / V1.1" as Factories
+  interface Validator {
+    +validate(source: StatementSource): ValidationResult
   }
-  class "PrintScriptV1TokenType\nPrintScriptV1Environment\nPrintScriptV1RuntimeValue\nPrintScriptV1SemanticError\nPrintScriptV1LexicalError" as V1DATA <<datos>>
-  V1FACTORIES ..> PrintScriptV1ProgramOutput : configura
-  V1FACTORIES ..> V1DATA
-  V1FACTORIES ..> AST : construye y consume
+  class "Reglas públicas del linter\nIdentifierNaming / PrintlnArgument / ReadInputArgument" as Rules
+  Rules ..|> LintRule
+  Validator ..> Interpreter : reutiliza el motor
+}
+package "cli" {
+  class PrintScriptCommandFactory
+  class PrintScriptToolchainFactory
+  PrintScriptCommandFactory ..> PrintScriptToolchainFactory
+  PrintScriptToolchainFactory ..> Factories
 }
 
-' ============================================================
-'   Dependencias entre módulos: consume (arriba) / produce (abajo)
-' ============================================================
+Lexer ..> SourceReader : consume
+Lexer ..> TokenSource : produce
+Lexer ..> TokenScanner : configura
+Parser ..> TokenSource : consume
+Parser ..> StatementSource : produce
+Parser ..> StatementParser : configura
+Interpreter ..> StatementSource : consume
+Interpreter ..> Executor : configura
+Linter ..> StatementSource : consume
+Linter ..> LintRule : configura
+Formatter ..> TokenSource : consume
+Formatter ..> TokenGapFormattingRule : configura
+Validator ..> StatementSource : consume
+Factories ..> Lexer
+Factories ..> Parser
+Factories ..> Interpreter
+Factories ..> Formatter
+Factories ..> Linter
+Factories ..> Validator
+Factories ..> Expression
+Factories ..> Environment
 
-SourceReader <.[#2471A3,bold]. Lexer : **consume**
-Lexer .[#C0392B,bold].> TokenSource : **produce**
-
-TokenSource <.[#2471A3,bold]. Parser : **consume**
-Parser .[#C0392B,bold].> StatementSource : **produce**
-
-StatementSource <.[#2471A3,bold]. Interpreter : **consume**
-StatementSource <.[#2471A3,bold]. Formatter : **consume**
-StatementSource <.[#2471A3,bold]. Linter : **consume**
-Linter .[#C0392B,bold].> DiagnosticSource : **produce**
-
-IRES ..> ParseError : propaga el error\ndel parser
-
-' El cli cablea las factories concretas y elige el consumidor
-SourceFileOperationCommand ..> V1FACTORIES : cablea
-SourceFileOperationCommand ..> SourceReaderFactory : abre el archivo
-
-' V1 rellena los puntos de variación de cada motor
-V1FACTORIES ..> LexerFactory : configura
-V1FACTORIES ..> ParserFactory : configura
-V1FACTORIES ..> FormatterFactory : configura
-V1FACTORIES ..> InterpreterFactory : configura
-V1FACTORIES ..> LinterFactory : configura
-
-note as N1
-  **Las etapas no se conocen entre sí.**
-  `lexer` no depende de `parser`, ni `parser` de `interpreter`,
-  `formatter` o `linter`. El único acoplamiento es contra el
-  contrato intermedio, que vive en su propio módulo.
-  Cambiar la implementación de una etapa no recompila a las otras.
-end note
-N1 .. Parser
-
-note as N2
-  **El motor es genérico, la configuración es de V1.**
-  Los motores reciben estrategias (`TokenScanner`, `StatementParser`,
-  `StatementFormatter`, `StatementExecutor<S>`) y no saben nada de
-  PrintScript. Las factories de versión son quienes las aportan.
-  Una versión nueva compone capacidades y comparte el AST oficial;
-  los motores permanecen sin cambios.
-end note
-N2 .. V1FACTORIES
-
-note as N3
-  **`interpreter`, `formatter` y `linter` son intercambiables.**
-  Consumen exactamente la misma `StatementSource` y no se conocen
-  entre ellos. Cada uno se agregó sin tocar las etapas anteriores.
-end note
-N3 .. Formatter
-
-note as N4
-  **El CLI es el único que conoce a todos.**
-  Es la raíz de composición: elige la versión, arma el pipeline,
-  elige el consumidor según la operación pedida y traduce el
-  resultado a un código de salida. Es también el único módulo con
-  una dependencia externa (Clikt).
-end note
-N4 .. PrintScriptCommandGroup
-
-note as N5
-  **La política la pone el cliente.**
-  `PrintScriptV1ProgramOutput` decide a dónde va la salida (consola,
-  descarte, test), `LinterConfiguration` qué reglas corren y
-  `StatementSeparationPolicy` cómo se separan las sentencias.
-  Ninguna de esas decisiones está quemada adentro de un motor.
-end note
-N5 .. LCFG
-
+legend bottom
+  Vista resumida de contratos, no inventario completo de clases ni dependencias Gradle.
+  Statement es abierto; Expression y RuntimeValue son dominios sellados.
+  Las reglas concretas del lenguaje y la composición por versión viven en printscript-v1.
+endlegend
 @enduml

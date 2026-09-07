@@ -4,8 +4,6 @@ import kotlinx.serialization.json.Json
 import printscript.v1.linter.PrintScriptV11LinterConfiguration
 import printscript.v1.linter.PrintScriptV11LinterConfigurationError
 import printscript.v1.linter.PrintScriptV11LinterConfigurationResult
-import printscript.v1.linter.PrintScriptV1RuleConfiguration
-import printscript.v1.linter.variableOrLiteralPrintlnArgumentRule
 import printscript.v1.linter.variableOrLiteralReadInputArgumentRule
 
 private val configurationJson = Json {
@@ -28,18 +26,11 @@ internal object PrintScriptV11LinterConfigurationReader {
     }
 
     private fun build(document: PrintScriptV11LinterConfigurationDocument): PrintScriptV11LinterConfigurationResult {
-        val identifierNamingRule = document.identifierFormat?.let { configuredName ->
-            val convention = namingConventionByConfiguredName[configuredName]
-                ?: return unknownIdentifierFormat(configuredName)
-
-            PrintScriptV1RuleConfiguration.IdentifierNaming(convention)
-        }
-
-        val printlnArgumentRule = if (document.mandatoryVariableOrLiteralInPrintln) {
-            variableOrLiteralPrintlnArgumentRule()
-        } else {
-            null
-        }
+        val sharedRules = sharedLinterRules(
+            identifierFormat = document.identifierFormat,
+            mandatoryVariableOrLiteralInPrintln = document.mandatoryVariableOrLiteralInPrintln,
+            onUnknownIdentifierFormat = { return unknownIdentifierFormat(it) },
+        )
 
         val readInputArgumentRule = if (document.mandatoryVariableOrLiteralInReadInput) {
             variableOrLiteralReadInputArgumentRule()
@@ -49,7 +40,7 @@ internal object PrintScriptV11LinterConfigurationReader {
 
         return PrintScriptV11LinterConfigurationResult.Success(
             PrintScriptV11LinterConfiguration(
-                rules = listOfNotNull(identifierNamingRule, printlnArgumentRule, readInputArgumentRule),
+                rules = sharedRules + listOfNotNull(readInputArgumentRule),
             ),
         )
     }

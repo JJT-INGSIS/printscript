@@ -1,18 +1,20 @@
 # PrintScript
 
 Implementación modular de **PrintScript** en Kotlin/JVM 21, con soporte para
-las versiones `1.0` y `1.1` (superset de `1.0`).
+las versiones `1.0` y `1.1`.
 
 El lenguaje se procesa mediante un pipeline pull y lazy. Cada etapa solicita el
 siguiente elemento cuando lo necesita y entrega también la fuente que representa
-el resto de la entrada. De esta forma no se materializan listas completas de
-tokens ni de sentencias.
+el resto de la entrada. Los tokens y las sentencias de nivel superior se
+consumen incrementalmente; el AST de cada bloque sí contiene sus sentencias.
 
 ## Requisitos
 
-- **JDK 21.** La versión de la JVM que usa Gradle está fijada en
-  `gradle/gradle-daemon-jvm.properties`, de modo que el build es reproducible
-  sin importar qué JDK tenga instalado cada integrante.
+- **JDK 21.** La JVM de Gradle se selecciona mediante
+  `gradle/gradle-daemon-jvm.properties`, y los convention plugins configuran
+  la toolchain de compilación. Debe haber una instalación compatible disponible.
+
+En Windows, usar `.\gradlew.bat` en lugar de `./gradlew` en los comandos siguientes.
 
 ## Puesta en marcha
 
@@ -31,7 +33,9 @@ Eso instala el hook de pre-commit versionado en `.githooks/`. Ver
 ./gradlew :cli:installDist
 ```
 
-El ejecutable queda en `cli/build/install/printscript/bin/printscript`.
+El ejecutable queda en `cli/build/install/printscript/bin/printscript`
+(`printscript.bat` en Windows). Los ejemplos siguientes suponen que ese directorio
+está en el `PATH` o que se invoca el ejecutable mediante su ruta completa.
 
 ```bash
 printscript validation ejemplo.ps   # ¿el archivo es válido?
@@ -54,16 +58,18 @@ aceptan `--config` con la ruta de un archivo JSON.
 | Código | Significado |
 |---|---|
 | `0` | La operación terminó bien. |
-| `1` | El archivo no se pudo leer, o tiene un error léxico, sintáctico o semántico. También los errores de uso. |
-| `3` | El análisis encontró problemas de estilo. El archivo es válido. |
+| `1` | Error de lectura, configuración, formateo, parsing o semántica detectado por la operación. |
+| `3` | El análisis terminó con diagnósticos de estilo. No certifica validez semántica. |
 
-El `3` está separado del `1` a propósito: permite que un CI distinga *"el código
-está roto"* de *"el código funciona pero no respeta las convenciones"*.
+Los errores de argumentos los gestiona Clikt con sus propios códigos de salida.
+`analysis` revisa estilo sobre el AST; para comprobar semántica se utiliza
+`validation`. Un código `3` permite distinguir hallazgos de estilo de un fallo
+de la operación.
 
 ### Dependencias externas
 
 `cli` depende de [Clikt 5.1.0](https://github.com/ajalt/clikt), que resuelve el
-parseo de argumentos, la generación del `--help` y el autocompletado de shell.
+parseo de argumentos, la ayuda y la interacción con la terminal.
 
 `printscript-v1` depende de
 [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) para
@@ -71,20 +77,20 @@ leer la configuración JSON del formatter y del linter. Es la única librería
 JSON del proyecto: no hay un decoder genérico compartido, cada reader interpreta
 sus propias claves.
 
-Ambas dependencias entran como `implementation`, así que no se propagan: los
-módulos motor (`lexer`, `parser`, `interpreter`, `formatter`, `linter`) siguen
-sin dependencias externas.
+Ambas dependencias entran como `implementation`: no forman parte de la API de
+compilación que se expone al consumidor, aunque sí se necesitan en runtime.
+Los motores no dependen directamente de Clikt ni de kotlinx.serialization.
+El build y los tests usan además las herramientas declaradas en `buildSrc`.
 
 ## Pipeline
 
 ```text
-código fuente
-    │
-    ▼
-SourceReader → Lexer → TokenSource → Parser → StatementSource → Interpreter → ProgramOutput
-                                                             ├→ Formatter
-                                                             ├→ Linter
-                                                             └→ Validator
+SourceReader
+    ├─ Lexer → TokenSource → Parser → StatementSource
+    │                                    ├─ Interpreter → ProgramOutput
+    │                                    ├─ Linter → DiagnosticSource
+    │                                    └─ Validator → ValidationResult
+    └─ Lexer con whitespace → TokenSource → Formatter → FormattedSource
 ```
 
 - `SourceReader` entrega en bloques código proveniente de strings, archivos o
@@ -92,11 +98,10 @@ SourceReader → Lexer → TokenSource → Parser → StatementSource → Interp
 - `TokenSource` produce un token por solicitud.
 - `StatementSource` produce una sentencia por solicitud.
 - El interpreter consume y ejecuta las sentencias en orden.
-- El formatter, el linter y el validator consumen la misma `StatementSource`:
-  son consumidores alternativos del mismo pipeline, no etapas nuevas. El
-  validator recorre ambas ramas de cada `if` sin ejecutar el programa ni
-  consumir entrada — por eso `validation` puede ejecutarse sobre un script que
-  usa `readInput` sin pedirle nada a la terminal.
+- El interpreter, el linter y el validator consumen el contrato `StatementSource`.
+  Cada operación arma su propia fuente; no se comparte un stream consumible entre
+  operaciones. El validator revisa ambas ramas de cada `if` sin ejecutar I/O.
+- El formatter consume tokens que conservan whitespace; no utiliza parser ni AST.
 - La CLI arma el pipeline, elige el consumidor según la operación pedida y
   traduce el resultado a un código de salida.
 
@@ -125,13 +130,13 @@ cierra.
 | `printscript-runtime` | Estado, valores y puertos públicos para extender la ejecución de PrintScript. |
 | `formatter` | Motor lazy de formateo y contratos públicos para estrategias externas. |
 | `linter` | Motor lazy de análisis de estilo y contratos públicos para reglas externas. |
-| `printscript-v1` | Reglas y composición concreta de los componentes de PrintScript, en dos familias: `1.0` y `1.1` (superset de `1.0` — agrega `if`, `const`, `boolean`, `readInput` y `readEnv`). También vive acá el validator, que reutiliza el motor de `interpreter` con executors que no ejecutan de verdad. |
-| `cli` | Aplicación de línea de comandos. Único módulo con dependencias externas. |
+| `printscript-v1` | Tokens, gramáticas, reglas y factories de `1.0` y `1.1`, incluyendo el validator estático. V1.1 agrega `if`, `const`, `boolean`, `readInput` y `readEnv`. |
+| `cli` | Composición exterior, archivos, terminal, configuración y selección de versión mediante Clikt. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
 
-Los módulos se conectan mediante interfaces pequeñas. Las implementaciones
-concretas son internas y cada versión se construye a través de una factory
-pública:
+Los módulos se conectan mediante contratos pequeños. Los motores concretos son
+internos; las factories ensamblan cada versión. Algunas reglas públicas del linter
+se ofrecen también como componentes de composición:
 
 ```kotlin
 PrintScriptV1LexerFactory.create()
@@ -143,10 +148,14 @@ PrintScriptV1LinterFactory.create()
 PrintScriptV1ValidatorFactory.create()
 ```
 
-Cada factory tiene su par `PrintScriptV11...` — `1.1` es superset de `1.0`, así
-que su factory suele delegar en la de `1.0` y agregar lo propio (ver
+Cada factory tiene su par `PrintScriptV11...`. Las versiones comparten
+componentes y agregan su composición específica (ver
 `PrintScriptV11ParserFactory`, que reutiliza `println` y la asignación de `1.0`
 en lugar de reconstruir su lista completa de parsers).
+
+Los diagramas editables están en [módulos](docs/diagrams/modulos.puml),
+[flujo](docs/diagrams/flujo.puml) y [contratos](docs/diagrams/estructura.puml).
+Los planes de refactor del CLI en `docs/` están marcados como históricos.
 
 ## Decisiones de diseño
 
@@ -188,18 +197,22 @@ noción de "sentencia": trabaja a nivel de `TokenGap`, el whitespace original
 entre dos tokens consecutivos. Cada `TokenGapFormattingRule` decide si le
 interesa un gap (`supports`) y, si le interesa, produce un
 `WhitespaceFormattingResult` — `Success(whitespace)` o `Failure`, para que un
-valor de configuración desbordado (una cantidad de saltos de línea o de
-indentación fuera de rango) se reporte como error de dominio en vez de romper
-en tiempo de ejecución. Cuando ninguna regla aplica, el whitespace original se
-preserva tal cual.
+desbordamiento durante el formateo se reporte como error de dominio. Los readers
+JSON rechazan configuraciones inválidas; los constructores de configuración
+comprueban sus invariantes con `require`. Cuando ninguna regla aplica, el
+whitespace original se preserva tal cual.
 
-Las reglas no son mutuamente excluyentes: `IndentedFormattingRule` compone en
-un solo gap una regla de salto de línea, una de espaciado y la de indentación,
-así que agregar una indentación no le pisa el resultado a la regla que decidió
-el salto de línea. Las reglas con estado (por ejemplo, "es este el primer
-`println` dentro de un bloque") avanzan con `afterConsuming`/`afterFormatting`
-a medida que el formatter consume tokens, y devuelven una nueva instancia de sí
-mismas — no hay mutación.
+El dispatcher aplica la primera regla compatible. Las reglas externas tienen
+prioridad sobre las reglas incluidas por la factory. Dentro de V1.1,
+`IndentedFormattingRule` selecciona una regla base de llaves, saltos o espaciado
+y luego aplica indentación sobre el whitespace resultante. También conserva e
+indenta los saltos existentes cuando corresponde. Los saltos específicos de
+`println` tienen prioridad sobre los generales después de un statement.
+
+Las reglas reciben el whitespace emitido mediante `afterFormatting` y el token
+consumido mediante `afterConsuming`, incluso si otra regla ganó la selección.
+Devuelven el nuevo estado; esto permite alinear llaves con la salida real y
+reconocer los límites de los bloques sin mutar las reglas oficiales.
 
 El lexer normal de V1 continúa descartando whitespace antes del parser.
 `PrintScriptV1FormattingLexerFactory` crea la variante que lo conserva para el
@@ -211,7 +224,8 @@ pertenecen a `printscript-v1`; el parser y el AST no participan del formateo.
 El interpreter core consume `StatementSource` de forma lazy y coordina
 `StatementExecutor<S>` públicos. El estado es genérico únicamente en este punto
 de variación: todos los executors configurados deben aceptar y producir el mismo
-tipo, por lo que el compilador impide mezclar estrategias de lenguajes distintos.
+tipo. Eso garantiza compatibilidad del estado, no compatibilidad semántica entre
+lenguajes; la selección de reglas corresponde a la factory.
 El `Interpreter` que usa la CLI permanece no genérico.
 
 El dispatcher conserva el orden configurado y da prioridad al primer executor
@@ -233,6 +247,12 @@ scope exterior con el mismo nombre no es un error, es una sombra nueva que
 bindings — no valida tipos ni constantes; esas comprobaciones son
 responsabilidad de los executors concretos de `printscript-v1`.
 
+Quien extienda la ejecución debe comprobar duplicados antes de `declaring` y
+existencia, mutabilidad y tipos antes de `reassigning`. Se reasigna el binding
+visible más cercano. No se puede abandonar el scope global. El evaluador y
+`IfExecutor` comparten la resolución de variables inicializadas; la condición
+del `if` mantiene además su comprobación de tipo booleano.
+
 ### Validation
 
 `validation` reutiliza el mismo motor de `interpreter`, pero con
@@ -244,6 +264,113 @@ estado de inicialización resultante, así que un error semántico en la rama qu
 la ejecución real nunca toma igual se reporta. `validation` y `execution`
 comparten el mismo parser y el mismo AST; solo cambia qué `StatementExecutor`
 se conecta al motor genérico.
+
+Una variable se considera inicializada después de un `if` si ya lo estaba antes
+o si ambas ramas la inicializan. Sin `else`, se contempla el camino que no entra
+al bloque. Los errores que dependen de valores reales, como división por cero,
+entrada inválida o variables del sistema ausentes, quedan para `execution`.
+
+### Linter y API de composición
+
+El core aplica todas las reglas configuradas mediante `CompositeRule`. Cada
+regla devuelve diagnósticos y su estado siguiente en `RuleInspection`. V1.1
+reutiliza esa composición y recorre las dos ramas de los bloques; no selecciona
+una rama según el valor de su condición.
+
+Estas clases de `printscript.v1.linter.rule` son API pública de composición:
+
+| Regla | Responsabilidad |
+|---|---|
+| `PrintScriptV1IdentifierNamingRule` | Comprueba el nombre de las variables declaradas. |
+| `PrintScriptV1PrintlnArgumentRule` | Comprueba la categoría del argumento de `println`. |
+| `PrintScriptV1ReadInputArgumentRule` | Encuentra llamadas a `readInput` en las expresiones de una sentencia y comprueba sus prompts. |
+
+Se conservan públicas para que un consumidor pueda construir una política propia
+sin copiar las reglas. Las dos reglas de argumentos reciben un mapa que debe
+cubrir `LITERAL`, `VARIABLE` y `COMPOSED`; copian el mapa recibido. Las expresiones
+agrupadas, operaciones y llamadas pertenecen a `COMPOSED`.
+
+Ejemplo de composición para V1.1, con el recorrido de bloques provisto por su factory:
+
+```kotlin
+import printscript.v1.linter.PrintScriptV11LinterConfiguration
+import printscript.v1.linter.PrintScriptV11LinterFactory
+import printscript.v1.linter.PrintScriptV1ArgumentAcceptance
+import printscript.v1.linter.PrintScriptV1ExpressionKind
+import printscript.v1.linter.PrintScriptV1NamingConvention
+import printscript.v1.linter.rule.PrintScriptV1IdentifierNamingRule
+import printscript.v1.linter.rule.PrintScriptV1PrintlnArgumentRule
+import printscript.v1.linter.rule.PrintScriptV1ReadInputArgumentRule
+
+val argumentPolicy = mapOf(
+    PrintScriptV1ExpressionKind.LITERAL to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+    PrintScriptV1ExpressionKind.VARIABLE to PrintScriptV1ArgumentAcceptance.ACCEPTED,
+    PrintScriptV1ExpressionKind.COMPOSED to PrintScriptV1ArgumentAcceptance.REJECTED,
+)
+val linter = PrintScriptV11LinterFactory.create(
+    configuration = PrintScriptV11LinterConfiguration(rules = emptyList()),
+    additionalRules = listOf(
+        PrintScriptV1IdentifierNamingRule(PrintScriptV1NamingConvention.CAMEL_CASE),
+        PrintScriptV1PrintlnArgumentRule(argumentPolicy),
+        PrintScriptV1ReadInputArgumentRule(argumentPolicy),
+    ),
+)
+```
+
+`linter.lint(statements)` devuelve un `DiagnosticSource`; se consume hasta
+`EndOfInput` o `Failure`. Las reglas adicionales se ejecutan antes de las
+configuradas, pero no las reemplazan: todas participan. El ejemplo usa una
+configuración vacía para evitar agregar dos veces la misma comprobación.
+Las reglas individuales inspeccionan una sentencia; la factory V1.1 aporta el
+recorrido de los bloques. Para otros árboles o lenguajes, ese recorrido lo
+define su composición.
+
+### Configuración JSON
+
+Sin `--config`, el formatter preserva el whitespace original. El linter aplica
+por defecto camel case y argumentos de `println` limitados a variables o
+literales. Un JSON `{}` selecciona una configuración sin reglas, también en el
+linter; no equivale a omitir `--config`.
+
+Ejemplo de formatter V1.1:
+
+```json
+{
+  "enforce-spacing-around-equals": true,
+  "mandatory-space-surrounding-operations": true,
+  "mandatory-line-break-after-statement": true,
+  "line-breaks-after-println": 1,
+  "if-brace-below-line": true,
+  "indent-inside-if": 2
+}
+```
+
+| Propiedad del formatter | Efecto |
+|---|---|
+| `enforce-spacing-around-equals` / `enforce-no-spacing-around-equals` | Agrega o elimina espacios alrededor de `=`; no pueden activarse juntas. |
+| `enforce-spacing-before-colon-in-declaration` / `enforce-spacing-after-colon-in-declaration` | Espacio antes o después de `:`. |
+| `mandatory-single-space-separation` | Separación de un espacio, subordinada a las reglas más específicas. |
+| `mandatory-space-surrounding-operations` | Espacios alrededor de operadores binarios. |
+| `mandatory-line-break-after-statement` | Un salto después de `;` cuando hay otro token. |
+| `line-breaks-after-println` | Cantidad de líneas vacías: `0` produce un salto, `1` produce dos. |
+| `if-brace-same-line` / `if-brace-below-line` | Ubicación de la llave de apertura del `if` en V1.1; son excluyentes. |
+| `indent-inside-if` | Espacios por nivel de bloque en V1.1; ajusta líneas existentes o creadas por otras reglas. |
+
+Ejemplo de linter V1.1:
+
+```json
+{
+  "identifier_format": "camel case",
+  "mandatory-variable-or-literal-in-println": true,
+  "mandatory-variable-or-literal-in-readInput": true
+}
+```
+
+`identifier_format` admite `camel case` o `snake case`. La propiedad de
+`readInput` pertenece a V1.1. Cada reader rechaza claves desconocidas y tipos
+JSON incorrectos, y conserva errores propios de su versión. Los readers del
+linter comparten el armado de las reglas comunes. El CLI informa el motivo
+específico de una configuración inválida.
 
 ### CLI
 
@@ -263,13 +390,12 @@ cuenta en lugar de pasar por esta factory, podría quedar en verde verificando
 un CLI distinto del que realmente se distribuye.
 
 `PrintScriptToolchainFactory` concentra la selección de versión. Cada toolchain
-agrupa el lexer, parser, interpreter, formatter y linter compatibles, por lo que
+agrupa lexer, parser, interpreter, validator, formatter y linter compatibles, por lo que
 los comandos no necesitan conocer factories concretas de `1.0` o `1.1`.
 
 La entrada, salida y consulta de variables de entorno se adaptan en la CLI a los
-contratos de `printscript-runtime`. `validation` no comparte el motor de
-ejecución: usa el validator descrito en la sección anterior, que recorre el AST
-sin ejecutar el programa.
+contratos de `printscript-runtime`. `validation` reutiliza el motor genérico con
+estado simbólico y reglas de validación, sin los executors que realizan I/O.
 
 ## Gramática de PrintScript 1.0
 
@@ -303,8 +429,19 @@ código fuente.
 
 `1.1` extiende esta gramática: agrega `const`, el tipo `boolean` con sus
 literales `true`/`false`, `if`/`else` con bloques `{ }`, y las expresiones
-`readInput(...)`/`readEnv(...)` como alternativas de `primary`. Es superset
-estricto de `1.0` — todo programa `1.0` válido también es válido en `1.1`.
+`readInput(...)`/`readEnv(...)` como alternativas de `primary`. Reutiliza las
+construcciones de V1, pero reserva keywords adicionales; un identificador de V1
+que coincida con una de ellas puede dejar de ser válido en V1.1.
+
+La condición de `if` es un identificador que debe resolver a booleano.
+`const` requiere inicializador. Los bloques se utilizan en `if`/`else`; no hay
+`else if` directo, aunque se puede anidar otro `if` dentro del `else`.
+
+`readInput` recibe un prompt String y `readEnv` un nombre String. El texto leído
+se convierte según el tipo esperado del destino; si no hay destino, se utiliza
+String. Por eso `let n: number = readInput("n") * 2;` puede ejecutarse, mientras
+`println(readInput("n") * 2);` falla por operandos incompatibles. El mismo
+criterio se aplica a `readEnv`.
 
 ### Ejemplo
 
@@ -330,7 +467,7 @@ hello world
 ./gradlew check
 ```
 
-`check` es la orden que corre todo: compila, verifica formato, ejecuta el
+`check` compila lo requerido para los tests, verifica formato, ejecuta el
 análisis estático, corre los tests y valida el umbral de cobertura.
 
 La configuración compartida de Kotlin, Java 21, tests y herramientas de calidad
@@ -338,12 +475,35 @@ vive en convention plugins dentro de `buildSrc`:
 
 - `printscript.kotlin-library` — todos los módulos de librería.
 - `printscript.kotlin-application` — módulos con `main`.
+- `printscript.publishable-library` — librerías que también generan artefactos Maven.
 
 Las pruebas de cada módulo validan sus propias responsabilidades y
 `integration-tests` verifica el flujo completo desde el código fuente hasta la
-salida o el error correspondiente.
+salida o el error correspondiente. Incluye InputStream con buffers pequeños,
+UTF-8, compatibilidad V1/V1.1 y una extensión que atraviesa parser e interpreter.
+Hay tests de consumo desde Java y de inmutabilidad de las colecciones del AST.
+El TCK es un repositorio separado y no forma parte de este `check`.
 
 ## Herramientas de desarrollo
+
+### CI y publicación
+
+El workflow de CI ejecuta `check` en pull requests y admite ejecución manual.
+El workflow de publicación se dispara al publicar una GitHub Release con tag
+`vX.Y.Z`: toma esa versión, ejecuta `check`, valida las publicaciones con
+`publishToMavenLocal` y publica en GitHub Packages.
+
+Las librerías aplican `printscript.publishable-library`; `cli` e
+`integration-tests` no se publican. `printscript-v1` es la fachada que expone
+transitivamente los motores y contratos. La versión local predeterminada es
+`1.0.0-SNAPSHOT`, reemplazable mediante `-PreleaseVersion=X.Y.Z`.
+Las credenciales de publicación son `GITHUB_ACTOR` y `GITHUB_TOKEN`.
+
+Este mecanismo no indica que exista una release actualizada con todos los
+cambios de `main`. Elegir y publicar el artefacto final, conectarlo al TCK y
+calibrar su heap en la Action de los profesores son tareas de entrega separadas.
+
+### Herramientas locales
 
 | Herramienta | Responde | Configuración |
 |---|---|---|
@@ -364,18 +524,17 @@ Los reportes quedan en `<módulo>/build/reports/`.
 
 ### Formato — ktlint
 
-`.editorconfig` está versionado y lo leen tanto ktlint como el IDE. Se apartan
-dos valores del default:
+`.editorconfig` está versionado y configura:
 
-- `ktlint_code_style = intellij_idea` en lugar de `ktlint_official`, para que el
+- `ktlint_code_style = intellij_idea`, para que el
   formateo del IDE y el de ktlint coincidan.
-- `max_line_length = 120` en lugar de 140.
+- `max_line_length = 120`.
 
 ### Análisis estático — detekt
 
 `config/detekt/detekt.yml` parte de la configuración por defecto
 (`buildUponDefaultConfig = true`) y ajusta las reglas que el equipo considera
-relevantes, cada una con su motivo documentado en el archivo. Las principales:
+relevantes. Las principales:
 
 - `LongMethod` con umbral 60: el estilo de un argumento nombrado por línea infla
   el conteo de líneas sin agregar complejidad real.
