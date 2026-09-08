@@ -38,7 +38,9 @@ internal class ValidationEnvironment private constructor(
 
     fun initializing(name: String): ValidationEnvironment {
         val targetScope = scopes.indexOfLast { name in it }
-        require(targetScope >= 0)
+        check(targetScope >= 0) {
+            "Se marco como inicializada la variable '$name', que no esta declarada en ningun scope"
+        }
         return ValidationEnvironment(
             scopes.mapIndexed { index, scope ->
                 if (index == targetScope) {
@@ -53,15 +55,20 @@ internal class ValidationEnvironment private constructor(
     fun enteringScope(): ValidationEnvironment = ValidationEnvironment(scopes + emptyMap())
 
     fun leavingScope(): ValidationEnvironment {
-        require(scopes.size > 1)
+        check(scopes.size > 1) { "Se intento salir del scope global" }
         return ValidationEnvironment(scopes.dropLast(1))
     }
 
     fun intersectingInitialization(other: ValidationEnvironment): ValidationEnvironment {
-        require(scopes.size == other.scopes.size)
+        require(scopes.size == other.scopes.size) {
+            "Los entornos a intersecar tienen distinta cantidad de scopes: ${scopes.size} y ${other.scopes.size}"
+        }
         return ValidationEnvironment(
             scopes.zip(other.scopes) { scope, otherScope ->
-                require(scope.keys == otherScope.keys)
+                require(scope.keys == otherScope.keys) {
+                    "Los entornos a intersecar declaran variables distintas en un mismo scope: " +
+                        "${scope.keys} y ${otherScope.keys}"
+                }
                 scope.mapValues { (name, binding) ->
                     binding.copy(initialized = binding.initialized && otherScope.getValue(name).initialized)
                 }
