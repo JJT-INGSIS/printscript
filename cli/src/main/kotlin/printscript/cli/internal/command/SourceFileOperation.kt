@@ -8,22 +8,20 @@ import printscript.cli.internal.report.ErrorReporter
 import printscript.source.SourceReader
 import printscript.source.SourceReaderCreationResult
 import printscript.source.SourceReaderFactory
-import java.io.IOException
-import java.nio.file.AccessDeniedException
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
+import java.io.InputStream
 
 internal fun CliktCommand.runOnSourceFile(
-    sourceFilePath: Path,
+    sourceFile: InputStream,
     errorReporter: ErrorReporter,
     outcomeFrom: (SourceReader) -> OperationOutcome,
 ) {
-    val outcome = operationOutcomeFromSourceFile(
-        sourceFilePath = sourceFilePath,
-        errorReporter = errorReporter,
-        outcomeFrom = outcomeFrom,
-    )
+    val outcome = when (val creation = SourceReaderFactory.fromInputStream(sourceFile)) {
+        is SourceReaderCreationResult.Failure ->
+            OperationOutcome.Failure(errorReporter.describe(creation.error))
+
+        is SourceReaderCreationResult.Success ->
+            outcomeFrom(creation.reader)
+    }
 
     reportOutcome(outcome)
 
@@ -31,49 +29,6 @@ internal fun CliktCommand.runOnSourceFile(
 
     if (exitCode != ExitCode.SUCCESS) {
         throw ProgramResult(exitCode.value)
-    }
-}
-
-private fun operationOutcomeFromSourceFile(
-    sourceFilePath: Path,
-    errorReporter: ErrorReporter,
-    outcomeFrom: (SourceReader) -> OperationOutcome,
-): OperationOutcome {
-    if (!Files.exists(sourceFilePath)) {
-        return OperationOutcome.Failure(errorReporter.describeMissingSourceFile(sourceFilePath))
-    }
-
-    if (!Files.isRegularFile(sourceFilePath)) {
-        return OperationOutcome.Failure(errorReporter.describeInvalidSourceFile(sourceFilePath))
-    }
-
-    if (!Files.isReadable(sourceFilePath)) {
-        return OperationOutcome.Failure(errorReporter.describeUnreadableSourceFile(sourceFilePath))
-    }
-
-    return try {
-        Files.newInputStream(sourceFilePath).use { inputStream ->
-            when (val creation = SourceReaderFactory.fromInputStream(inputStream)) {
-                is SourceReaderCreationResult.Failure ->
-                    OperationOutcome.Failure(errorReporter.describe(creation.error))
-
-                is SourceReaderCreationResult.Success ->
-                    outcomeFrom(creation.reader)
-            }
-        }
-    } catch (_: NoSuchFileException) {
-        OperationOutcome.Failure(errorReporter.describeMissingSourceFile(sourceFilePath))
-    } catch (_: AccessDeniedException) {
-        OperationOutcome.Failure(errorReporter.describeUnreadableSourceFile(sourceFilePath))
-    } catch (cause: IOException) {
-        OperationOutcome.Failure(
-            errorReporter.describeSourceFileAccessFailure(
-                path = sourceFilePath,
-                reason = cause.message.orEmpty(),
-            ),
-        )
-    } catch (_: SecurityException) {
-        OperationOutcome.Failure(errorReporter.describeUnreadableSourceFile(sourceFilePath))
     }
 }
 

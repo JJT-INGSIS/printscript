@@ -2,9 +2,12 @@ package printscript.cli.internal.command
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.context
+import com.github.ajalt.clikt.core.registerJvmCloseable
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import printscript.cli.internal.OperationOutcome
 import printscript.cli.internal.report.ErrorReporter
+import printscript.cli.internal.report.PrintScriptLocalization
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
@@ -17,7 +20,11 @@ internal class FormattingCommand(
         PrintScriptToolchainFactory::forVersion,
 ) : CliktCommand(name = "formatting") {
 
-    private val sourceFilePath by sourceFileArgument()
+    init {
+        context { localization = PrintScriptLocalization }
+    }
+
+    private val sourceFile by sourceFileArgument()
 
     private val languageOptions by LanguageOptions()
 
@@ -28,6 +35,9 @@ internal class FormattingCommand(
     }
 
     override fun run() {
+        // Clikt abrio el archivo al parsear los argumentos; que lo cierre el tambien.
+        currentContext.registerJvmCloseable(sourceFile)
+
         val toolchain = toolchainFor(languageOptions.version)
         val formatter = configuredToolFrom(
             configurationFilePath = configurationFilePath,
@@ -35,7 +45,7 @@ internal class FormattingCommand(
         )
 
         runOnSourceFile(
-            sourceFilePath = sourceFilePath,
+            sourceFile = sourceFile,
             errorReporter = errorReporter,
         ) { sourceReader ->
             writeRemainingFormattedChunks(
