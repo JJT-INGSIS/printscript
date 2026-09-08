@@ -8,7 +8,7 @@ import printscript.v1.interpreter.PrintScriptV1SemanticError
 import java.math.BigDecimal
 import java.math.MathContext
 
-internal class DivideCalculation : NumberCalculation {
+internal data object DivideCalculation : NumberCalculation {
 
     override fun calculate(left: BigDecimal, right: BigDecimal, span: SourceSpan): ExecutionResult<RuntimeValue> {
         if (isZero(right)) {

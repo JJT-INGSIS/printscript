@@ -8,7 +8,7 @@ import printscript.runtime.NumberValue
 import printscript.runtime.RuntimeValue
 import printscript.runtime.StringValue
 
-internal class AddOperation : BinaryOperation {
+internal data object AddOperation : BinaryOperation {
 
     override fun applyToOperands(
         left: RuntimeValue,

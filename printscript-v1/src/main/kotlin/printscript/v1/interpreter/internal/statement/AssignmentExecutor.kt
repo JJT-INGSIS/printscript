@@ -2,9 +2,9 @@ package printscript.v1.interpreter.internal.statement
 
 import printscript.ast.statement.AssignmentStatement
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
+import printscript.model.source.SourceSpan
 import printscript.runtime.Environment
 import printscript.runtime.ExpressionEvaluator
 import printscript.runtime.RuntimeValue
@@ -27,24 +27,23 @@ internal class AssignmentExecutor(
         context: StatementExecutionContext<Environment>,
     ): ExecutionResult<Environment> {
         if (statement !is AssignmentStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(span = statement.span),
-            )
+            return unsupportedStatement(statement)
         }
 
         val state: Environment = context.state
         val name: String = statement.target.value
 
-        val binding: VariableBinding = findAssignableBinding(statement, state)
-            .orReturn { return it }
+        val binding: VariableBinding = findAssignableBinding(
+            name = name,
+            span = statement.span,
+            state = state,
+        ).orReturn { return it }
 
-        val value: RuntimeValue =
-            expressionEvaluator.evaluateExpression(
-                expression = statement.expression,
-                environment = state,
-                expectedType = binding.type,
-            )
-                .orReturn { return it }
+        val value: RuntimeValue = expressionEvaluator.evaluateExpression(
+            expression = statement.expression,
+            environment = state,
+            expectedType = binding.type,
+        ).orReturn { return it }
 
         binding.type.verifyAccepts(
             value = value,
@@ -61,15 +60,15 @@ internal class AssignmentExecutor(
     }
 
     private fun findAssignableBinding(
-        statement: AssignmentStatement,
+        name: String,
+        span: SourceSpan,
         state: Environment,
     ): ExecutionResult<VariableBinding> {
-        val name: String = statement.target.value
         val binding: VariableBinding = state.findBinding(name)
             ?: return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.UndeclaredVariable(
                     name = name,
-                    span = statement.span,
+                    span = span,
                 ),
             )
 
@@ -77,7 +76,7 @@ internal class AssignmentExecutor(
             return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.ConstantReassignment(
                     name = name,
-                    span = statement.span,
+                    span = span,
                 ),
             )
         }

@@ -3,7 +3,6 @@ package printscript.v1.interpreter.internal.statement
 import printscript.ast.statement.BlockStatement
 import printscript.ast.statement.IfStatement
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.runtime.BooleanValue
@@ -24,9 +23,7 @@ internal class IfExecutor : StatementExecutor<Environment> {
         context: StatementExecutionContext<Environment>,
     ): ExecutionResult<Environment> {
         if (statement !is IfStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(span = statement.span),
-            )
+            return unsupportedStatement(statement)
         }
 
         val condition: BooleanValue = evaluateCondition(statement, context.state)
