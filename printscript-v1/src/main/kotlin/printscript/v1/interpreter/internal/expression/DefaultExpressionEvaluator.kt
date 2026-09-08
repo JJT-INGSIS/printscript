@@ -35,22 +35,10 @@ internal class DefaultExpressionEvaluator(
         environment: Environment,
         expectedType: DeclaredType?,
     ): ExecutionResult<RuntimeValue> {
-        return evaluateWithExpectedType(
-            expression = expression,
-            environment = environment,
-            expectedType = expectedType,
-        )
-    }
-
-    private fun evaluateWithExpectedType(
-        expression: Expression,
-        environment: Environment,
-        expectedType: DeclaredType?,
-    ): ExecutionResult<RuntimeValue> {
         return when (expression) {
             is NumberLiteralExpression -> evaluateNumberLiteral(expression)
             is StringLiteralExpression -> evaluateStringLiteral(expression)
-            is GroupingExpression -> evaluateWithExpectedType(expression.expression, environment, expectedType)
+            is GroupingExpression -> evaluateExpression(expression.expression, environment, expectedType)
             is IdentifierExpression -> environment.resolveInitializedValue(expression.identifier.value, expression.span)
             is UnaryExpression -> evaluateUnary(expression, environment, expectedType)
             is BinaryExpression -> evaluateBinary(expression, environment, expectedType)
@@ -58,12 +46,14 @@ internal class DefaultExpressionEvaluator(
                 v11ExpressionEvaluation?.evaluateBooleanLiteral(expression)
                     ?: unsupportedExpression(expression)
 
+            // Se pasa this en cada llamada y no por constructor porque la dependencia es circular:
+            // este evaluador ya recibe el PrintScriptV11ExpressionEvaluation en su propio constructor.
             is ReadInputExpression ->
                 v11ExpressionEvaluation?.evaluateReadInput(
                     expression = expression,
                     environment = environment,
                     expectedType = expectedType,
-                    evaluateNestedExpression = ::evaluateWithExpectedType,
+                    nestedEvaluator = this,
                 ) ?: unsupportedExpression(expression)
 
             is ReadEnvironmentExpression ->
@@ -71,7 +61,7 @@ internal class DefaultExpressionEvaluator(
                     expression = expression,
                     environment = environment,
                     expectedType = expectedType,
-                    evaluateNestedExpression = ::evaluateWithExpectedType,
+                    nestedEvaluator = this,
                 ) ?: unsupportedExpression(expression)
         }
     }
@@ -95,7 +85,7 @@ internal class DefaultExpressionEvaluator(
         environment: Environment,
         expectedType: DeclaredType?,
     ): ExecutionResult<RuntimeValue> {
-        val operand: RuntimeValue = evaluateWithExpectedType(expression.operand, environment, expectedType)
+        val operand: RuntimeValue = evaluateExpression(expression.operand, environment, expectedType)
             .orReturn { return it }
 
         if (operand !is NumberValue) {
@@ -121,10 +111,10 @@ internal class DefaultExpressionEvaluator(
         environment: Environment,
         expectedType: DeclaredType?,
     ): ExecutionResult<RuntimeValue> {
-        val left: RuntimeValue = evaluateWithExpectedType(expression.left, environment, expectedType)
+        val left: RuntimeValue = evaluateExpression(expression.left, environment, expectedType)
             .orReturn { return it }
 
-        val right: RuntimeValue = evaluateWithExpectedType(expression.right, environment, expectedType)
+        val right: RuntimeValue = evaluateExpression(expression.right, environment, expectedType)
             .orReturn { return it }
 
         val operation: BinaryOperation = operations.forOperator(expression.operator)

@@ -10,18 +10,13 @@ import printscript.interpreter.SemanticError
 import printscript.runtime.BooleanValue
 import printscript.runtime.Environment
 import printscript.runtime.EnvironmentVariableProvider
+import printscript.runtime.ExpressionEvaluator
 import printscript.runtime.NumberValue
 import printscript.runtime.ProgramInput
 import printscript.runtime.RuntimeValue
 import printscript.runtime.StringValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.interpreter.internal.orReturn
-
-internal typealias NestedExpressionEvaluator = (
-    Expression,
-    Environment,
-    DeclaredType?,
-) -> ExecutionResult<RuntimeValue>
 
 internal class PrintScriptV11ExpressionEvaluation(
     private val input: ProgramInput,
@@ -36,12 +31,12 @@ internal class PrintScriptV11ExpressionEvaluation(
         expression: ReadInputExpression,
         environment: Environment,
         expectedType: DeclaredType?,
-        evaluateNestedExpression: NestedExpressionEvaluator,
+        nestedEvaluator: ExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
         val prompt: String = stringArgument(
             argument = expression.prompt,
             environment = environment,
-            evaluateNestedExpression = evaluateNestedExpression,
+            nestedEvaluator = nestedEvaluator,
         ) { actual ->
             PrintScriptV1SemanticError.InvalidInputPrompt(
                 actual = actual,
@@ -66,12 +61,12 @@ internal class PrintScriptV11ExpressionEvaluation(
         expression: ReadEnvironmentExpression,
         environment: Environment,
         expectedType: DeclaredType?,
-        evaluateNestedExpression: NestedExpressionEvaluator,
+        nestedEvaluator: ExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
         val variableName: String = stringArgument(
             argument = expression.variableName,
             environment = environment,
-            evaluateNestedExpression = evaluateNestedExpression,
+            nestedEvaluator = nestedEvaluator,
         ) { actual ->
             PrintScriptV1SemanticError.InvalidEnvironmentVariableName(
                 actual = actual,
@@ -99,13 +94,13 @@ internal class PrintScriptV11ExpressionEvaluation(
     private fun stringArgument(
         argument: Expression,
         environment: Environment,
-        evaluateNestedExpression: NestedExpressionEvaluator,
+        nestedEvaluator: ExpressionEvaluator,
         invalidArgument: (DeclaredType) -> SemanticError,
     ): ExecutionResult<String> {
-        val value: RuntimeValue = evaluateNestedExpression(
-            argument,
-            environment,
-            DeclaredType.STRING,
+        val value: RuntimeValue = nestedEvaluator.evaluateExpression(
+            expression = argument,
+            environment = environment,
+            expectedType = DeclaredType.STRING,
         ).orReturn { return it }
 
         return if (value is StringValue) {
