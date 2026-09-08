@@ -2,7 +2,6 @@ package printscript.v1.interpreter.internal.statement
 
 import printscript.ast.statement.PrintlnStatement
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.runtime.Environment
@@ -26,15 +25,16 @@ internal class PrintlnExecutor(
         context: StatementExecutionContext<Environment>,
     ): ExecutionResult<Environment> {
         if (statement !is PrintlnStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(span = statement.span),
-            )
+            return unsupportedStatement(statement)
         }
 
         val state: Environment = context.state
-        val value: RuntimeValue =
-            expressionEvaluator.evaluateExpression(statement.argument, state)
-                .orReturn { return it }
+
+        val value: RuntimeValue = expressionEvaluator.evaluateExpression(
+            expression = statement.argument,
+            environment = state,
+            expectedType = null,
+        ).orReturn { return it }
 
         output.writeLine(value.asText())
 

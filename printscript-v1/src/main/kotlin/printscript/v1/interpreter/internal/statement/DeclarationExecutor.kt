@@ -4,7 +4,6 @@ import printscript.ast.DeclarationKind
 import printscript.ast.expression.Expression
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.runtime.Environment
@@ -29,19 +28,15 @@ internal class DeclarationExecutor(
         context: StatementExecutionContext<Environment>,
     ): ExecutionResult<Environment> {
         if (statement !is VariableDeclarationStatement) {
-            return ExecutionResult.Failure(
-                SemanticError.UnsupportedStatement(span = statement.span),
-            )
+            return unsupportedStatement(statement)
         }
 
         val state: Environment = context.state
 
-        ensureNotAlreadyDeclared(statement, state)
-            .orReturn { return it }
+        ensureNotAlreadyDeclared(statement, state).orReturn { return it }
 
-        val initialValue: RuntimeValue? =
-            evaluateInitializer(statement, state)
-                .orReturn { return it }
+        val initialValue: RuntimeValue? = evaluateInitializer(statement, state)
+            .orReturn { return it }
 
         return ExecutionResult.Success(
             state.declare(
@@ -80,13 +75,11 @@ internal class DeclarationExecutor(
         val initializer: Expression = statement.initializer
             ?: return ExecutionResult.Success(null)
 
-        val value: RuntimeValue =
-            expressionEvaluator.evaluateExpression(
-                expression = initializer,
-                environment = state,
-                expectedType = statement.declaredType,
-            )
-                .orReturn { return it }
+        val value: RuntimeValue = expressionEvaluator.evaluateExpression(
+            expression = initializer,
+            environment = state,
+            expectedType = statement.declaredType,
+        ).orReturn { return it }
 
         statement.declaredType.verifyAccepts(
             value = value,
