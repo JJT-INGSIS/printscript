@@ -13,16 +13,15 @@ private val configurationJson = Json {
 internal object PrintScriptV11LinterConfigurationReader {
 
     fun read(source: String): PrintScriptV11LinterConfigurationResult {
-        val document = try {
+        return runCatching {
             configurationJson.decodeFromString(
                 deserializer = PrintScriptV11LinterConfigurationDocument.serializer(),
                 string = source,
             )
-        } catch (invalidDocument: IllegalArgumentException) {
-            return invalidConfigurationDocument(invalidDocument)
-        }
-
-        return build(document)
+        }.fold(
+            onSuccess = { document -> build(document) },
+            onFailure = { cause -> invalidConfigurationDocument(cause) },
+        )
     }
 
     private fun build(document: PrintScriptV11LinterConfigurationDocument): PrintScriptV11LinterConfigurationResult {
@@ -45,12 +44,10 @@ internal object PrintScriptV11LinterConfigurationReader {
         )
     }
 
-    private fun invalidConfigurationDocument(
-        invalidDocument: IllegalArgumentException,
-    ): PrintScriptV11LinterConfigurationResult.Failure {
+    private fun invalidConfigurationDocument(cause: Throwable): PrintScriptV11LinterConfigurationResult.Failure {
         return PrintScriptV11LinterConfigurationResult.Failure(
             PrintScriptV11LinterConfigurationError.InvalidConfigurationDocument(
-                reason = invalidDocument.message ?: DEFAULT_INVALID_CONFIGURATION_REASON,
+                reason = cause.message ?: DEFAULT_INVALID_CONFIGURATION_REASON,
             ),
         )
     }
