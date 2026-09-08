@@ -6,6 +6,7 @@ import printscript.ast.expression.Expression
 import printscript.ast.expression.ReadEnvironmentExpression
 import printscript.ast.expression.ReadInputExpression
 import printscript.interpreter.ExecutionResult
+import printscript.interpreter.SemanticError
 import printscript.runtime.BooleanValue
 import printscript.runtime.Environment
 import printscript.runtime.EnvironmentVariableProvider
@@ -37,36 +38,28 @@ internal class PrintScriptV11ExpressionEvaluation(
         expectedType: DeclaredType?,
         evaluateNestedExpression: NestedExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
-        val prompt: RuntimeValue = evaluateNestedExpression(
-            expression.prompt,
-            environment,
-            DeclaredType.STRING,
-        ).orReturn { return it }
-
-        if (prompt !is StringValue) {
-            return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.InvalidInputPrompt(
-                    actual = prompt.type,
-                    span = expression.prompt.span,
-                ),
+        val prompt: String = stringArgument(
+            argument = expression.prompt,
+            environment = environment,
+            evaluateNestedExpression = evaluateNestedExpression,
+        ) { actual ->
+            PrintScriptV1SemanticError.InvalidInputPrompt(
+                actual = actual,
+                span = expression.prompt.span,
             )
-        }
+        }.orReturn { return it }
 
-        val rawValue: String = input.readLine(prompt.value)
+        val enteredValue: String = input.readLine(prompt)
             ?: return ExecutionResult.Failure(
                 PrintScriptV1SemanticError.InputUnavailable(span = expression.span),
             )
 
-        val targetType: DeclaredType = expectedType ?: DeclaredType.STRING
-        val value: RuntimeValue = runtimeValueOf(rawValue, targetType)
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.InvalidInputValue(
-                    expected = targetType,
-                    span = expression.span,
-                ),
+        return convertedValue(enteredValue, expectedType) { targetType ->
+            PrintScriptV1SemanticError.InvalidInputValue(
+                expected = targetType,
+                span = expression.span,
             )
-
-        return ExecutionResult.Success(value)
+        }
     }
 
     fun evaluateReadEnvironment(
@@ -75,44 +68,67 @@ internal class PrintScriptV11ExpressionEvaluation(
         expectedType: DeclaredType?,
         evaluateNestedExpression: NestedExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
-        val variableName: RuntimeValue = evaluateNestedExpression(
-            expression.variableName,
+        val variableName: String = stringArgument(
+            argument = expression.variableName,
+            environment = environment,
+            evaluateNestedExpression = evaluateNestedExpression,
+        ) { actual ->
+            PrintScriptV1SemanticError.InvalidEnvironmentVariableName(
+                actual = actual,
+                span = expression.variableName.span,
+            )
+        }.orReturn { return it }
+
+        val variableValue: String = environmentVariables.valueOf(variableName)
+            ?: return ExecutionResult.Failure(
+                PrintScriptV1SemanticError.EnvironmentVariableNotFound(
+                    name = variableName,
+                    span = expression.span,
+                ),
+            )
+
+        return convertedValue(variableValue, expectedType) { targetType ->
+            PrintScriptV1SemanticError.InvalidEnvironmentVariableValue(
+                name = variableName,
+                expected = targetType,
+                span = expression.span,
+            )
+        }
+    }
+
+    private fun stringArgument(
+        argument: Expression,
+        environment: Environment,
+        evaluateNestedExpression: NestedExpressionEvaluator,
+        invalidArgument: (DeclaredType) -> SemanticError,
+    ): ExecutionResult<String> {
+        val value: RuntimeValue = evaluateNestedExpression(
+            argument,
             environment,
             DeclaredType.STRING,
         ).orReturn { return it }
 
-        if (variableName !is StringValue) {
-            return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.InvalidEnvironmentVariableName(
-                    actual = variableName.type,
-                    span = expression.variableName.span,
-                ),
-            )
+        return if (value is StringValue) {
+            ExecutionResult.Success(value.value)
+        } else {
+            ExecutionResult.Failure(invalidArgument(value.type))
         }
+    }
 
-        val rawValue: String = environmentVariables.valueOf(variableName.value)
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.EnvironmentVariableNotFound(
-                    name = variableName.value,
-                    span = expression.span,
-                ),
-            )
-
+    private fun convertedValue(
+        rawValue: String,
+        expectedType: DeclaredType?,
+        invalidValue: (DeclaredType) -> SemanticError,
+    ): ExecutionResult<RuntimeValue> {
         val targetType: DeclaredType = expectedType ?: DeclaredType.STRING
         val value: RuntimeValue = runtimeValueOf(rawValue, targetType)
-            ?: return ExecutionResult.Failure(
-                PrintScriptV1SemanticError.InvalidEnvironmentVariableValue(
-                    name = variableName.value,
-                    expected = targetType,
-                    span = expression.span,
-                ),
-            )
+            ?: return ExecutionResult.Failure(invalidValue(targetType))
 
         return ExecutionResult.Success(value)
     }
 
-    private fun runtimeValueOf(value: String, expectedType: DeclaredType): RuntimeValue? {
-        return when (expectedType) {
+    private fun runtimeValueOf(value: String, type: DeclaredType): RuntimeValue? {
+        return when (type) {
             DeclaredType.NUMBER -> value.toBigDecimalOrNull()?.let(::NumberValue)
             DeclaredType.STRING -> StringValue(value)
             DeclaredType.BOOLEAN -> value.toBooleanStrictOrNull()?.let(::BooleanValue)
