@@ -58,10 +58,14 @@ public object PrintScriptV1LinterFactory {
 
 internal fun variableOrLiteralPrintlnArgumentConfiguration(): PrintScriptV1RuleConfiguration.PrintlnArgument {
     return PrintScriptV1RuleConfiguration.PrintlnArgument(
-        acceptanceByKind = mapOf(
-            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
-            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
-            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
-        ),
+        acceptanceByKind = variableOrLiteralAcceptanceByKind(),
+    )
+}
+
+internal fun variableOrLiteralAcceptanceByKind(): Map<PrintScriptExpressionKind, PrintScriptArgumentAcceptance> {
+    return mapOf(
+        PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
+        PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
+        PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
     )
 }

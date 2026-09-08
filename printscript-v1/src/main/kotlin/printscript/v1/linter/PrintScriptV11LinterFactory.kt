@@ -4,7 +4,7 @@ import printscript.linter.LintRule
 import printscript.linter.Linter
 import printscript.linter.LinterFactory
 import printscript.v1.linter.internal.configuration.PrintScriptV11LinterConfigurationReader
-import printscript.v1.linter.rule.PrintScriptV11RecursiveStatementRule
+import printscript.v1.linter.rule.PrintScriptV11StatementTreeRule
 
 public object PrintScriptV11LinterFactory {
 
@@ -28,7 +28,7 @@ public object PrintScriptV11LinterFactory {
     ): Linter {
         return LinterFactory.create(
             rules = listOf(
-                PrintScriptV11RecursiveStatementRule(
+                PrintScriptV11StatementTreeRule(
                     rules = additionalRules + PrintScriptV1LinterFactory.rulesFrom(configuration.rules),
                 ),
             ),
@@ -38,10 +38,6 @@ public object PrintScriptV11LinterFactory {
 
 internal fun variableOrLiteralReadInputArgumentConfiguration(): PrintScriptV1RuleConfiguration.ReadInputArgument {
     return PrintScriptV1RuleConfiguration.ReadInputArgument(
-        acceptanceByKind = mapOf(
-            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
-            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
-            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
-        ),
+        acceptanceByKind = variableOrLiteralAcceptanceByKind(),
     )
 }

@@ -1,8 +1,6 @@
 package printscript.v1.linter.rule
 
 import printscript.ast.Identifier
-import printscript.ast.statement.AssignmentStatement
-import printscript.ast.statement.PrintlnStatement
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.StatelessLintRule
@@ -23,10 +21,6 @@ public class PrintScriptV1IdentifierNamingRule(
     private fun declaredIdentifiersOf(statement: Statement): List<Identifier> {
         return when (statement) {
             is VariableDeclarationStatement -> listOf(statement.identifier)
-
-            is AssignmentStatement -> emptyList()
-
-            is PrintlnStatement -> emptyList()
 
             else -> emptyList()
         }
