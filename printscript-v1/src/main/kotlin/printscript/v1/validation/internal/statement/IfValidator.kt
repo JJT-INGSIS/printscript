@@ -4,12 +4,12 @@ import printscript.ast.DeclaredType
 import printscript.ast.statement.BlockStatement
 import printscript.ast.statement.IfStatement
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.interpreter.internal.orReturn
+import printscript.v1.interpreter.internal.statement.unsupportedStatement
 import printscript.v1.validation.internal.ValidationEnvironment
 
 internal class IfValidator : StatementExecutor<ValidationEnvironment> {
@@ -21,7 +21,7 @@ internal class IfValidator : StatementExecutor<ValidationEnvironment> {
         context: StatementExecutionContext<ValidationEnvironment>,
     ): ExecutionResult<ValidationEnvironment> {
         if (statement !is IfStatement) {
-            return ExecutionResult.Failure(SemanticError.UnsupportedStatement(statement.span))
+            return unsupportedStatement(statement)
         }
         validateCondition(statement, context.state).orReturn { return it }
         val thenState = validateBranch(statement.thenBranch, context).orReturn { return it }
