@@ -1,7 +1,6 @@
 package printscript.cli.internal.command
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.ProgramResult
+import com.github.ajalt.clikt.core.CliktError
 import printscript.cli.internal.ExitCode
 import printscript.cli.internal.toolchain.ConfiguredToolResult
 import java.io.IOException
@@ -9,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal fun <T> CliktCommand.configuredToolFrom(
+internal fun <T> configuredToolFrom(
     configurationFilePath: Path?,
     toolConfiguredBy: (String?) -> ConfiguredToolResult<T>,
 ): T {
@@ -21,7 +20,7 @@ internal fun <T> CliktCommand.configuredToolFrom(
     }
 }
 
-private fun CliktCommand.readConfiguration(path: Path): String {
+private fun readConfiguration(path: Path): String {
     return try {
         Files.readString(path, StandardCharsets.UTF_8)
     } catch (error: IOException) {
@@ -29,7 +28,9 @@ private fun CliktCommand.readConfiguration(path: Path): String {
     }
 }
 
-private fun CliktCommand.failWith(description: String): Nothing {
-    echo("error: $description", err = true)
-    throw ProgramResult(ExitCode.SOURCE_ERROR.value)
+private fun failWith(description: String): Nothing {
+    throw CliktError(
+        message = "error: $description",
+        statusCode = ExitCode.SOURCE_ERROR.value,
+    )
 }
