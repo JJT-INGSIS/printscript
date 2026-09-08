@@ -7,14 +7,11 @@ import printscript.linter.StatelessLintRule
 import printscript.statement.Statement
 import printscript.v1.linter.PrintScriptArgumentAcceptance
 import printscript.v1.linter.PrintScriptArgumentAcceptancePolicy
-import printscript.v1.linter.PrintScriptExpressionKind
 import printscript.v1.linter.PrintScriptV1Diagnostic
 
 public class PrintScriptV1PrintlnArgumentRule(
-    acceptanceByKind: Map<PrintScriptExpressionKind, PrintScriptArgumentAcceptance>,
+    private val acceptance: PrintScriptArgumentAcceptancePolicy,
 ) : StatelessLintRule {
-
-    private val acceptancePolicy = PrintScriptArgumentAcceptancePolicy(acceptanceByKind)
 
     public override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return when (statement) {
@@ -25,7 +22,7 @@ public class PrintScriptV1PrintlnArgumentRule(
     }
 
     private fun inspectArgument(argument: Expression): List<Diagnostic> {
-        return when (acceptancePolicy.acceptanceOf(argument)) {
+        return when (acceptance.acceptanceOf(argument)) {
             PrintScriptArgumentAcceptance.ACCEPTED -> emptyList()
 
             PrintScriptArgumentAcceptance.REJECTED -> listOf(

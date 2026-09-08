@@ -48,24 +48,16 @@ public object PrintScriptV1LinterFactory {
                 PrintScriptV1IdentifierNamingRule(configuration.convention)
 
             is PrintScriptV1RuleConfiguration.PrintlnArgument ->
-                PrintScriptV1PrintlnArgumentRule(configuration.acceptanceByKind)
+                PrintScriptV1PrintlnArgumentRule(configuration.acceptance)
 
             is PrintScriptV1RuleConfiguration.ReadInputArgument ->
-                PrintScriptV11ReadInputArgumentRule(configuration.acceptanceByKind)
+                PrintScriptV11ReadInputArgumentRule(configuration.acceptance)
         }
     }
 }
 
 internal fun variableOrLiteralPrintlnArgumentConfiguration(): PrintScriptV1RuleConfiguration.PrintlnArgument {
     return PrintScriptV1RuleConfiguration.PrintlnArgument(
-        acceptanceByKind = variableOrLiteralAcceptanceByKind(),
-    )
-}
-
-internal fun variableOrLiteralAcceptanceByKind(): Map<PrintScriptExpressionKind, PrintScriptArgumentAcceptance> {
-    return mapOf(
-        PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
-        PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
-        PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
+        acceptance = PrintScriptArgumentAcceptancePolicy.variableOrLiteral(),
     )
 }

@@ -21,8 +21,8 @@ class SharedLinterConfigurationTest {
             assertEquals(2, v11.size)
             assertEquals(v1.first(), v11.first())
             assertEquals(
-                assertIs<PrintScriptV1RuleConfiguration.PrintlnArgument>(v1.last()).acceptanceByKind,
-                assertIs<PrintScriptV1RuleConfiguration.PrintlnArgument>(v11.last()).acceptanceByKind,
+                assertIs<PrintScriptV1RuleConfiguration.PrintlnArgument>(v1.last()).acceptance,
+                assertIs<PrintScriptV1RuleConfiguration.PrintlnArgument>(v11.last()).acceptance,
             )
         }
     }

@@ -45,12 +45,8 @@ class PrintScriptV11LinterConfigurationTest {
             configuration.rules.single(),
         )
         assertEquals(
-            expected = mapOf(
-                PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
-                PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
-                PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
-            ),
-            actual = rule.acceptanceByKind,
+            expected = PrintScriptArgumentAcceptancePolicy.variableOrLiteral(),
+            actual = rule.acceptance,
         )
     }
 

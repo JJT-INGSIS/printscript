@@ -14,11 +14,7 @@ class PublicLinterCompositionTest {
 
     @Test
     fun `README composition applies all three public rules inside blocks`() {
-        val argumentPolicy = mapOf(
-            PrintScriptExpressionKind.LITERAL to PrintScriptArgumentAcceptance.ACCEPTED,
-            PrintScriptExpressionKind.VARIABLE to PrintScriptArgumentAcceptance.ACCEPTED,
-            PrintScriptExpressionKind.COMPOSED to PrintScriptArgumentAcceptance.REJECTED,
-        )
+        val argumentPolicy = PrintScriptArgumentAcceptancePolicy.variableOrLiteral()
         val linter = PrintScriptV11LinterFactory.create(
             configuration = PrintScriptV11LinterConfiguration(rules = emptyList()),
             additionalRules = listOf(
