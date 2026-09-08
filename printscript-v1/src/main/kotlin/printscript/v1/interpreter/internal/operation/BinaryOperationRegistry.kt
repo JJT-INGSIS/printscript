@@ -5,18 +5,18 @@ import printscript.ast.expression.BinaryOperator
 internal class BinaryOperationRegistry {
 
     private val operations: Map<BinaryOperator, BinaryOperation> = mapOf(
-        BinaryOperator.ADD to AddOperation(),
+        BinaryOperator.ADD to AddOperation,
         BinaryOperator.SUBTRACT to NumericBinaryOperation(
             operator = BinaryOperator.SUBTRACT,
-            calculation = SubtractCalculation(),
+            calculation = SubtractCalculation,
         ),
         BinaryOperator.MULTIPLY to NumericBinaryOperation(
             operator = BinaryOperator.MULTIPLY,
-            calculation = MultiplyCalculation(),
+            calculation = MultiplyCalculation,
         ),
         BinaryOperator.DIVIDE to NumericBinaryOperation(
             operator = BinaryOperator.DIVIDE,
-            calculation = DivideCalculation(),
+            calculation = DivideCalculation,
         ),
     )
 
