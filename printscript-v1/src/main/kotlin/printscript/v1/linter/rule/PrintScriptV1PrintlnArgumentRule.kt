@@ -1,9 +1,7 @@
 package printscript.v1.linter.rule
 
 import printscript.ast.expression.Expression
-import printscript.ast.statement.AssignmentStatement
 import printscript.ast.statement.PrintlnStatement
-import printscript.ast.statement.VariableDeclarationStatement
 import printscript.linter.Diagnostic
 import printscript.linter.StatelessLintRule
 import printscript.statement.Statement
@@ -21,10 +19,6 @@ public class PrintScriptV1PrintlnArgumentRule(
     public override fun diagnosticsIn(statement: Statement): List<Diagnostic> {
         return when (statement) {
             is PrintlnStatement -> inspectArgument(statement.argument)
-
-            is VariableDeclarationStatement -> emptyList()
-
-            is AssignmentStatement -> emptyList()
 
             else -> emptyList()
         }
