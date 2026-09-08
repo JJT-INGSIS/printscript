@@ -40,18 +40,19 @@ internal class ExpressionTypeResolver(
             is GroupingExpression -> typeOf(expression.expression, environment, expectedType)
             is UnaryExpression -> unaryType(expression, environment, expectedType)
             is BinaryExpression -> binaryType(expression, environment, expectedType)
+
             is ReadInputExpression -> inputExpressions?.readInputType(
                 expression = expression,
                 environment = environment,
                 expectedType = expectedType,
-                resolveType = ::typeOf,
+                nestedResolver = this,
             ) ?: unsupportedExpression(expression)
 
             is ReadEnvironmentExpression -> inputExpressions?.readEnvironmentType(
                 expression = expression,
                 environment = environment,
                 expectedType = expectedType,
-                resolveType = ::typeOf,
+                nestedResolver = this,
             ) ?: unsupportedExpression(expression)
         }
     }
