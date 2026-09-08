@@ -2,12 +2,12 @@ package printscript.v1.validation.internal.statement
 
 import printscript.ast.statement.AssignmentStatement
 import printscript.interpreter.ExecutionResult
-import printscript.interpreter.SemanticError
 import printscript.interpreter.StatementExecutionContext
 import printscript.interpreter.StatementExecutor
 import printscript.statement.Statement
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.interpreter.internal.orReturn
+import printscript.v1.interpreter.internal.statement.unsupportedStatement
 import printscript.v1.interpreter.internal.value.verifyAccepts
 import printscript.v1.validation.internal.ValidationEnvironment
 import printscript.v1.validation.internal.expression.ExpressionTypeResolver
@@ -23,7 +23,7 @@ internal class AssignmentValidator(
         context: StatementExecutionContext<ValidationEnvironment>,
     ): ExecutionResult<ValidationEnvironment> {
         if (statement !is AssignmentStatement) {
-            return ExecutionResult.Failure(SemanticError.UnsupportedStatement(statement.span))
+            return unsupportedStatement(statement)
         }
         return validateAssignment(statement, context.state)
     }
