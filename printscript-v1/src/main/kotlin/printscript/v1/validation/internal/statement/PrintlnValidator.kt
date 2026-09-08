@@ -14,7 +14,9 @@ internal class PrintlnValidator(
     private val expressionTypes: ExpressionTypeResolver,
 ) : StatementExecutor<ValidationEnvironment> {
 
-    override fun supportsStatement(statement: Statement): Boolean = statement is PrintlnStatement
+    override fun supportsStatement(statement: Statement): Boolean {
+        return statement is PrintlnStatement
+    }
 
     override fun executeStatement(
         statement: Statement,

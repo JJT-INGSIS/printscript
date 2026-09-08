@@ -10,16 +10,20 @@ internal fun DeclaredType.verifyAccepts(
     value: RuntimeValue,
     variableName: String,
     span: SourceSpan,
-): ExecutionResult<Unit> = verifyAccepts(value.type, variableName, span)
+): ExecutionResult<Unit> {
+    return verifyAccepts(value.type, variableName, span)
+}
 
 internal fun DeclaredType.verifyAccepts(
     actualType: DeclaredType,
     variableName: String,
     span: SourceSpan,
-): ExecutionResult<Unit> = if (actualType == this) {
-    ExecutionResult.Success(Unit)
-} else {
-    ExecutionResult.Failure(
+): ExecutionResult<Unit> {
+    if (actualType == this) {
+        return ExecutionResult.Success(Unit)
+    }
+
+    return ExecutionResult.Failure(
         PrintScriptV1SemanticError.TypeMismatch(
             name = variableName,
             expected = this,

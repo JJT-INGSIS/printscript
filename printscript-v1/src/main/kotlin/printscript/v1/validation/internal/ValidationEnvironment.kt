@@ -11,7 +11,9 @@ internal class ValidationEnvironment private constructor(
 
     constructor() : this(listOf(emptyMap()))
 
-    fun containsInCurrentScope(name: String): Boolean = name in scopes.last()
+    fun containsInCurrentScope(name: String): Boolean {
+        return name in scopes.last()
+    }
 
     fun bindingOf(identifier: Identifier): ExecutionResult<ValidationBinding> {
         val binding = scopes.asReversed().firstNotNullOfOrNull { it[identifier.value] }
@@ -52,7 +54,9 @@ internal class ValidationEnvironment private constructor(
         )
     }
 
-    fun enteringScope(): ValidationEnvironment = ValidationEnvironment(scopes + emptyMap())
+    fun enteringScope(): ValidationEnvironment {
+        return ValidationEnvironment(scopes + emptyMap())
+    }
 
     fun leavingScope(): ValidationEnvironment {
         check(scopes.size > 1) { "Se intento salir del scope global" }

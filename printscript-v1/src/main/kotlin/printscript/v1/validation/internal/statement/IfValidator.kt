@@ -14,7 +14,9 @@ import printscript.v1.validation.internal.ValidationEnvironment
 
 internal class IfValidator : StatementExecutor<ValidationEnvironment> {
 
-    override fun supportsStatement(statement: Statement): Boolean = statement is IfStatement
+    override fun supportsStatement(statement: Statement): Boolean {
+        return statement is IfStatement
+    }
 
     override fun executeStatement(
         statement: Statement,
