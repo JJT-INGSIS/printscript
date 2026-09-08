@@ -8,47 +8,63 @@ import printscript.linter.LintRule
 import printscript.linter.RuleInspection
 import printscript.statement.Statement
 
-internal class PrintScriptV11RecursiveStatementRule private constructor(
+internal class PrintScriptV11StatementTreeRule private constructor(
     private val delegate: LintRule,
 ) : LintRule {
 
     constructor(rules: List<LintRule>) : this(delegate = CompositeRule(rules))
 
     override fun inspect(statement: Statement): RuleInspection {
-        val (diagnostics, resultingDelegate) = inspect(statement, delegate)
+        val outcome = inspect(statement, delegate)
 
         return RuleInspection(
-            diagnostics = diagnostics,
-            resultingRule = PrintScriptV11RecursiveStatementRule(delegate = resultingDelegate),
+            diagnostics = outcome.diagnostics,
+            resultingRule = PrintScriptV11StatementTreeRule(delegate = outcome.resultingDelegate),
         )
     }
 
-    private fun inspect(statement: Statement, currentDelegate: LintRule): Pair<List<Diagnostic>, LintRule> {
+    private fun inspect(statement: Statement, currentDelegate: LintRule): TreeInspectionOutcome {
         val inspection = currentDelegate.inspect(statement)
 
-        val (nestedDiagnostics, finalDelegate) = when (statement) {
+        val nestedOutcome = when (statement) {
             is IfStatement -> inspectBranches(statement, inspection.resultingRule)
-            else -> emptyList<Diagnostic>() to inspection.resultingRule
+            else -> TreeInspectionOutcome(diagnostics = emptyList(), resultingDelegate = inspection.resultingRule)
         }
 
-        return (inspection.diagnostics + nestedDiagnostics) to finalDelegate
+        return TreeInspectionOutcome(
+            diagnostics = inspection.diagnostics + nestedOutcome.diagnostics,
+            resultingDelegate = nestedOutcome.resultingDelegate,
+        )
     }
 
-    private fun inspectBranches(statement: IfStatement, currentDelegate: LintRule): Pair<List<Diagnostic>, LintRule> {
-        val (thenDiagnostics, delegateAfterThen) = inspectBlock(statement.thenBranch, currentDelegate)
+    private fun inspectBranches(statement: IfStatement, currentDelegate: LintRule): TreeInspectionOutcome {
+        val thenOutcome = inspectBlock(statement.thenBranch, currentDelegate)
         val elseBranch = statement.elseBranch
-            ?: return thenDiagnostics to delegateAfterThen
+            ?: return thenOutcome
 
-        val (elseDiagnostics, delegateAfterElse) = inspectBlock(elseBranch, delegateAfterThen)
+        val elseOutcome = inspectBlock(elseBranch, thenOutcome.resultingDelegate)
 
-        return (thenDiagnostics + elseDiagnostics) to delegateAfterElse
+        return TreeInspectionOutcome(
+            diagnostics = thenOutcome.diagnostics + elseOutcome.diagnostics,
+            resultingDelegate = elseOutcome.resultingDelegate,
+        )
     }
 
-    private fun inspectBlock(block: BlockStatement, currentDelegate: LintRule): Pair<List<Diagnostic>, LintRule> {
-        return block.statements.fold(emptyList<Diagnostic>() to currentDelegate) { (diagnostics, delegate), nested ->
-            val (nestedDiagnostics, updatedDelegate) = inspect(nested, delegate)
+    private fun inspectBlock(block: BlockStatement, currentDelegate: LintRule): TreeInspectionOutcome {
+        return block.statements.fold(
+            initial = TreeInspectionOutcome(diagnostics = emptyList(), resultingDelegate = currentDelegate),
+        ) { outcome, nested ->
+            val nestedOutcome = inspect(nested, outcome.resultingDelegate)
 
-            (diagnostics + nestedDiagnostics) to updatedDelegate
+            TreeInspectionOutcome(
+                diagnostics = outcome.diagnostics + nestedOutcome.diagnostics,
+                resultingDelegate = nestedOutcome.resultingDelegate,
+            )
         }
     }
+
+    private data class TreeInspectionOutcome(
+        val diagnostics: List<Diagnostic>,
+        val resultingDelegate: LintRule,
+    )
 }
