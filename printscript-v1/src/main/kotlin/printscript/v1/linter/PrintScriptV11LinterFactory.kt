@@ -38,6 +38,6 @@ public object PrintScriptV11LinterFactory {
 
 internal fun variableOrLiteralReadInputArgumentConfiguration(): PrintScriptV1RuleConfiguration.ReadInputArgument {
     return PrintScriptV1RuleConfiguration.ReadInputArgument(
-        acceptanceByKind = variableOrLiteralAcceptanceByKind(),
+        acceptance = PrintScriptArgumentAcceptancePolicy.variableOrLiteral(),
     )
 }

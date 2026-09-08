@@ -11,24 +11,21 @@ private val configurationJson = Json {
 internal object PrintScriptV1FormatterConfigurationReader {
 
     fun read(source: String): PrintScriptV1FormatterConfigurationResult {
-        val document = try {
+        return runCatching {
             configurationJson.decodeFromString(
                 deserializer = PrintScriptV1FormatterConfigurationDocument.serializer(),
                 string = source,
             )
-        } catch (invalidDocument: IllegalArgumentException) {
-            return invalidConfigurationDocument(invalidDocument)
-        }
-
-        return PrintScriptV1FormatterConfigurationMapper.map(document)
+        }.fold(
+            onSuccess = { document -> PrintScriptV1FormatterConfigurationMapper.map(document) },
+            onFailure = { cause -> invalidConfigurationDocument(cause) },
+        )
     }
 
-    private fun invalidConfigurationDocument(
-        invalidDocument: IllegalArgumentException,
-    ): PrintScriptV1FormatterConfigurationResult.Failure {
+    private fun invalidConfigurationDocument(cause: Throwable): PrintScriptV1FormatterConfigurationResult.Failure {
         return PrintScriptV1FormatterConfigurationResult.Failure(
             PrintScriptV1FormatterConfigurationError.InvalidConfigurationDocument(
-                reason = invalidDocument.message ?: DEFAULT_INVALID_CONFIGURATION_REASON,
+                reason = cause.message ?: DEFAULT_INVALID_CONFIGURATION_REASON,
             ),
         )
     }
