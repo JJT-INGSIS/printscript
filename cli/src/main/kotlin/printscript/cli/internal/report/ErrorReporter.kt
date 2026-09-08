@@ -12,7 +12,6 @@ import printscript.token.TokenReadError
 import printscript.v1.formatter.PrintScriptFormattingError
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
-import java.nio.file.Path
 
 internal class ErrorReporter {
 
@@ -24,22 +23,6 @@ internal class ErrorReporter {
         }
 
         return "error: $description"
-    }
-
-    fun describeMissingSourceFile(path: Path): String {
-        return "error: no se encontró el archivo '$path'"
-    }
-
-    fun describeInvalidSourceFile(path: Path): String {
-        return "error: '$path' no es un archivo"
-    }
-
-    fun describeUnreadableSourceFile(path: Path): String {
-        return "error: no hay permisos de lectura sobre '$path'"
-    }
-
-    fun describeSourceFileAccessFailure(path: Path, reason: String): String {
-        return "error: no se pudo leer '$path': $reason"
     }
 
     fun describe(error: ParseError): String {

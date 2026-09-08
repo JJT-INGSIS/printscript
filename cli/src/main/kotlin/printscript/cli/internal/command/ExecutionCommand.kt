@@ -2,9 +2,12 @@ package printscript.cli.internal.command
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.context
+import com.github.ajalt.clikt.core.registerJvmCloseable
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import printscript.cli.internal.OperationOutcome
 import printscript.cli.internal.report.ErrorReporter
+import printscript.cli.internal.report.PrintScriptLocalization
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
@@ -20,7 +23,11 @@ internal class ExecutionCommand(
         PrintScriptToolchainFactory::forVersion,
 ) : CliktCommand(name = "execution") {
 
-    private val sourceFilePath by sourceFileArgument()
+    init {
+        context { localization = PrintScriptLocalization }
+    }
+
+    private val sourceFile by sourceFileArgument()
 
     private val languageOptions by LanguageOptions()
 
@@ -29,10 +36,13 @@ internal class ExecutionCommand(
     }
 
     override fun run() {
+        // Clikt abrio el archivo al parsear los argumentos; que lo cierre el tambien.
+        currentContext.registerJvmCloseable(sourceFile)
+
         val toolchain = toolchainFor(languageOptions.version)
 
         runOnSourceFile(
-            sourceFilePath = sourceFilePath,
+            sourceFile = sourceFile,
             errorReporter = errorReporter,
         ) { sourceReader ->
             interpretationOutcome(

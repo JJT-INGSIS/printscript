@@ -18,10 +18,8 @@ import printscript.token.TokenType
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
 import printscript.v1.token.PrintScriptV1TokenType
-import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
-import kotlin.test.assertFalse
 
 class ErrorReporterTest {
 
@@ -32,31 +30,7 @@ class ErrorReporterTest {
         end = SourcePosition(line = 3, column = 9, offset = 24),
     )
 
-    private val anyPath: Path = Path.of("ejemplo.ps")
-
     private fun tokenOf(type: TokenType, lexeme: String) = Token(type = type, lexeme = lexeme, span = anySpan)
-
-    @Test
-    fun `describes every source file access failure mentioning the path`() {
-        val messages = listOf(
-            reporter.describeMissingSourceFile(anyPath),
-            reporter.describeInvalidSourceFile(anyPath),
-            reporter.describeUnreadableSourceFile(anyPath),
-            reporter.describeSourceFileAccessFailure(anyPath, "disco desconectado"),
-        )
-
-        for (message in messages) {
-            assertContains(message, "error:")
-            assertContains(message, "ejemplo.ps")
-        }
-    }
-
-    @Test
-    fun `source file access failures have no position because nothing was read`() {
-        val message = reporter.describeMissingSourceFile(anyPath)
-
-        assertFalse(message.contains("línea"))
-    }
 
     @Test
     fun `describes an invalid source reader buffer size`() {
