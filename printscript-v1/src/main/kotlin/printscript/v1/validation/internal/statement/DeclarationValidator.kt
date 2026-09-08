@@ -18,7 +18,9 @@ internal class DeclarationValidator(
     private val expressionTypes: ExpressionTypeResolver,
 ) : StatementExecutor<ValidationEnvironment> {
 
-    override fun supportsStatement(statement: Statement): Boolean = statement is VariableDeclarationStatement
+    override fun supportsStatement(statement: Statement): Boolean {
+        return statement is VariableDeclarationStatement
+    }
 
     override fun executeStatement(
         statement: Statement,

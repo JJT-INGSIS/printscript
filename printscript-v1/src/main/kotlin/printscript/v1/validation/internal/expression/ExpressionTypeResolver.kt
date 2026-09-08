@@ -25,8 +25,9 @@ internal class ExpressionTypeResolver(
 
     private val supportedTypes = supportedTypes.toSet()
 
-    fun supports(type: DeclaredType): Boolean = type in supportedTypes
-
+    fun supports(type: DeclaredType): Boolean {
+        return type in supportedTypes
+    }
     fun typeOf(
         expression: Expression,
         environment: ValidationEnvironment,
