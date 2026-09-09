@@ -10,9 +10,12 @@ import printscript.interpreter.Interpreter
 import printscript.interpreter.SemanticError
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
+import printscript.parser.Parser
 import printscript.runtime.ProgramOutput
 import printscript.statement.StatementReadResult
 import printscript.statement.StatementSource
+import printscript.token.TokenSource
+import printscript.v1.lexer.PrintScriptV1LexerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
@@ -32,6 +35,11 @@ class ExecutionCommandTest {
     private object EmptyStatementSource : StatementSource {
 
         override fun nextStatement(): StatementReadResult = StatementReadResult.EndOfInput
+    }
+
+    private object EmptyParser : Parser {
+
+        override fun parse(tokens: TokenSource): StatementSource = EmptyStatementSource
     }
 
     private class FixedResultInterpreter(
@@ -58,10 +66,8 @@ class ExecutionCommandTest {
             receivedVersion = version
 
             return PrintScriptToolchain(
-                statementsFrom = { EmptyStatementSource },
-                formattingTokensFrom = {
-                    error("ExecutionCommand no debería pedir tokens de formato")
-                },
+                lexer = PrintScriptV1LexerFactory.create(),
+                parser = EmptyParser,
                 interpreterUsing = { environment ->
                     FixedResultInterpreter(
                         result = result,

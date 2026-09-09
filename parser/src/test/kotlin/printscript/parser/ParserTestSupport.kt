@@ -17,6 +17,7 @@ internal enum class TestTokenType : TokenType {
     OPEN,
     CLOSE,
     TERMINATOR,
+    WHITESPACE,
     EOF,
 }
 

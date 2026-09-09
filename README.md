@@ -140,7 +140,6 @@ se ofrecen también como componentes de composición:
 
 ```kotlin
 PrintScriptV1LexerFactory.create()
-PrintScriptV1FormattingLexerFactory.create()
 PrintScriptV1ParserFactory.create()
 PrintScriptV1FormatterFactory.create()
 PrintScriptV1InterpreterFactory.create(output)
@@ -214,10 +213,11 @@ consumido mediante `afterConsuming`, incluso si otra regla ganó la selección.
 Devuelven el nuevo estado; esto permite alinear llaves con la salida real y
 reconocer los límites de los bloques sin mutar las reglas oficiales.
 
-El lexer normal de V1 continúa descartando whitespace antes del parser.
-`PrintScriptV1FormattingLexerFactory` crea la variante que lo conserva para el
-formatter. Las reglas concretas de espacios, saltos de línea e indentación
-pertenecen a `printscript-v1`; el parser y el AST no participan del formateo.
+El lexer de cada versión emite un único flujo de tokens que incluye whitespace.
+El parser ignora ese tipo de token de manera centralizada, mientras que el
+formatter lo utiliza para construir los gaps. Las reglas concretas de espacios,
+saltos de línea e indentación pertenecen a `printscript-v1`; el parser y el AST
+no participan del formateo.
 
 ### Interpreter
 

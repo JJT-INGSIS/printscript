@@ -50,7 +50,7 @@ internal class FormattingCommand(
         ) { sourceReader ->
             writeRemainingFormattedChunks(
                 formatter.format(
-                    toolchain.formattingTokensFrom(sourceReader),
+                    toolchain.tokensFrom(sourceReader),
                 ),
             )
         }

@@ -7,7 +7,6 @@ import printscript.v1.formatter.internal.configuration.PrintScriptV11FormatterCo
 import printscript.v1.formatter.internal.rule.IfBlockIndentationRule
 import printscript.v1.formatter.internal.rule.IfBracePlacementRule
 import printscript.v1.formatter.internal.rule.IndentedFormattingRule
-import printscript.v1.lexer.PrintScriptV1FormattingTokenType
 import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV11FormatterFactory {
@@ -32,7 +31,7 @@ public object PrintScriptV11FormatterFactory {
     ): Formatter {
         return FormatterFactory.create(
             formattingRules = additionalFormattingRules + printScriptV11FormattingRule(configuration),
-            whitespaceTokenType = PrintScriptV1FormattingTokenType.WHITESPACE,
+            whitespaceTokenType = PrintScriptV1TokenType.WHITESPACE,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
     }

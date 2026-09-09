@@ -332,7 +332,9 @@ sentencias sin saber cuáles son.
 
 **Qué resuelve.** El tipo que produce el motor de expresiones es configurable,
 así que PrintScript lo especializa con su `Expression` sellada sin que el motor
-tenga que conocerla.
+tenga que conocerla. También puede recibir tipos de token ignorados; las
+factories de PrintScript configuran `WHITESPACE`, que el lexer siempre emite y
+el parser descarta de manera centralizada.
 
 ## `interpreter`
 

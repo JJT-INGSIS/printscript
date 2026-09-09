@@ -3,10 +3,39 @@ package printscript.cli
 import printscript.cli.internal.toolchain.ConfiguredToolResult
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.source.SourceReaderFactory
+import printscript.statement.StatementReadResult
+import printscript.token.TokenReadResult
+import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class PrintScriptToolchainFactoryTest {
+
+    @Test
+    fun `uses one tokenization that exposes whitespace and feeds the parser`() {
+        for (version in LanguageVersion.entries) {
+            val toolchain = PrintScriptToolchainFactory.forVersion(version)
+            val tokens = toolchain.tokensFrom(
+                SourceReaderFactory.fromString("let value: number = 1;"),
+            )
+            val firstToken = assertIs<TokenReadResult.Success>(tokens.nextToken())
+            val whitespace = assertIs<TokenReadResult.Success>(
+                firstToken.remainingSource.nextToken(),
+            )
+
+            assertEquals(
+                expected = PrintScriptV1TokenType.WHITESPACE,
+                actual = whitespace.token.type,
+            )
+            assertIs<StatementReadResult.Success>(
+                toolchain.statementsFrom(
+                    SourceReaderFactory.fromString("let value: number = 1;"),
+                ).nextStatement(),
+            )
+        }
+    }
 
     @Test
     fun `creates default tools for every supported version`() {

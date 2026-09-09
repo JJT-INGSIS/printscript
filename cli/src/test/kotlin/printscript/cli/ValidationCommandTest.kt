@@ -5,7 +5,8 @@ import printscript.cli.internal.command.ValidationCommand
 import printscript.cli.internal.report.ErrorReporter
 import printscript.cli.internal.toolchain.LanguageVersion
 import printscript.cli.internal.toolchain.PrintScriptToolchain
-import printscript.cli.internal.toolchain.PrintScriptToolchainFactory
+import printscript.v1.lexer.PrintScriptV11LexerFactory
+import printscript.v1.parser.PrintScriptV11ParserFactory
 import printscript.v1.validation.ValidationResult
 import printscript.v1.validation.Validator
 import kotlin.test.Test
@@ -32,11 +33,9 @@ class ValidationCommandTest {
     }
 
     private fun toolchainWithValidator(validator: Validator): PrintScriptToolchain {
-        val base = PrintScriptToolchainFactory.forVersion(LanguageVersion.V1_1)
-
         return PrintScriptToolchain(
-            statementsFrom = base.statementsFrom,
-            formattingTokensFrom = { error("ValidationCommand no debería pedir tokens de formato") },
+            lexer = PrintScriptV11LexerFactory.create(),
+            parser = PrintScriptV11ParserFactory.create(),
             interpreterUsing = { error("ValidationCommand no debería construir un intérprete") },
             validator = validator,
             formatterConfiguredBy = { error("ValidationCommand no debería pedir el formatter") },

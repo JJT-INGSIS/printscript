@@ -44,6 +44,7 @@ internal object PrintScriptWording {
             PrintScriptV1TokenType.RIGHT_PAREN -> ")"
             PrintScriptV1TokenType.LEFT_BRACE -> "{"
             PrintScriptV1TokenType.RIGHT_BRACE -> "}"
+            PrintScriptV1TokenType.WHITESPACE -> "espacio en blanco"
             PrintScriptV1TokenType.EOF -> "el final del archivo"
             else -> tokenType.toString()
         }

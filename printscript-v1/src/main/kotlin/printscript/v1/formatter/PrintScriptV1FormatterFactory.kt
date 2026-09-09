@@ -11,7 +11,6 @@ import printscript.v1.formatter.internal.rule.SingleSpaceSeparationRule
 import printscript.v1.formatter.internal.rule.SpaceAfterDeclarationColonRule
 import printscript.v1.formatter.internal.rule.SpaceAroundBinaryOperatorRule
 import printscript.v1.formatter.internal.rule.SpaceBeforeDeclarationColonRule
-import printscript.v1.lexer.PrintScriptV1FormattingTokenType
 import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV1FormatterFactory {
@@ -34,7 +33,7 @@ public object PrintScriptV1FormatterFactory {
     ): Formatter {
         return FormatterFactory.create(
             formattingRules = additionalFormattingRules + lineBreakRules(configuration) + spacingRules(configuration),
-            whitespaceTokenType = PrintScriptV1FormattingTokenType.WHITESPACE,
+            whitespaceTokenType = PrintScriptV1TokenType.WHITESPACE,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
     }

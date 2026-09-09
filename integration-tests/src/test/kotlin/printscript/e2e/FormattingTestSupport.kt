@@ -6,15 +6,15 @@ import printscript.v1.formatter.PrintScriptV11FormatterConfiguration
 import printscript.v1.formatter.PrintScriptV11FormatterFactory
 import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
 import printscript.v1.formatter.PrintScriptV1FormatterFactory
-import printscript.v1.lexer.PrintScriptV11FormattingLexerFactory
-import printscript.v1.lexer.PrintScriptV1FormattingLexerFactory
+import printscript.v1.lexer.PrintScriptV11LexerFactory
+import printscript.v1.lexer.PrintScriptV1LexerFactory
 
 internal fun formatV1ScriptFromStream(
     sourceCode: String,
     bufferSizeInCharacters: Int,
     configuration: PrintScriptV1FormatterConfiguration,
 ): ProgramFormatting {
-    val formattingTokens = PrintScriptV1FormattingLexerFactory.create()
+    val formattingTokens = PrintScriptV1LexerFactory.create()
         .tokenize(sourceReader = streamReaderFor(sourceCode, bufferSizeInCharacters))
 
     return collectFormattedText(
@@ -27,7 +27,7 @@ internal fun formatV11ScriptFromStream(
     bufferSizeInCharacters: Int,
     configuration: PrintScriptV11FormatterConfiguration,
 ): ProgramFormatting {
-    val formattingTokens = PrintScriptV11FormattingLexerFactory.create()
+    val formattingTokens = PrintScriptV11LexerFactory.create()
         .tokenize(sourceReader = streamReaderFor(sourceCode, bufferSizeInCharacters))
 
     return collectFormattedText(
