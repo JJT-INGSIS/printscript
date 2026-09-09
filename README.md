@@ -152,10 +152,6 @@ componentes y agregan su composición específica (ver
 `PrintScriptV11ParserFactory`, que reutiliza `println` y la asignación de `1.0`
 en lugar de reconstruir su lista completa de parsers).
 
-Los diagramas editables están en [módulos](docs/diagrams/modulos.puml),
-[flujo](docs/diagrams/flujo.puml) y [contratos](docs/diagrams/estructura.puml).
-Los planes de refactor del CLI en `docs/` están marcados como históricos.
-
 ## Decisiones de diseño
 
 ### Lectura y lexer
