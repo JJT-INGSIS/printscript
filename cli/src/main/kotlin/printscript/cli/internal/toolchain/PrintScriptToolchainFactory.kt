@@ -9,9 +9,7 @@ import printscript.v1.formatter.PrintScriptV1FormatterConfigurationResult
 import printscript.v1.formatter.PrintScriptV1FormatterFactory
 import printscript.v1.interpreter.PrintScriptV11InterpreterFactory
 import printscript.v1.interpreter.PrintScriptV1InterpreterFactory
-import printscript.v1.lexer.PrintScriptV11FormattingLexerFactory
 import printscript.v1.lexer.PrintScriptV11LexerFactory
-import printscript.v1.lexer.PrintScriptV1FormattingLexerFactory
 import printscript.v1.lexer.PrintScriptV1LexerFactory
 import printscript.v1.linter.PrintScriptV11LinterConfigurationResult
 import printscript.v1.linter.PrintScriptV11LinterFactory
@@ -35,14 +33,8 @@ internal object PrintScriptToolchainFactory {
 
     private fun printScriptV1Toolchain(): PrintScriptToolchain {
         return PrintScriptToolchain(
-            statementsFrom = { sourceReader ->
-                PrintScriptV1ParserFactory.create().parse(
-                    tokens = PrintScriptV1LexerFactory.create().tokenize(sourceReader),
-                )
-            },
-            formattingTokensFrom = { sourceReader ->
-                PrintScriptV1FormattingLexerFactory.create().tokenize(sourceReader)
-            },
+            lexer = PrintScriptV1LexerFactory.create(),
+            parser = PrintScriptV1ParserFactory.create(),
             interpreterUsing = { environment ->
                 PrintScriptV1InterpreterFactory.create(environment.output)
             },
@@ -54,14 +46,8 @@ internal object PrintScriptToolchainFactory {
 
     private fun printScriptV11Toolchain(): PrintScriptToolchain {
         return PrintScriptToolchain(
-            statementsFrom = { sourceReader ->
-                PrintScriptV11ParserFactory.create().parse(
-                    tokens = PrintScriptV11LexerFactory.create().tokenize(sourceReader),
-                )
-            },
-            formattingTokensFrom = { sourceReader ->
-                PrintScriptV11FormattingLexerFactory.create().tokenize(sourceReader)
-            },
+            lexer = PrintScriptV11LexerFactory.create(),
+            parser = PrintScriptV11ParserFactory.create(),
             interpreterUsing = { environment ->
                 PrintScriptV11InterpreterFactory.create(
                     output = environment.output,

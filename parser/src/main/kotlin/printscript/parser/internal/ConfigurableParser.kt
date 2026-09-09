@@ -12,6 +12,7 @@ import printscript.token.TokenType
 internal class ConfigurableParser(
     statementParsers: List<StatementParser>,
     private val endOfInputTokenType: TokenType,
+    ignoredTokenTypes: Set<TokenType>,
 ) : Parser {
 
     private val statementParserDispatcher =
@@ -19,12 +20,18 @@ internal class ConfigurableParser(
             parsers = statementParsers,
         )
 
+    private val ignoredTokenTypes: Set<TokenType> =
+        ignoredTokenTypes - endOfInputTokenType
+
     override fun parse(tokens: TokenSource): StatementSource {
         return ParsingStatementSource(
             endOfInputTokenType = endOfInputTokenType,
             context =
             DefaultParsingContext(
-                cursor = TokenCursor.initial(tokens),
+                cursor = TokenCursor.initial(
+                    source = tokens,
+                    ignoredTokenTypes = ignoredTokenTypes,
+                ),
                 statementParserDispatcher = statementParserDispatcher,
             ),
         )

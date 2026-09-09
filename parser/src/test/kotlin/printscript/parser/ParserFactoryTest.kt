@@ -131,6 +131,33 @@ class ParserFactoryTest {
         )
     }
 
+    @Test
+    fun `ignores configured token types throughout a statement`() {
+        val parser = ParserFactory.create(
+            statementParsers = listOf(WordStatementParser("parsed")),
+            endOfInputTokenType = TestTokenType.EOF,
+            ignoredTokenTypes = setOf(TestTokenType.WHITESPACE),
+        )
+        val source = tokenSourceOf(
+            TestTokenType.WHITESPACE to " ",
+            TestTokenType.WORD to "word",
+            TestTokenType.WHITESPACE to "\n  ",
+            TestTokenType.TERMINATOR to ";",
+            TestTokenType.WHITESPACE to "\n",
+            TestTokenType.EOF to "",
+        )
+
+        val firstRead = assertIs<StatementReadResult.Success>(
+            parser.parse(source).nextStatement(),
+        )
+
+        assertEquals(
+            expected = "parsed",
+            actual = assertIs<TestStatement>(firstRead.statement).value,
+        )
+        assertIs<StatementReadResult.EndOfInput>(firstRead.remainingSource.nextStatement())
+    }
+
     private fun parserWith(vararg statementParsers: StatementParser): Parser {
         return ParserFactory.create(
             statementParsers = statementParsers.toList(),

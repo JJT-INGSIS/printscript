@@ -58,7 +58,7 @@ else formatting
   F --> C : texto y fuente restante / error / fin
   note over T,F
     TokenGapReader construye los gaps dentro del formatter.
-    El lexer de esta operación conserva whitespace.
+    El lexer único emite whitespace; el parser lo ignora y el formatter lo conserva.
     No intervienen parser ni AST.
   end note
 end

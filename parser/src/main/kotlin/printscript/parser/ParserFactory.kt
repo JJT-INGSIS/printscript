@@ -5,10 +5,16 @@ import printscript.token.TokenType
 
 public object ParserFactory {
 
-    public fun create(statementParsers: List<StatementParser>, endOfInputTokenType: TokenType): Parser {
+    @JvmOverloads
+    public fun create(
+        statementParsers: List<StatementParser>,
+        endOfInputTokenType: TokenType,
+        ignoredTokenTypes: Set<TokenType> = emptySet(),
+    ): Parser {
         return ConfigurableParser(
             statementParsers = statementParsers,
             endOfInputTokenType = endOfInputTokenType,
+            ignoredTokenTypes = ignoredTokenTypes,
         )
     }
 }

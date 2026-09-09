@@ -9,7 +9,7 @@ import printscript.source.SourceReaderFactory
 import printscript.token.Token
 import printscript.v1.formatter.internal.indentedWhitespace
 import printscript.v1.formatter.internal.repeatedWhitespace
-import printscript.v1.lexer.PrintScriptV11FormattingLexerFactory
+import printscript.v1.lexer.PrintScriptV11LexerFactory
 import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -101,7 +101,7 @@ class FormattingQuantityTest {
         val formatter = PrintScriptV11FormatterFactory.create(
             PrintScriptV11FormatterConfiguration(indentationInsideIf = Int.MAX_VALUE.toUInt()),
         )
-        val tokens = PrintScriptV11FormattingLexerFactory.create().tokenize(
+        val tokens = PrintScriptV11LexerFactory.create().tokenize(
             SourceReaderFactory.fromString("if(a){if(b){\nprintln(1);}}"),
         )
         var source = formatter.format(tokens)

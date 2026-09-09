@@ -19,6 +19,20 @@ class PrintScriptV1LexerTest {
         PrintScriptV1LexerFactory.create()
 
     @Test
+    fun `emits consecutive whitespace as tokens`() {
+        lexer.tokenize(sourceReaderFor("let \tvalue\r\n"))
+            .assertProducesTokenSequence(
+                listOf(
+                    ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                    ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " \t"),
+                    ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
+                    ExpectedToken(PrintScriptV1TokenType.WHITESPACE, "\r\n"),
+                    ExpectedToken(PrintScriptV1TokenType.EOF, ""),
+                ),
+            )
+    }
+
+    @Test
     fun `tokenizes complete PrintScript V1 program in token order`() {
         val sourceCode = """
             let age: number = 12.5;
@@ -32,25 +46,35 @@ class PrintScriptV1LexerTest {
 
         val expectedTokens = listOf(
             ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "age"),
             ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.NUMBER_TYPE, "number"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.NUMBER_LITERAL, "12.5"),
             ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
-
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, "\n"),
             ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "name"),
             ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.STRING_TYPE, "string"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "'Joe'"),
             ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
-
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, "\n"),
             ExpectedToken(PrintScriptV1TokenType.PRINTLN, "println"),
             ExpectedToken(PrintScriptV1TokenType.LEFT_PAREN, "("),
             ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "name"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.PLUS, "+"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
             ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "\" Doe\""),
             ExpectedToken(PrintScriptV1TokenType.RIGHT_PAREN, ")"),
             ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
@@ -77,8 +101,6 @@ class PrintScriptV1LexerTest {
                     defaultConfiguration.symbolTokenTypesByCharacter,
                     stringQuoteDelimiters =
                     defaultConfiguration.stringQuoteDelimiters,
-                    ignoredCharacterPolicy =
-                    defaultConfiguration.ignoredCharacterPolicy,
                 ),
             )
 
@@ -89,10 +111,24 @@ class PrintScriptV1LexerTest {
         tokenSource.assertProducesTokenSequence(
             listOf(
                 ExpectedToken(PrintScriptV1TokenType.LET, "var"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "let"),
                 ExpectedToken(PrintScriptV1TokenType.EOF, ""),
             ),
         )
+    }
+
+    @Test
+    fun `groups whitespace that crosses source chunks`() {
+        lexer.tokenize(sourceReaderForChunks("let ", "\t", "\r", "\nvalue"))
+            .assertProducesTokenSequence(
+                listOf(
+                    ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                    ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " \t\r\n"),
+                    ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
+                    ExpectedToken(PrintScriptV1TokenType.EOF, ""),
+                ),
+            )
     }
 
     @Test
@@ -104,12 +140,19 @@ class PrintScriptV1LexerTest {
         tokenSource.assertProducesTokenSequence(
             listOf(
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "const"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "boolean"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "if"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "else"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "readInput"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "readEnv"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "true"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "false"),
                 ExpectedToken(PrintScriptV1TokenType.EOF, ""),
             ),
@@ -167,22 +210,32 @@ class PrintScriptV1LexerTest {
         tokenSource.assertProducesTokenSequence(
             listOf(
                 ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
                 ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.NUMBER_TYPE, "number"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.NUMBER_LITERAL, "1"),
                 ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, "\n"),
                 ExpectedToken(PrintScriptV1TokenType.PRINTLN, "println"),
                 ExpectedToken(PrintScriptV1TokenType.LEFT_PAREN, "("),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
                 ExpectedToken(PrintScriptV1TokenType.RIGHT_PAREN, ")"),
                 ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, "\n"),
                 ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "text"),
                 ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.STRING_TYPE, "string"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "\"hello\""),
                 ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
                 ExpectedToken(PrintScriptV1TokenType.EOF, ""),
@@ -204,10 +257,14 @@ class PrintScriptV1LexerTest {
         lexer.tokenize(reader).assertProducesTokenSequence(
             listOf(
                 ExpectedToken(PrintScriptV1TokenType.LET, "let"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "café"),
                 ExpectedToken(PrintScriptV1TokenType.COLON, ":"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.STRING_TYPE, "string"),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.ASSIGN, "="),
+                ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
                 ExpectedToken(PrintScriptV1TokenType.STRING_LITERAL, "\"sí\""),
                 ExpectedToken(PrintScriptV1TokenType.SEMICOLON, ";"),
                 ExpectedToken(PrintScriptV1TokenType.EOF, ""),
@@ -240,7 +297,7 @@ class PrintScriptV1LexerTest {
         )
 
         firstRead.remainingSource.assertNextToken(
-            ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "value"),
+            ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
         )
     }
 
@@ -264,15 +321,15 @@ class PrintScriptV1LexerTest {
 
         firstResult.remainingSource.assertNextToken(
             ExpectedToken(
-                PrintScriptV1TokenType.IDENTIFIER,
-                "first",
+                PrintScriptV1TokenType.WHITESPACE,
+                " ",
             ),
         )
 
         secondResult.remainingSource.assertNextToken(
             ExpectedToken(
-                PrintScriptV1TokenType.IDENTIFIER,
-                "second",
+                PrintScriptV1TokenType.WHITESPACE,
+                " ",
             ),
         )
     }

@@ -33,5 +33,6 @@ public enum class PrintScriptV1TokenType : TokenType {
     LEFT_BRACE,
     RIGHT_BRACE,
 
+    WHITESPACE,
     EOF,
 }

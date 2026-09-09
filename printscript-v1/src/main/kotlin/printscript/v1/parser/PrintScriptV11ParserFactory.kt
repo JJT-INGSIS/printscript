@@ -42,6 +42,7 @@ public object PrintScriptV11ParserFactory {
 
         return ParserFactory.create(
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
+            ignoredTokenTypes = setOf(PrintScriptV1TokenType.WHITESPACE),
             statementParsers =
             additionalStatementParsers +
                 printScriptV11StatementParsers(expressionParser),

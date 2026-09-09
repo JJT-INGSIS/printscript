@@ -2,10 +2,12 @@ package printscript.parser.internal.context
 
 import printscript.token.TokenReadResult
 import printscript.token.TokenSource
+import printscript.token.TokenType
 
 internal data class TokenCursor(
     private val source: TokenSource,
     private val lookahead: TokenReadResult?,
+    private val ignoredTokenTypes: Set<TokenType>,
 ) {
 
     fun peek(): TokenCursorReadResult {
@@ -20,12 +22,28 @@ internal data class TokenCursor(
         val readResult = currentRead()
 
         return readResult.toCursorRead(
-            resultingCursor = initial(readResult.remainingSource),
+            resultingCursor = initial(
+                source = readResult.remainingSource,
+                ignoredTokenTypes = ignoredTokenTypes,
+            ),
         )
     }
 
     private fun currentRead(): TokenReadResult {
-        return lookahead ?: source.nextToken()
+        return lookahead ?: readNextRelevantToken(source)
+    }
+
+    private tailrec fun readNextRelevantToken(source: TokenSource): TokenReadResult {
+        return when (val readResult = source.nextToken()) {
+            is TokenReadResult.Failure -> readResult
+            is TokenReadResult.Success -> {
+                if (readResult.token.type in ignoredTokenTypes) {
+                    readNextRelevantToken(readResult.remainingSource)
+                } else {
+                    readResult
+                }
+            }
+        }
     }
 
     private fun withLookahead(readResult: TokenReadResult): TokenCursor {
@@ -48,10 +66,11 @@ internal data class TokenCursor(
 
     companion object {
 
-        fun initial(source: TokenSource): TokenCursor {
+        fun initial(source: TokenSource, ignoredTokenTypes: Set<TokenType> = emptySet()): TokenCursor {
             return TokenCursor(
                 source = source,
                 lookahead = null,
+                ignoredTokenTypes = ignoredTokenTypes.toSet(),
             )
         }
     }

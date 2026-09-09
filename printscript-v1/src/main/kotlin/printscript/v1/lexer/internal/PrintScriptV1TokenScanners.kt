@@ -6,10 +6,14 @@ import printscript.v1.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.v1.lexer.internal.scanner.NumberLiteralScanner
 import printscript.v1.lexer.internal.scanner.StringLiteralScanner
 import printscript.v1.lexer.internal.scanner.SymbolScanner
+import printscript.v1.lexer.internal.scanner.WhitespaceScanner
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal fun printScriptV1TokenScanners(configuration: PrintScriptV1LexerConfiguration): List<TokenScanner> {
     return listOf(
+        WhitespaceScanner(
+            whitespaceTokenType = PrintScriptV1TokenType.WHITESPACE,
+        ),
         StringLiteralScanner(
             supportedQuoteDelimiters = configuration.stringQuoteDelimiters,
             stringLiteralTokenType = PrintScriptV1TokenType.STRING_LITERAL,
