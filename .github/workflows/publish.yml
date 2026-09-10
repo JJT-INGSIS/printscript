@@ -4,23 +4,21 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: read
-  packages: write
-
 concurrency:
   group: publish
   cancel-in-progress: false
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+  validate-version:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+
+    outputs:
+      version: ${{ steps.version.outputs.value }}
 
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.release.tag_name }}
-
       - name: Validate release version
         id: version
         shell: bash
@@ -35,23 +33,14 @@ jobs:
 
           echo "value=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '21'
+  publish:
+    needs: validate-version
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+    permissions:
+      contents: read
+      packages: write
 
-      - name: Check
-        run: ./gradlew check -PreleaseVersion="${{ steps.version.outputs.value }}"
-
-      - name: Validate publications
-        run: ./gradlew publishToMavenLocal -PreleaseVersion="${{ steps.version.outputs.value }}"
-
-      - name: Publish
-        run: ./gradlew publish -PreleaseVersion="${{ steps.version.outputs.value }}"
-        env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/gradle-pipeline.yml
+    with:
+      version: ${{ needs.validate-version.outputs.version }}
+      publish: true

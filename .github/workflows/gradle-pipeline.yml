@@ -1,0 +1,49 @@
+name: Gradle pipeline
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version assigned to the Gradle project
+        required: false
+        default: "1.0.0-SNAPSHOT"
+        type: string
+
+      publish:
+        description: Validate and publish artifacts to GitHub Packages
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  gradle:
+    runs-on: ubuntu-24.04
+
+    env:
+      PRINTSCRIPT_VERSION: ${{ inputs.version }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Check
+        run: ./gradlew check -PreleaseVersion="$PRINTSCRIPT_VERSION"
+
+      - name: Validate publications
+        if: inputs.publish
+        run: ./gradlew publishToMavenLocal -PreleaseVersion="$PRINTSCRIPT_VERSION"
+
+      - name: Publish artifacts
+        if: inputs.publish
+        run: ./gradlew publish -PreleaseVersion="$PRINTSCRIPT_VERSION"
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}
