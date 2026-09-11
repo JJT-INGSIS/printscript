@@ -9,7 +9,7 @@ import printscript.source.SourceReaderCreationError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
 import printscript.token.TokenReadError
-import printscript.v1.formatter.PrintScriptFormattingError
+import printscript.v1.formatter.WhitespaceSizeLimitExceeded
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
 
@@ -117,7 +117,7 @@ internal class ErrorReporter {
 
     fun describe(error: FormattingError): String {
         return when (error) {
-            is PrintScriptFormattingError.WhitespaceSizeOverflow ->
+            is WhitespaceSizeLimitExceeded ->
                 formatError("la cantidad de espacios o saltos de línea excede el tamaño admitido", error.span)
 
             is FormattingError.TokenReadFailure ->

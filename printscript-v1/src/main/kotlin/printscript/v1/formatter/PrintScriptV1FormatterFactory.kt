@@ -3,26 +3,15 @@ package printscript.v1.formatter
 import printscript.formatter.Formatter
 import printscript.formatter.FormatterFactory
 import printscript.formatter.TokenGapFormattingRule
-import printscript.v1.formatter.internal.configuration.PrintScriptV1FormatterConfigurationReader
-import printscript.v1.formatter.internal.rule.EqualsSpacingRule
-import printscript.v1.formatter.internal.rule.LineBreakAfterPrintlnRule
-import printscript.v1.formatter.internal.rule.LineBreakAfterStatementRule
-import printscript.v1.formatter.internal.rule.SingleSpaceSeparationRule
-import printscript.v1.formatter.internal.rule.SpaceAfterDeclarationColonRule
-import printscript.v1.formatter.internal.rule.SpaceAroundBinaryOperatorRule
-import printscript.v1.formatter.internal.rule.SpaceBeforeDeclarationColonRule
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.internal.rule.PrintScriptV1FormattingRules
 import printscript.v1.token.PrintScriptV1TokenType
 
 public object PrintScriptV1FormatterFactory {
 
     @JvmStatic
     public fun defaultConfiguration(): PrintScriptV1FormatterConfiguration {
-        return PrintScriptV1FormatterConfiguration()
-    }
-
-    @JvmStatic
-    public fun configurationFrom(json: String): PrintScriptV1FormatterConfigurationResult {
-        return PrintScriptV1FormatterConfigurationReader.read(json)
+        return PrintScriptV1FormatterConfiguration.default()
     }
 
     @JvmStatic
@@ -31,41 +20,13 @@ public object PrintScriptV1FormatterFactory {
         configuration: PrintScriptV1FormatterConfiguration = defaultConfiguration(),
         additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
     ): Formatter {
+        val configuredRules =
+            PrintScriptV1FormattingRules.allRules(configuration)
+
         return FormatterFactory.create(
-            formattingRules = additionalFormattingRules + lineBreakRules(configuration) + spacingRules(configuration),
+            formattingRules = additionalFormattingRules + configuredRules,
             whitespaceTokenType = PrintScriptV1TokenType.WHITESPACE,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
-        )
-    }
-
-    internal fun lineBreakRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
-        return listOfNotNull(
-            configuration.lineBreaksAfterPrintln?.let { blankLineCount ->
-                LineBreakAfterPrintlnRule(blankLineCount)
-            },
-            LineBreakAfterStatementRule.takeIf {
-                configuration.enforceLineBreakAfterStatement
-            },
-        )
-    }
-
-    internal fun spacingRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
-        return listOfNotNull(
-            configuration.equalsSpacing?.let(::EqualsSpacingRule),
-            SpaceBeforeDeclarationColonRule.takeIf {
-                configuration.enforceSpaceBeforeColonInDeclaration
-            },
-            SpaceAfterDeclarationColonRule.takeIf {
-                configuration.enforceSpaceAfterColonInDeclaration
-            },
-            if (configuration.enforceSpaceAroundBinaryOperators) {
-                SpaceAroundBinaryOperatorRule()
-            } else {
-                null
-            },
-            SingleSpaceSeparationRule.takeIf {
-                configuration.enforceSingleSpaceSeparation
-            },
         )
     }
 }

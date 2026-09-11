@@ -1,59 +1,83 @@
 package printscript.v1.formatter.internal.configuration
 
-import printscript.v1.formatter.EqualsSpacing
-import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationError
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationResult
+import printscript.v1.formatter.configuration.EqualsSpacing
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationResult
 
 internal object PrintScriptV1FormatterConfigurationMapper {
 
-    fun map(values: PrintScriptV1FormatterConfigurationValues): PrintScriptV1FormatterConfigurationResult {
-        if (values.enforceNoSpacingAroundEquals && values.enforceSpacingAroundEquals) {
-            return conflictingEqualsSpacingRules()
+    fun map(properties: PrintScriptV1FormatterConfigurationProperties): PrintScriptV1FormatterConfigurationResult {
+        if (hasConflictingEqualsSpacingRules(properties)) {
+            return PrintScriptV1FormatterConfigurationResult.Failure(
+                PrintScriptV1FormatterConfigurationError.ConflictingEqualsSpacingRules,
+            )
         }
 
-        val equalsSpacing = when {
-            values.enforceNoSpacingAroundEquals -> EqualsSpacing.WITHOUT_SPACES
-            values.enforceSpacingAroundEquals -> EqualsSpacing.SURROUNDED_BY_SPACES
-            else -> null
-        }
+        val blankLineCountFailure =
+            validateBlankLineCount(properties.blankLinesAfterPrintln)
 
-        val lineBreaksAfterPrintln = values.lineBreaksAfterPrintln?.let { value ->
-            if (value < MINIMUM_LINE_BREAK_COUNT) return negativeLineBreakCount(value)
-            if (value.toUInt() > maximumBlankLineCount) return excessiveLineBreakCount(value)
-            value.toUInt()
+        if (blankLineCountFailure != null) {
+            return blankLineCountFailure
         }
 
         return PrintScriptV1FormatterConfigurationResult.Success(
-            PrintScriptV1FormatterConfiguration(
-                equalsSpacing = equalsSpacing,
-                enforceSpaceBeforeColonInDeclaration = values.enforceSpaceBeforeColonInDeclaration,
-                enforceSpaceAfterColonInDeclaration = values.enforceSpaceAfterColonInDeclaration,
-                enforceSingleSpaceSeparation = values.enforceSingleSpaceSeparation,
-                enforceSpaceAroundBinaryOperators = values.enforceSpaceAroundBinaryOperators,
-                enforceLineBreakAfterStatement = values.enforceLineBreakAfterStatement,
-                lineBreaksAfterPrintln = lineBreaksAfterPrintln,
-            ),
+            configurationFrom(properties),
         )
     }
 
-    private fun conflictingEqualsSpacingRules(): PrintScriptV1FormatterConfigurationResult.Failure {
-        return PrintScriptV1FormatterConfigurationResult.Failure(
-            PrintScriptV1FormatterConfigurationError.ConflictingEqualsSpacingRules,
+    private fun configurationFrom(
+        properties: PrintScriptV1FormatterConfigurationProperties,
+    ): PrintScriptV1FormatterConfiguration {
+        return PrintScriptV1FormatterConfiguration(
+            equalsSpacing = equalsSpacingFrom(properties),
+            enforceSpaceBeforeColonInDeclaration =
+            properties.enforceSpaceBeforeColonInDeclaration,
+            enforceSpaceAfterColonInDeclaration =
+            properties.enforceSpaceAfterColonInDeclaration,
+            enforceSingleSpaceSeparation =
+            properties.enforceSingleSpaceSeparation,
+            enforceSpaceAroundBinaryOperators =
+            properties.enforceSpaceAroundBinaryOperators,
+            enforceLineBreakAfterStatement =
+            properties.enforceLineBreakAfterStatement,
+            blankLinesAfterPrintln =
+            properties.blankLinesAfterPrintln,
         )
     }
 
-    private fun negativeLineBreakCount(providedValue: Int): PrintScriptV1FormatterConfigurationResult.Failure {
-        return PrintScriptV1FormatterConfigurationResult.Failure(
-            PrintScriptV1FormatterConfigurationError.NegativeLineBreakCount(providedValue),
-        )
+    private fun validateBlankLineCount(blankLineCount: Int?): PrintScriptV1FormatterConfigurationResult.Failure? {
+        if (blankLineCount == null) {
+            return null
+        }
+
+        if (blankLineCount < MINIMUM_BLANK_LINE_COUNT) {
+            return PrintScriptV1FormatterConfigurationResult.Failure(
+                PrintScriptV1FormatterConfigurationError.NegativeBlankLineCount(
+                    blankLineCount,
+                ),
+            )
+        }
+
+        return null
     }
 
-    private fun excessiveLineBreakCount(providedValue: Int): PrintScriptV1FormatterConfigurationResult.Failure {
-        return PrintScriptV1FormatterConfigurationResult.Failure(
-            PrintScriptV1FormatterConfigurationError.ExcessiveLineBreakCount(providedValue),
-        )
+    private fun hasConflictingEqualsSpacingRules(properties: PrintScriptV1FormatterConfigurationProperties): Boolean {
+        return properties.enforceNoSpacingAroundEquals &&
+            properties.enforceSpacingAroundEquals
     }
 
-    private const val MINIMUM_LINE_BREAK_COUNT = 0
+    private fun equalsSpacingFrom(properties: PrintScriptV1FormatterConfigurationProperties): EqualsSpacing? {
+        return when {
+            properties.enforceNoSpacingAroundEquals ->
+                EqualsSpacing.WITHOUT_SPACES
+
+            properties.enforceSpacingAroundEquals ->
+                EqualsSpacing.SURROUNDED_BY_SPACES
+
+            else -> null
+        }
+    }
+
+    private const val MINIMUM_BLANK_LINE_COUNT = 0
 }

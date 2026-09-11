@@ -3,6 +3,8 @@ package printscript.v1.formatter
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
 import printscript.formatter.WhitespaceFormattingResult
+import printscript.v1.formatter.configuration.EqualsSpacing
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -217,7 +219,7 @@ class PrintScriptV1FormatterFactoryTest {
             actual = formatSource(
                 sourceCode = source,
                 configuration = PrintScriptV1FormatterConfiguration(
-                    lineBreaksAfterPrintln = 0u,
+                    blankLinesAfterPrintln = 0,
                 ),
             ),
         )
@@ -229,7 +231,7 @@ class PrintScriptV1FormatterFactoryTest {
             actual = formatSource(
                 sourceCode = source,
                 configuration = PrintScriptV1FormatterConfiguration(
-                    lineBreaksAfterPrintln = 1u,
+                    blankLinesAfterPrintln = 1,
                 ),
             ),
         )
@@ -241,7 +243,7 @@ class PrintScriptV1FormatterFactoryTest {
             actual = formatSource(
                 sourceCode = source,
                 configuration = PrintScriptV1FormatterConfiguration(
-                    lineBreaksAfterPrintln = 2u,
+                    blankLinesAfterPrintln = 2,
                 ),
             ),
         )
@@ -252,7 +254,7 @@ class PrintScriptV1FormatterFactoryTest {
         val formatted = formatSource(
             sourceCode = "println(1);",
             configuration = PrintScriptV1FormatterConfiguration(
-                lineBreaksAfterPrintln = 2u,
+                blankLinesAfterPrintln = 2,
             ),
         )
 
@@ -265,7 +267,7 @@ class PrintScriptV1FormatterFactoryTest {
             sourceCode = "println(1);let value:number=2;",
             configuration = PrintScriptV1FormatterConfiguration(
                 enforceLineBreakAfterStatement = true,
-                lineBreaksAfterPrintln = 2u,
+                blankLinesAfterPrintln = 2,
             ),
         )
 

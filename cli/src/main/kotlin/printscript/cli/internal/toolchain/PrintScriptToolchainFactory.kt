@@ -3,10 +3,12 @@ package printscript.cli.internal.toolchain
 import printscript.cli.internal.report.ConfigurationErrorReporter
 import printscript.formatter.Formatter
 import printscript.linter.Linter
-import printscript.v1.formatter.PrintScriptV11FormatterConfigurationResult
 import printscript.v1.formatter.PrintScriptV11FormatterFactory
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationResult
 import printscript.v1.formatter.PrintScriptV1FormatterFactory
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfigurationResult
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationResult
 import printscript.v1.interpreter.PrintScriptV11InterpreterFactory
 import printscript.v1.interpreter.PrintScriptV1InterpreterFactory
 import printscript.v1.lexer.PrintScriptV11LexerFactory
@@ -66,7 +68,7 @@ internal object PrintScriptToolchainFactory {
             return ConfiguredToolResult.Success(PrintScriptV1FormatterFactory.create())
         }
 
-        return when (val result = PrintScriptV1FormatterFactory.configurationFrom(json)) {
+        return when (val result = PrintScriptV1FormatterConfiguration.fromJson(json)) {
             is PrintScriptV1FormatterConfigurationResult.Failure ->
                 ConfiguredToolResult.Failure(errorReporter.describe(result.error))
 
@@ -82,7 +84,7 @@ internal object PrintScriptToolchainFactory {
             return ConfiguredToolResult.Success(PrintScriptV11FormatterFactory.create())
         }
 
-        return when (val result = PrintScriptV11FormatterFactory.configurationFrom(json)) {
+        return when (val result = PrintScriptV11FormatterConfiguration.fromJson(json)) {
             is PrintScriptV11FormatterConfigurationResult.Failure ->
                 ConfiguredToolResult.Failure(errorReporter.describe(result.error))
 

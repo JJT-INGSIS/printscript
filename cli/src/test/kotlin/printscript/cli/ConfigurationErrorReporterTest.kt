@@ -1,8 +1,8 @@
 package printscript.cli
 
 import printscript.cli.internal.report.ConfigurationErrorReporter
-import printscript.v1.formatter.PrintScriptV11FormatterConfigurationError
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationError
 import printscript.v1.linter.PrintScriptV11LinterConfigurationError
 import printscript.v1.linter.PrintScriptV1LinterConfigurationError
 import kotlin.test.Test
@@ -24,9 +24,9 @@ class ConfigurationErrorReporterTest {
     }
 
     @Test
-    fun `keeps the specific value of a negative line break count`() {
+    fun `keeps the specific value of a negative blank line count`() {
         val message = reporter.describe(
-            PrintScriptV1FormatterConfigurationError.NegativeLineBreakCount(providedValue = -3),
+            PrintScriptV1FormatterConfigurationError.NegativeBlankLineCount(providedValue = -3),
         )
 
         assertContains(message, "-3")
@@ -36,7 +36,7 @@ class ConfigurationErrorReporterTest {
     fun `unwraps a V1 configuration failure inherited by V1_1`() {
         val message = reporter.describe(
             PrintScriptV11FormatterConfigurationError.V1ConfigurationFailure(
-                error = PrintScriptV1FormatterConfigurationError.NegativeLineBreakCount(providedValue = -7),
+                error = PrintScriptV1FormatterConfigurationError.NegativeBlankLineCount(providedValue = -7),
             ),
         )
 

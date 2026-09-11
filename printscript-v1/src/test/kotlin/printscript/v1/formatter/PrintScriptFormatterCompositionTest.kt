@@ -3,6 +3,9 @@ package printscript.v1.formatter
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
 import printscript.formatter.WhitespaceFormattingResult
+import printscript.v1.formatter.configuration.IfBracePlacement
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
 import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,7 +16,7 @@ class PrintScriptFormatterCompositionTest {
     fun `inserts line breaks and indents them in the same pass`() {
         val configuration = PrintScriptV11FormatterConfiguration(
             v1Configuration = PrintScriptV1FormatterConfiguration(enforceLineBreakAfterStatement = true),
-            indentationInsideIf = 2u,
+            indentationInsideIf = 2,
         )
         val source = "if(active){println(1);println(2);}"
         val expected = "if(active){println(1);\n  println(2);\n}"
@@ -27,9 +30,9 @@ class PrintScriptFormatterCompositionTest {
         val configuration = PrintScriptV11FormatterConfiguration(
             v1Configuration = PrintScriptV1FormatterConfiguration(
                 enforceLineBreakAfterStatement = true,
-                lineBreaksAfterPrintln = 1u,
+                blankLinesAfterPrintln = 1,
             ),
-            indentationInsideIf = 2u,
+            indentationInsideIf = 2,
         )
         val source = "if(active){\nprintln(1);\nprintln(2);\n}"
         val expected = "if(active){\n  println(1);\n\n  println(2);\n\n}"
@@ -44,7 +47,7 @@ class PrintScriptFormatterCompositionTest {
         val expected = "if(a){if(b){println(1);\n\nx=1;}println(2);\n\nx=2;}else{println(3);\n\nx=3;}" +
             "println(4);\n\nx=4;"
         val configuration = PrintScriptV11FormatterConfiguration(
-            v1Configuration = PrintScriptV1FormatterConfiguration(lineBreaksAfterPrintln = 1u),
+            v1Configuration = PrintScriptV1FormatterConfiguration(blankLinesAfterPrintln = 1),
         )
 
         assertEquals(expected, formatSourceV11(source, configuration))
@@ -54,7 +57,7 @@ class PrintScriptFormatterCompositionTest {
     fun `does not mistake declarations after a block for println statements`() {
         val source = "if(a){println(1);}let x:number=1;println(2);"
         val configuration = PrintScriptV11FormatterConfiguration(
-            v1Configuration = PrintScriptV1FormatterConfiguration(lineBreaksAfterPrintln = 1u),
+            v1Configuration = PrintScriptV1FormatterConfiguration(blankLinesAfterPrintln = 1),
         )
 
         assertEquals("if(a){println(1);\n\n}let x:number=1;println(2);", formatSourceV11(source, configuration))
@@ -89,9 +92,9 @@ class PrintScriptFormatterCompositionTest {
         val configuration = PrintScriptV11FormatterConfiguration(
             v1Configuration = PrintScriptV1FormatterConfiguration(
                 enforceLineBreakAfterStatement = true,
-                lineBreaksAfterPrintln = 1u,
+                blankLinesAfterPrintln = 1,
             ),
-            indentationInsideIf = 2u,
+            indentationInsideIf = 2,
         )
         val source = "if(a){println(1);println(2);}"
 
@@ -106,7 +109,7 @@ class PrintScriptFormatterCompositionTest {
         val source = "if(a){\r\nif(b){println(true+\"x\");println(2);}else{}\r\n}" +
             "println(3);if(c){\nprintln(false+\"y\");\n}"
         val configurations = listOf(null, IfBracePlacement.SAME_LINE, IfBracePlacement.NEXT_LINE).flatMap { placement ->
-            listOf(null, 0u, 2u).flatMap { indentation ->
+            listOf(null, 0, 2).flatMap { indentation ->
                 baseConfigurations().map { base ->
                     PrintScriptV11FormatterConfiguration(base, placement, indentation)
                 }
@@ -129,13 +132,13 @@ class PrintScriptFormatterCompositionTest {
     }
 
     private fun baseConfigurations(): List<PrintScriptV1FormatterConfiguration> {
-        return listOf(null, 0u, 1u).flatMap { blankLines ->
+        return listOf(null, 0, 1).flatMap { blankLines ->
             listOf(false, true).map { singleSpace ->
                 PrintScriptV1FormatterConfiguration(
                     enforceLineBreakAfterStatement = true,
                     enforceSpaceAroundBinaryOperators = true,
                     enforceSingleSpaceSeparation = singleSpace,
-                    lineBreaksAfterPrintln = blankLines,
+                    blankLinesAfterPrintln = blankLines,
                 )
             }
         }

@@ -1,5 +1,9 @@
 package printscript.v1.formatter
 
+import printscript.v1.formatter.configuration.EqualsSpacing
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -8,7 +12,7 @@ class PrintScriptV1FormatterConfigurationTest {
 
     @Test
     fun `an empty document produces the default configuration`() {
-        val result = PrintScriptV1FormatterFactory.configurationFrom("{}")
+        val result = PrintScriptV1FormatterConfiguration.fromJson("{}")
 
         val success = assertIs<PrintScriptV1FormatterConfigurationResult.Success>(result)
 
@@ -33,7 +37,7 @@ class PrintScriptV1FormatterConfigurationTest {
             }
             """.trimIndent()
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val success = assertIs<PrintScriptV1FormatterConfigurationResult.Success>(result)
 
@@ -45,7 +49,7 @@ class PrintScriptV1FormatterConfigurationTest {
                 enforceSingleSpaceSeparation = true,
                 enforceSpaceAroundBinaryOperators = true,
                 enforceLineBreakAfterStatement = true,
-                lineBreaksAfterPrintln = 2u,
+                blankLinesAfterPrintln = 2,
             ),
             actual = success.configuration,
         )
@@ -55,7 +59,7 @@ class PrintScriptV1FormatterConfigurationTest {
     fun `an absent key keeps the default for that field`() {
         val json = """{"mandatory-single-space-separation": true}"""
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val success = assertIs<PrintScriptV1FormatterConfigurationResult.Success>(result)
 
@@ -68,7 +72,7 @@ class PrintScriptV1FormatterConfigurationTest {
     fun `an unknown key is rejected`() {
         val json = """{"this-key-does-not-exist": true}"""
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val failure = assertIs<PrintScriptV1FormatterConfigurationResult.Failure>(result)
         assertIs<PrintScriptV1FormatterConfigurationError.InvalidConfigurationDocument>(failure.error)
@@ -76,7 +80,7 @@ class PrintScriptV1FormatterConfigurationTest {
 
     @Test
     fun `malformed JSON is reported as a domain failure instead of throwing`() {
-        val result = PrintScriptV1FormatterFactory.configurationFrom("{ not valid json")
+        val result = PrintScriptV1FormatterConfiguration.fromJson("{ not valid json")
 
         val failure = assertIs<PrintScriptV1FormatterConfigurationResult.Failure>(result)
 
@@ -87,7 +91,7 @@ class PrintScriptV1FormatterConfigurationTest {
     fun `maps the spacing around equals rule`() {
         val json = """{"enforce-spacing-around-equals": true}"""
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val success = assertIs<PrintScriptV1FormatterConfigurationResult.Success>(result)
 
@@ -107,7 +111,7 @@ class PrintScriptV1FormatterConfigurationTest {
             }
             """.trimIndent()
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val failure = assertIs<PrintScriptV1FormatterConfigurationResult.Failure>(result)
         assertIs<PrintScriptV1FormatterConfigurationError.ConflictingEqualsSpacingRules>(failure.error)
@@ -117,20 +121,20 @@ class PrintScriptV1FormatterConfigurationTest {
     fun `a value with the wrong JSON type is rejected`() {
         val json = """{"mandatory-single-space-separation": "yes"}"""
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val failure = assertIs<PrintScriptV1FormatterConfigurationResult.Failure>(result)
         assertIs<PrintScriptV1FormatterConfigurationError.InvalidConfigurationDocument>(failure.error)
     }
 
     @Test
-    fun `a negative line break count is reported instead of accepted`() {
+    fun `a negative blank line count is reported instead of accepted`() {
         val json = """{"line-breaks-after-println": -1}"""
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
 
         val failure = assertIs<PrintScriptV1FormatterConfigurationResult.Failure>(result)
-        val error = assertIs<PrintScriptV1FormatterConfigurationError.NegativeLineBreakCount>(failure.error)
+        val error = assertIs<PrintScriptV1FormatterConfigurationError.NegativeBlankLineCount>(failure.error)
 
         assertEquals(expected = -1, actual = error.providedValue)
     }
@@ -140,7 +144,7 @@ class PrintScriptV1FormatterConfigurationTest {
         val source = "let value :number= 1;"
         val json = """{"mandatory-single-space-separation": true}"""
 
-        val result = PrintScriptV1FormatterFactory.configurationFrom(json)
+        val result = PrintScriptV1FormatterConfiguration.fromJson(json)
         val success = assertIs<PrintScriptV1FormatterConfigurationResult.Success>(result)
 
         val formattedFromJson = formatSource(source, configuration = success.configuration)

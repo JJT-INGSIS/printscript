@@ -5,6 +5,8 @@ import printscript.formatter.Formatter
 import printscript.formatter.TokenGapFormattingRule
 import printscript.source.SourceReaderFactory
 import printscript.token.TokenSource
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
 import printscript.v1.lexer.PrintScriptV11LexerFactory
 import printscript.v1.lexer.PrintScriptV1LexerFactory
 

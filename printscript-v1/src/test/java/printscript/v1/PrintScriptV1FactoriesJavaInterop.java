@@ -5,6 +5,8 @@ import printscript.runtime.ProgramInput;
 import printscript.runtime.ProgramOutput;
 import printscript.v1.formatter.PrintScriptV11FormatterFactory;
 import printscript.v1.formatter.PrintScriptV1FormatterFactory;
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration;
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration;
 import printscript.v1.interpreter.PrintScriptV1ExpressionEvaluatorFactory;
 import printscript.v1.interpreter.PrintScriptV1InterpreterFactory;
 import printscript.v1.interpreter.PrintScriptV11ExpressionEvaluatorFactory;
@@ -41,10 +43,10 @@ final class PrintScriptV1FactoriesJavaInterop {
         PrintScriptV11InterpreterFactory.create(output, input, environmentVariables);
 
         PrintScriptV1FormatterFactory.defaultConfiguration();
-        PrintScriptV1FormatterFactory.configurationFrom("{}");
+        PrintScriptV1FormatterConfiguration.fromJson("{}");
         PrintScriptV1FormatterFactory.create();
         PrintScriptV11FormatterFactory.defaultConfiguration();
-        PrintScriptV11FormatterFactory.configurationFrom("{}");
+        PrintScriptV11FormatterConfiguration.fromJson("{}");
         PrintScriptV11FormatterFactory.create();
 
         PrintScriptV1LinterFactory.defaultConfiguration();

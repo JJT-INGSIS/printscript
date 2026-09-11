@@ -199,7 +199,7 @@ whitespace original se preserva tal cual.
 
 El dispatcher aplica la primera regla compatible. Las reglas externas tienen
 prioridad sobre las reglas incluidas por la factory. Dentro de V1.1,
-`IndentedFormattingRule` selecciona una regla base de llaves, saltos o espaciado
+`LayeredFormattingRule` selecciona una regla base de llaves, saltos o espaciado
 y luego aplica indentación sobre el whitespace resultante. También conserva e
 indenta los saltos existentes cuando corresponde. Los saltos específicos de
 `println` tienen prioridad sobre los generales después de un statement.

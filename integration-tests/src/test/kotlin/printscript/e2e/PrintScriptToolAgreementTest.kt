@@ -3,10 +3,10 @@ package printscript.e2e
 import printscript.interpreter.InterpretationResult
 import printscript.runtime.EnvironmentVariableProvider
 import printscript.runtime.ProgramInput
-import printscript.v1.formatter.EqualsSpacing
-import printscript.v1.formatter.IfBracePlacement
-import printscript.v1.formatter.PrintScriptV11FormatterConfiguration
-import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.configuration.EqualsSpacing
+import printscript.v1.formatter.configuration.IfBracePlacement
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
 import printscript.v1.linter.PrintScriptV11LinterConfiguration
 import printscript.v1.linter.PrintScriptV11LinterConfigurationResult
 import printscript.v1.linter.PrintScriptV11LinterFactory
@@ -30,7 +30,7 @@ class PrintScriptToolAgreementTest {
     private val v11FormatterConfiguration = PrintScriptV11FormatterConfiguration(
         v1Configuration = v1FormatterConfiguration,
         ifBracePlacement = IfBracePlacement.SAME_LINE,
-        indentationInsideIf = 4u,
+        indentationInsideIf = 4,
     )
 
     @Test
