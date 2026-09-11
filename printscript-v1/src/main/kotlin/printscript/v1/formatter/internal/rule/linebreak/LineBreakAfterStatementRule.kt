@@ -1,9 +1,9 @@
-package printscript.v1.formatter.internal.rule
+package printscript.v1.formatter.internal.rule.linebreak
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
 import printscript.formatter.WhitespaceFormattingResult
-import printscript.v1.formatter.internal.LINE_BREAK
+import printscript.v1.formatter.internal.whitespace.LINE_BREAK
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal data object LineBreakAfterStatementRule : TokenGapFormattingRule {

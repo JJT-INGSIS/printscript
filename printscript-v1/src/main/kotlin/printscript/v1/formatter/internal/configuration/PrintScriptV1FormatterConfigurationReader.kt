@@ -1,25 +1,21 @@
 package printscript.v1.formatter.internal.configuration
 
-import kotlinx.serialization.json.Json
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationError
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationResult
-
-private val configurationJson = Json {
-    ignoreUnknownKeys = false
-}
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationResult
 
 internal object PrintScriptV1FormatterConfigurationReader {
 
     fun read(source: String): PrintScriptV1FormatterConfigurationResult {
-        return runCatching {
-            configurationJson.decodeFromString(
+        val document = try {
+            formatterConfigurationJson.decodeFromString(
                 deserializer = PrintScriptV1FormatterConfigurationDocument.serializer(),
                 string = source,
             )
-        }.fold(
-            onSuccess = { document -> PrintScriptV1FormatterConfigurationMapper.map(document) },
-            onFailure = { cause -> invalidConfigurationDocument(cause) },
-        )
+        } catch (cause: IllegalArgumentException) {
+            return invalidConfigurationDocument(cause)
+        }
+
+        return PrintScriptV1FormatterConfigurationMapper.map(document)
     }
 
     private fun invalidConfigurationDocument(cause: Throwable): PrintScriptV1FormatterConfigurationResult.Failure {
@@ -30,5 +26,6 @@ internal object PrintScriptV1FormatterConfigurationReader {
         )
     }
 
-    private const val DEFAULT_INVALID_CONFIGURATION_REASON = "invalid formatter configuration"
+    private const val DEFAULT_INVALID_CONFIGURATION_REASON =
+        "invalid formatter configuration"
 }

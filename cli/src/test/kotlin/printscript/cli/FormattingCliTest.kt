@@ -53,15 +53,15 @@ class FormattingCliTest {
     }
 
     @Test
-    fun `reports excessive configured line breaks`() {
-        val file = scriptFile("println(1);")
+    fun `reports excessive configured blank lines`() {
+        val file = scriptFile("println(1);let value:number=1;")
         val configuration = configurationFile("""{"line-breaks-after-println": ${Int.MAX_VALUE}}""")
 
         val result = cli().test(listOf("formatting", file, "--config", configuration))
 
         assertEquals(expected = 1, actual = result.statusCode)
-        assertContains(result.stderr, "excede el máximo admitido")
-        assertEquals(expected = "", actual = result.stdout)
+        assertContains(result.stderr, "excede el tamaño admitido")
+        assertEquals(expected = "println(1);", actual = result.stdout)
     }
 
     @Test

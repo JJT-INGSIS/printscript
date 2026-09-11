@@ -1,5 +1,13 @@
 package printscript.v1.formatter
 
+import printscript.v1.formatter.configuration.EqualsSpacing
+import printscript.v1.formatter.configuration.IfBracePlacement
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfigurationResult
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -8,7 +16,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `an empty document produces the default configuration`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom("{}")
+        val result = PrintScriptV11FormatterConfiguration.fromJson("{}")
         val success = assertIs<PrintScriptV11FormatterConfigurationResult.Success>(result)
 
         assertEquals(
@@ -19,7 +27,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `maps V1 and V1_1 properties`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """
             {
                 "enforce-spacing-around-equals": true,
@@ -39,14 +47,14 @@ class PrintScriptV11FormatterConfigurationTest {
             actual = success.configuration.ifBracePlacement,
         )
         assertEquals(
-            expected = 4u,
+            expected = 4,
             actual = success.configuration.indentationInsideIf,
         )
     }
 
     @Test
     fun `a configuration read from JSON formats an if statement`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """{"if-brace-below-line": true}""",
         )
         val success = assertIs<PrintScriptV11FormatterConfigurationResult.Success>(result)
@@ -64,7 +72,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `rejects contradictory brace placement properties`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """
             {
                 "if-brace-same-line": true,
@@ -81,7 +89,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `rejects negative indentation`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """{"indent-inside-if": -1}""",
         )
         val failure = assertIs<PrintScriptV11FormatterConfigurationResult.Failure>(result)
@@ -94,7 +102,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `reports inherited V1 configuration failures`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """
             {
                 "enforce-no-spacing-around-equals": true,
@@ -112,7 +120,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `rejects malformed JSON`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom("{ not valid json")
+        val result = PrintScriptV11FormatterConfiguration.fromJson("{ not valid json")
         val failure = assertIs<PrintScriptV11FormatterConfigurationResult.Failure>(result)
 
         assertIs<PrintScriptV11FormatterConfigurationError.InvalidConfigurationDocument>(
@@ -122,7 +130,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `rejects unknown properties`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """{"unknown-rule": true}""",
         )
         val failure = assertIs<PrintScriptV11FormatterConfigurationResult.Failure>(result)
@@ -134,7 +142,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `rejects properties with the wrong JSON type`() {
-        val result = PrintScriptV11FormatterFactory.configurationFrom(
+        val result = PrintScriptV11FormatterConfiguration.fromJson(
             """{"indent-inside-if": "four"}""",
         )
         val failure = assertIs<PrintScriptV11FormatterConfigurationResult.Failure>(result)
@@ -146,7 +154,7 @@ class PrintScriptV11FormatterConfigurationTest {
 
     @Test
     fun `V1 rejects V1_1 properties`() {
-        val result = PrintScriptV1FormatterFactory.configurationFrom(
+        val result = PrintScriptV1FormatterConfiguration.fromJson(
             """{"if-brace-same-line": true}""",
         )
 

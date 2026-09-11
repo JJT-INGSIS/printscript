@@ -2,10 +2,10 @@ package printscript.e2e
 
 import printscript.formatter.FormattedChunkReadResult
 import printscript.formatter.FormattedSource
-import printscript.v1.formatter.PrintScriptV11FormatterConfiguration
 import printscript.v1.formatter.PrintScriptV11FormatterFactory
-import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
 import printscript.v1.formatter.PrintScriptV1FormatterFactory
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
 import printscript.v1.lexer.PrintScriptV11LexerFactory
 import printscript.v1.lexer.PrintScriptV1LexerFactory
 

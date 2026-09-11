@@ -1,9 +1,9 @@
-package printscript.v1.formatter.internal.rule
+package printscript.v1.formatter.internal.rule.spacing
 
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
 import printscript.formatter.WhitespaceFormattingResult
-import printscript.v1.formatter.internal.SPACE
+import printscript.v1.formatter.internal.whitespace.SPACE
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal data object SingleSpaceSeparationRule : TokenGapFormattingRule {

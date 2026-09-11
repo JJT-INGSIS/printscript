@@ -1,7 +1,7 @@
 package printscript.cli.internal.report
 
-import printscript.v1.formatter.PrintScriptV11FormatterConfigurationError
-import printscript.v1.formatter.PrintScriptV1FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfigurationError
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfigurationError
 import printscript.v1.linter.PrintScriptV11LinterConfigurationError
 import printscript.v1.linter.PrintScriptV1LinterConfigurationError
 
@@ -15,12 +15,9 @@ internal class ConfigurationErrorReporter {
             PrintScriptV1FormatterConfigurationError.ConflictingEqualsSpacingRules ->
                 errorMessage("no se puede exigir espacios y ausencia de espacios alrededor de '=' a la vez")
 
-            is PrintScriptV1FormatterConfigurationError.ExcessiveLineBreakCount ->
-                errorMessage("la cantidad de saltos de línea (${error.providedValue}) excede el máximo admitido")
-
-            is PrintScriptV1FormatterConfigurationError.NegativeLineBreakCount ->
+            is PrintScriptV1FormatterConfigurationError.NegativeBlankLineCount ->
                 errorMessage(
-                    "la cantidad de saltos de línea no puede ser negativa (se recibió ${error.providedValue})",
+                    "la cantidad de líneas vacías no puede ser negativa (se recibió ${error.providedValue})",
                 )
         }
     }

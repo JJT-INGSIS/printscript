@@ -1,4 +1,4 @@
-package printscript.v1.formatter
+package printscript.v1.formatter.configuration
 
 public sealed interface PrintScriptV11FormatterConfigurationResult {
 

@@ -1,4 +1,4 @@
-package printscript.v1.formatter
+package printscript.v1.formatter.configuration
 
 public sealed interface PrintScriptV1FormatterConfigurationError {
 
@@ -8,11 +8,7 @@ public sealed interface PrintScriptV1FormatterConfigurationError {
 
     public data object ConflictingEqualsSpacingRules : PrintScriptV1FormatterConfigurationError
 
-    public data class ExcessiveLineBreakCount(
-        public val providedValue: Int,
-    ) : PrintScriptV1FormatterConfigurationError
-
-    public data class NegativeLineBreakCount(
+    public data class NegativeBlankLineCount(
         public val providedValue: Int,
     ) : PrintScriptV1FormatterConfigurationError
 }

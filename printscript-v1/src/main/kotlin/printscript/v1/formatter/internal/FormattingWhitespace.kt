@@ -1,8 +1,0 @@
-package printscript.v1.formatter.internal
-
-internal const val SPACE: String = " "
-internal const val LINE_BREAK: String = "\n"
-
-internal fun String.containsLineBreak(): Boolean {
-    return contains('\n') || contains('\r')
-}

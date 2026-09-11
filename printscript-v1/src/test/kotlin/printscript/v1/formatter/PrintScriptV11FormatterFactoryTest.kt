@@ -3,6 +3,8 @@ package printscript.v1.formatter
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
 import printscript.formatter.WhitespaceFormattingResult
+import printscript.v1.formatter.configuration.IfBracePlacement
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
 import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -97,7 +99,7 @@ class PrintScriptV11FormatterFactoryTest {
         val formatted = formatSourceV11(
             sourceCode = source,
             configuration = PrintScriptV11FormatterConfiguration(
-                indentationInsideIf = 4u,
+                indentationInsideIf = 4,
             ),
         )
 
@@ -130,7 +132,7 @@ class PrintScriptV11FormatterFactoryTest {
             sourceCode = source,
             configuration = PrintScriptV11FormatterConfiguration(
                 ifBracePlacement = IfBracePlacement.NEXT_LINE,
-                indentationInsideIf = 4u,
+                indentationInsideIf = 4,
             ),
         )
 
@@ -156,7 +158,7 @@ class PrintScriptV11FormatterFactoryTest {
         val formatted = formatSourceV11(
             sourceCode = source,
             configuration = PrintScriptV11FormatterConfiguration(
-                indentationInsideIf = 4u,
+                indentationInsideIf = 4,
             ),
         )
 

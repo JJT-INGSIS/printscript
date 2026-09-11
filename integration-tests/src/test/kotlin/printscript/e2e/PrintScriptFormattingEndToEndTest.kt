@@ -2,9 +2,9 @@ package printscript.e2e
 
 import printscript.formatter.FormattingError
 import printscript.token.LexicalError
-import printscript.v1.formatter.EqualsSpacing
-import printscript.v1.formatter.PrintScriptV11FormatterConfiguration
-import printscript.v1.formatter.PrintScriptV1FormatterConfiguration
+import printscript.v1.formatter.configuration.EqualsSpacing
+import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
+import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -40,7 +40,7 @@ class PrintScriptFormattingEndToEndTest {
                 }
             """.trimIndent(),
             bufferSizeInCharacters = SINGLE_CHARACTER_BUFFER,
-            configuration = PrintScriptV11FormatterConfiguration(indentationInsideIf = 2u),
+            configuration = PrintScriptV11FormatterConfiguration(indentationInsideIf = 2),
         )
 
         val formatted = assertIs<ProgramFormatting.Success>(formatting)

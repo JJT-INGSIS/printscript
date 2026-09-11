@@ -18,7 +18,7 @@ import printscript.source.SourceReadError
 import printscript.statement.ParseError
 import printscript.token.LexicalError
 import printscript.token.Token
-import printscript.v1.formatter.PrintScriptFormattingError
+import printscript.v1.formatter.WhitespaceSizeLimitExceeded
 import printscript.v1.interpreter.PrintScriptV1SemanticError
 import printscript.v1.lexer.PrintScriptV1LexicalError
 import printscript.v1.linter.PrintScriptV11Diagnostic
@@ -144,7 +144,7 @@ class ErrorWordingCompletenessTest {
             FormattingError.TokenReadFailure(
                 LexicalError.UnexpectedCharacter(character = '@', span = anySpan),
             ),
-            PrintScriptFormattingError.WhitespaceSizeOverflow(anySpan),
+            WhitespaceSizeLimitExceeded(anySpan),
         )
 
         for (error in errors) {
