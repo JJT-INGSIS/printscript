@@ -2,13 +2,22 @@ package printscript.v1.parser
 
 import printscript.ast.DeclarationKind
 import printscript.ast.expression.Expression
+import printscript.ast.expression.ReadEnvironmentExpression
+import printscript.ast.expression.ReadInputExpression
 import printscript.parser.Parser
 import printscript.parser.ParserFactory
 import printscript.parser.StatementParser
 import printscript.parser.expression.ExpressionParser
-import printscript.v1.parser.internal.expression.PrintScriptV11PrimaryExpressionParser
+import printscript.v1.parser.internal.assignmentParser
+import printscript.v1.parser.internal.expression.BooleanLiteralRule
+import printscript.v1.parser.internal.expression.PrimaryExpressionRule
+import printscript.v1.parser.internal.expression.PrimaryExpressionRuleDispatcher
+import printscript.v1.parser.internal.expression.SingleArgumentFunctionCallRule
+import printscript.v1.parser.internal.expressionParserFor
 import printscript.v1.parser.internal.printScriptV11BooleanValuesByTokenType
 import printscript.v1.parser.internal.printScriptV11DeclaredTypesByTokenType
+import printscript.v1.parser.internal.printScriptV1StatementTerminatorTokenType
+import printscript.v1.parser.internal.printlnParser
 import printscript.v1.parser.internal.statement.DeclarationParser
 import printscript.v1.parser.internal.statement.DeclarationTokens
 import printscript.v1.parser.internal.statement.IfParser
@@ -22,9 +31,8 @@ public object PrintScriptV11ParserFactory {
         val v1Configuration = PrintScriptV1ParserFactory.defaultConfiguration()
 
         return PrintScriptExpressionParserConfiguration(
-            primaryExpressionParser = PrintScriptV11PrimaryExpressionParser(
-                v1PrimaryExpressionParser = v1Configuration.primaryExpressionParser,
-                booleanValuesByTokenType = printScriptV11BooleanValuesByTokenType,
+            primaryExpressionParser = PrimaryExpressionRuleDispatcher(
+                rules = v11PrimaryExpressionRules(),
             ),
             unaryExpressionBuildersByTokenType = v1Configuration.unaryExpressionBuildersByTokenType,
             binaryExpressionBuildersByDescendingPrecedence =
@@ -38,7 +46,7 @@ public object PrintScriptV11ParserFactory {
         configuration: PrintScriptExpressionParserConfiguration = defaultConfiguration(),
         additionalStatementParsers: List<StatementParser> = emptyList(),
     ): Parser {
-        val expressionParser = PrintScriptV1ParserFactory.expressionParserFor(configuration)
+        val expressionParser = expressionParserFor(configuration)
 
         return ParserFactory.create(
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
@@ -46,6 +54,21 @@ public object PrintScriptV11ParserFactory {
             additionalStatementParsers +
                 printScriptV11StatementParsers(expressionParser),
         )
+    }
+
+    private fun v11PrimaryExpressionRules(): List<PrimaryExpressionRule> {
+        return PrintScriptV1ParserFactory.v1PrimaryExpressionRules() +
+            listOf(
+                BooleanLiteralRule(booleanValuesByTokenType = printScriptV11BooleanValuesByTokenType),
+                SingleArgumentFunctionCallRule(
+                    functionTokenType = PrintScriptV1TokenType.READ_INPUT,
+                    buildExpression = ::ReadInputExpression,
+                ),
+                SingleArgumentFunctionCallRule(
+                    functionTokenType = PrintScriptV1TokenType.READ_ENV,
+                    buildExpression = ::ReadEnvironmentExpression,
+                ),
+            )
     }
 
     private fun printScriptV11StatementParsers(expressionParser: ExpressionParser<Expression>): List<StatementParser> {
@@ -69,8 +92,8 @@ public object PrintScriptV11ParserFactory {
                 expressionParser = expressionParser,
             ),
             IfParser(statementBlockParser),
-            PrintScriptV1ParserFactory.printlnParser(expressionParser),
-            PrintScriptV1ParserFactory.assignmentParser(expressionParser),
+            printlnParser(expressionParser),
+            assignmentParser(expressionParser),
         )
     }
 
