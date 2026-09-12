@@ -16,18 +16,7 @@ consumen incrementalmente; el AST de cada bloque sí contiene sus sentencias.
 
 En Windows, usar `.\gradlew.bat` en lugar de `./gradlew` en los comandos siguientes.
 
-## Puesta en marcha
-
-Después de clonar el repositorio, una sola vez:
-
-```bash
-./gradlew installHooks
-```
-
-Eso instala el hook de pre-commit versionado en `.githooks/`. Ver
-[Herramientas de desarrollo](#herramientas-de-desarrollo).
-
-## Uso
+## Instalación y uso
 
 ```bash
 ./gradlew :cli:installDist
@@ -38,10 +27,10 @@ El ejecutable queda en `cli/build/install/printscript/bin/printscript`
 está en el `PATH` o que se invoca el ejecutable mediante su ruta completa.
 
 ```bash
-printscript validation ejemplo.ps   # ¿el archivo es válido?
-printscript execution  ejemplo.ps   # correlo
+printscript validation ejemplo.ps   # comprueba la validez semántica
+printscript execution  ejemplo.ps   # ejecuta el programa
 printscript formatting ejemplo.ps   # muestra el código formateado
-printscript analysis   ejemplo.ps   # reportá problemas de estilo
+printscript analysis   ejemplo.ps   # informa problemas de estilo
 ```
 
 Las cuatro operaciones aceptan `--version`. `formatting` y `analysis` también
@@ -85,37 +74,43 @@ El build y los tests usan además las herramientas declaradas en `buildSrc`.
 ## Pipeline
 
 ```text
-SourceReader
-    ├─ Lexer → TokenSource → Parser → StatementSource
-    │                                    ├─ Interpreter → ProgramOutput
-    │                                    ├─ Linter → DiagnosticSource
-    │                                    └─ Validator → ValidationResult
-    └─ Lexer con whitespace → TokenSource → Formatter → FormattedSource
+SourceReader → Lexer → TokenSource
+                          ├─ Parser (ignora whitespace) → StatementSource
+                          │                                ├─ Interpreter → ProgramOutput
+                          │                                ├─ Linter → DiagnosticSource
+                          │                                └─ Validator → ValidationResult
+                          └─ Formatter (conserva whitespace) → FormattedSource
 ```
 
-- `SourceReader` entrega en bloques código proveniente de strings o streams de
-  entrada. El CLI abre y cierra los archivos que procesa.
-- `TokenSource` produce un token por solicitud.
-- `StatementSource` produce una sentencia por solicitud.
-- El interpreter consume y ejecuta las sentencias en orden.
-- El interpreter, el linter y el validator consumen el contrato `StatementSource`.
-  Cada operación arma su propia fuente; no se comparte un stream consumible entre
-  operaciones. El validator revisa ambas ramas de cada `if` sin ejecutar I/O.
-- El formatter consume tokens que conservan whitespace; no utiliza parser ni AST.
-- La CLI arma el pipeline, elige el consumidor según la operación pedida y
-  traduce el resultado a un código de salida.
+- `SourceReader` entrega bloques desde un `String` o un `InputStream`; la CLI
+  abre y cierra los archivos que procesa.
+- El lexer produce un `TokenSource` que entrega un token por solicitud, incluido
+  el whitespace. Cada operación crea su propia fuente: las ramas del esquema
+  son alternativas, no consumidores simultáneos del mismo stream.
+- El parser ignora el whitespace y produce un `StatementSource`, que entrega
+  una sentencia por solicitud.
+- El interpreter ejecuta esas sentencias; el linter analiza su estilo y el
+  validator revisa semánticamente ambas ramas de cada `if` sin ejecutar I/O.
+- El formatter consume tokens directamente, sin pasar por parser ni AST.
+- La CLI arma el pipeline, elige la operación y traduce su resultado a un
+  código de salida.
 
-Los resultados exitosos transportan la fuente restante en lugar de modificar la
-fuente actual. Los errores léxicos, sintácticos y semánticos se representan como
-resultados de dominio y no mediante excepciones.
-
-Las fuentes reproducibles, como strings y archivos, conservan estados
-inmutables. Un `InputStream` es una fuente no reproducible: su reader encapsula
-el avance del recurso y debe consumirse linealmente usando siempre el estado
-restante. El stream sigue siendo propiedad de quien lo creó y el reader no lo
-cierra.
+Las APIs devuelven explícitamente la fuente restante. Al leer un `String`, los
+readers sucesivos son estados inmutables. Al leer un `InputStream` —como hace
+la CLI con los archivos—, el avance del recurso no es reproducible: debe
+consumirse linealmente usando siempre el reader restante. El stream sigue
+siendo propiedad de quien lo abrió y el reader no lo cierra. Los errores
+léxicos, sintácticos y semánticos se expresan como resultados de dominio.
 
 ## Módulos
+
+![Diagrama de componentes de PrintScript](diagrams/componentes.png)
+
+Las flechas apuntan desde quien usa un módulo hacia quien le aporta un contrato
+o motor. El diagrama resume las relaciones principales; no enumera todas las
+dependencias de Gradle. El [archivo fuente editable](diagrams/componentes.puml)
+está junto a la imagen. `validation` es parte de `printscript-v1`, no un módulo
+Gradle independiente.
 
 | Módulo | Responsabilidad |
 |---|---|
@@ -133,6 +128,26 @@ cierra.
 | `printscript-v1` | Tokens, gramáticas, reglas y factories de `1.0` y `1.1`, incluyendo el validator estático. V1.1 agrega `if`, `const`, `boolean`, `readInput` y `readEnv`. |
 | `cli` | Composición exterior, archivos, terminal, configuración y selección de versión mediante Clikt. |
 | `integration-tests` | Pruebas de caja negra del pipeline completo. |
+
+### Cómo interactúan los módulos
+
+`cli` abre el archivo, crea un `SourceReader` y selecciona las factories de
+`printscript-v1` según la versión. Ese módulo aporta los scanners, parsers,
+executors y reglas concretas; los motores reutilizables no dependen de las
+versiones del lenguaje.
+
+`lexer` consume `source-reader` y entrega tokens mediante `token-source`.
+`parser` consume esos tokens y produce sentencias mediante `statement-source`;
+los nodos oficiales están en `printscript-ast`. `interpreter` y `linter`
+consumen las sentencias. La validación, implementada dentro de
+`printscript-v1`, reutiliza el motor de `interpreter` con un estado estático
+propio. Para la ejecución real, `printscript-runtime` aporta el environment,
+los valores y los puertos de entrada y salida.
+
+`formatter` toma directamente los tokens, incluido el whitespace, sin pasar
+por `parser` ni por el AST. `common` aporta posiciones y rangos compartidos por
+los contratos. `integration-tests` verifica que estos módulos se conecten
+correctamente a través de sus APIs públicas; no interviene en la aplicación.
 
 Los módulos se conectan mediante contratos pequeños. Los motores concretos son
 internos; las factories ensamblan cada versión. Algunas reglas públicas del linter
@@ -152,7 +167,7 @@ componentes y agregan su composición específica (ver
 `PrintScriptV11ParserFactory`, que reutiliza `println` y la asignación de `1.0`
 en lugar de reconstruir su lista completa de parsers).
 
-## Decisiones de diseño
+## Detalles de diseño y extensión
 
 ### Lectura y lexer
 
@@ -484,20 +499,17 @@ El TCK es un repositorio separado y no forma parte de este `check`.
 
 ### CI y publicación
 
-El workflow de CI ejecuta `check` en pull requests y admite ejecución manual.
-El workflow de publicación se dispara al publicar una GitHub Release con tag
-`vX.Y.Z`: toma esa versión, ejecuta `check`, valida las publicaciones con
-`publishToMavenLocal` y publica en GitHub Packages.
+CI ejecuta `check` en pull requests y admite ejecución manual. Cada push a
+`main` ejecuta `check` y, si pasa, publica un snapshot `1.0.0-SNAPSHOT`; ese
+workflow también puede lanzarse manualmente. Al publicar una GitHub Release con
+tag `vX.Y.Z`, se usa esa versión para ejecutar `check`, validar con
+`publishToMavenLocal` y publicar en GitHub Packages.
 
 Las librerías aplican `printscript.publishable-library`; `cli` e
 `integration-tests` no se publican. `printscript-v1` es la fachada que expone
 transitivamente los motores y contratos. La versión local predeterminada es
 `1.0.0-SNAPSHOT`, reemplazable mediante `-PreleaseVersion=X.Y.Z`.
 Las credenciales de publicación son `GITHUB_ACTOR` y `GITHUB_TOKEN`.
-
-Este mecanismo no indica que exista una release actualizada con todos los
-cambios de `main`. Elegir y publicar el artefacto final, conectarlo al TCK y
-calibrar su heap en la Action de los profesores son tareas de entrega separadas.
 
 ### Herramientas locales
 

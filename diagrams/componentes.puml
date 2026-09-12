@@ -1,0 +1,48 @@
+@startuml
+title Componentes de PrintScript
+top to bottom direction
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam shadowing false
+
+package "Aplicación" {
+    [cli] as CLI
+}
+
+package "Implementación del lenguaje" {
+    [printscript-v1\n(incluye validation)] as V1
+}
+
+package "Lectura de entrada" {
+    [source-reader] as SOURCE
+}
+
+package "Motores reutilizables" as CORE {
+    [lexer] as LEXER
+    [parser]
+    [interpreter]
+    [formatter]
+    [linter]
+}
+
+package "Contratos y modelo" as MODEL {
+    [common]
+    [token-source]
+    [statement-source]
+    [printscript-ast]
+    [printscript-runtime]
+}
+
+package "Verificación" {
+    [integration-tests] as TESTS
+}
+
+CLI ..> V1
+CLI ..> CORE
+V1 ..> CORE
+V1 ..> MODEL
+LEXER ..> SOURCE
+CORE ..> MODEL
+TESTS ..> V1
+
+@enduml
