@@ -1,6 +1,8 @@
 package printscript.v1.lexer
 
 import printscript.lexer.Lexer
+import printscript.token.TokenType
+import printscript.v1.lexer.internal.scanner.IdentifierOrKeywordScanner
 import printscript.v1.token.PrintScriptV1TokenType
 import kotlin.test.Test
 
@@ -119,5 +121,54 @@ class PrintScriptV11LexerTest {
                 ExpectedToken(PrintScriptV1TokenType.EOF, ""),
             ),
         )
+    }
+
+    @Test
+    fun `uses configured V1_1 keyword lexemes`() {
+        val defaults = PrintScriptV11LexerFactory.defaultConfiguration()
+        val configuredLexer = PrintScriptV11LexerFactory.create(
+            configuration = PrintScriptV1LexerConfiguration(
+                keywordTokenTypesByLexeme = defaults.keywordTokenTypesByLexeme
+                    .minus("const")
+                    .plus("fixed" to PrintScriptV1TokenType.CONST),
+                symbolTokenTypesByCharacter = defaults.symbolTokenTypesByCharacter,
+                stringQuoteDelimiters = defaults.stringQuoteDelimiters,
+            ),
+        )
+
+        configuredLexer.tokenize(sourceReaderFor("fixed const"))
+            .assertProducesTokenSequence(
+                listOf(
+                    ExpectedToken(PrintScriptV1TokenType.CONST, "fixed"),
+                    ExpectedToken(PrintScriptV1TokenType.WHITESPACE, " "),
+                    ExpectedToken(PrintScriptV1TokenType.IDENTIFIER, "const"),
+                    ExpectedToken(PrintScriptV1TokenType.EOF, ""),
+                ),
+            )
+    }
+
+    @Test
+    fun `additional scanners have priority over V1_1 scanners`() {
+        val lexerWithAdditionalScanner = PrintScriptV11LexerFactory.create(
+            additionalScanners = listOf(
+                IdentifierOrKeywordScanner(
+                    keywordTokenTypesByLexeme = mapOf("const" to CustomTokenType.KEYWORD),
+                    identifierTokenType = CustomTokenType.IDENTIFIER,
+                ),
+            ),
+        )
+
+        lexerWithAdditionalScanner.tokenize(sourceReaderFor("const"))
+            .assertProducesTokenSequence(
+                listOf(
+                    ExpectedToken(CustomTokenType.KEYWORD, "const"),
+                    ExpectedToken(PrintScriptV1TokenType.EOF, ""),
+                ),
+            )
+    }
+
+    private enum class CustomTokenType : TokenType {
+        KEYWORD,
+        IDENTIFIER,
     }
 }
