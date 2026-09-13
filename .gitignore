@@ -25,3 +25,4 @@ gradle-app.setting
 .gradle/
 .kotlin/
 out/.DS_Store
+Claude outputs/
