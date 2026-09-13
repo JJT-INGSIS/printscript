@@ -1,0 +1,48 @@
+@startuml
+!pragma layout smetana
+title Pipeline de PrintScript
+left to right direction
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 16
+skinparam defaultTextAlignment center
+skinparam nodesep 45
+skinparam ranksep 30
+<style>
+rectangle {
+    Padding 12
+}
+</style>
+skinparam ArrowColor #526579
+skinparam ArrowThickness 1.5
+skinparam rectangle {
+    BackgroundColor #EEF4FA
+    BorderColor #526579
+    RoundCorner 12
+}
+
+rectangle "**CLI**\nElige versión y operación\nAbre el archivo y arma el pipeline" as CLI #EDE9F7
+rectangle "**SourceReader**\nLee el código fuente por bloques" as SOURCE
+rectangle "**Lexer**\nReconoce tokens" as LEXER
+rectangle "**TokenSource**\nTokens, incluido el whitespace" as TOKENS #F3F4F6
+rectangle "**Parser**\nIgnora los tokens de whitespace\nConstruye el AST" as PARSER
+rectangle "**StatementSource**\nEntrega sentencias del AST" as STATEMENTS #F3F4F6
+
+rectangle "**Formatter**\nUsa el whitespace\nProduce código formateado" as FORMATTER #EAF5ED
+rectangle "**Interpreter**\nEjecuta el programa" as INTERPRETER #EAF5ED
+rectangle "**Validator**\nComprueba semántica\nsin ejecutar el programa" as VALIDATOR #EAF5ED
+rectangle "**Linter**\nInforma problemas de estilo" as LINTER #EAF5ED
+
+CLI ..> SOURCE
+SOURCE --> LEXER
+LEXER --> TOKENS
+TOKENS --> PARSER
+TOKENS --> FORMATTER
+PARSER --> STATEMENTS
+STATEMENTS --> INTERPRETER
+STATEMENTS --> VALIDATOR
+STATEMENTS --> LINTER
+
+@enduml

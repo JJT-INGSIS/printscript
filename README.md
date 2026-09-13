@@ -73,14 +73,15 @@ El build y los tests usan además las herramientas declaradas en `buildSrc`.
 
 ## Pipeline
 
-```text
-SourceReader → Lexer → TokenSource
-                          ├─ Parser (ignora whitespace) → StatementSource
-                          │                                ├─ Interpreter → ProgramOutput
-                          │                                ├─ Linter → DiagnosticSource
-                          │                                └─ Validator → ValidationResult
-                          └─ Formatter (conserva whitespace) → FormattedSource
-```
+![Pipeline de PrintScript: lectura, tokenización, parsing y operaciones](diagrams/pipeline.png)
+
+La CLI abre el archivo y arma el pipeline según la versión y la operación elegidas.
+El lexer produce tokens con whitespace tanto para el parser como para el formatter:
+el parser los ignora y el formatter los utiliza.
+El [archivo fuente editable](diagrams/pipeline.puml) permite actualizar el gráfico.
+Las flechas continuas muestran el flujo de datos; la punteada indica la preparación
+de la entrada por la CLI. El procesamiento es pull y lazy:
+cada consumidor solicita el siguiente elemento cuando lo necesita.
 
 - `SourceReader` entrega bloques desde un `String` o un `InputStream`; la CLI
   abre y cierra los archivos que procesa.
