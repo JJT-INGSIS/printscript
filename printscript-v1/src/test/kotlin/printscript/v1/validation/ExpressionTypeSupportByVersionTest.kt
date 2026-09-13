@@ -14,17 +14,20 @@ import printscript.ast.expression.StringLiteralExpression
 import printscript.ast.expression.StringQuoteStyle
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
+import printscript.interpreter.ExecutionResult
+import printscript.interpreter.SemanticError
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
-import printscript.v1.validation.internal.expression.rule.ExpressionTypeRule
-import printscript.v1.validation.internal.expression.rule.printScriptV11ExpressionTypeRules
-import printscript.v1.validation.internal.expression.rule.printScriptV1ExpressionTypeRules
+import printscript.v1.validation.internal.ValidationEnvironment
+import printscript.v1.validation.internal.expression.ExpressionTypeResolver
+import printscript.v1.validation.internal.expression.PrintScriptV11ExpressionTypeResolver
+import printscript.v1.validation.internal.expression.PrintScriptV1ExpressionTypeResolver
 import java.math.BigDecimal
 import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ExpressionTypeRuleCompletenessTest {
+class ExpressionTypeSupportByVersionTest {
 
     private val anySpan = SourceSpan(
         start = SourcePosition(line = 1, column = 1, offset = 0),
@@ -33,7 +36,7 @@ class ExpressionTypeRuleCompletenessTest {
 
     private val anyOperand = NumberLiteralExpression(value = BigDecimal.ONE, span = anySpan)
 
-    private val everyExpression: List<Expression> = listOf(
+    private val printScriptV1Expressions: List<Expression> = listOf(
         anyOperand,
         StringLiteralExpression(
             value = "texto",
@@ -53,59 +56,46 @@ class ExpressionTypeRuleCompletenessTest {
             operatorSpan = anySpan,
             right = anyOperand,
         ),
+    )
+
+    private val expressionsAddedInV11: List<Expression> = listOf(
         BooleanLiteralExpression(value = true, span = anySpan),
         ReadInputExpression(prompt = anyOperand, span = anySpan),
         ReadEnvironmentExpression(variableName = anyOperand, span = anySpan),
     )
 
     @Test
-    fun `PrintScript 1_0 resolves exactly the expressions of its own version`() {
-        val rules = printScriptV1ExpressionTypeRules()
+    fun `PrintScript 1_0 resolves the expressions of its own version`() {
+        for (expression in printScriptV1Expressions) {
+            assertFalse(
+                actual = rejectsAsUnsupported(PrintScriptV1ExpressionTypeResolver, expression),
+                message = "PrintScript 1.0 deberia resolver ${expression::class.simpleName}",
+            )
+        }
+    }
 
-        for (expression in everyExpression) {
-            assertEquals(
-                expected = belongsToPrintScriptV1(expression),
-                actual = isSupportedByAnyRule(rules, expression),
-                message = "Las reglas de tipos de PrintScript 1.0 no coinciden con la version de " +
-                    "${expression::class.simpleName}",
+    @Test
+    fun `PrintScript 1_0 rejects the expressions added in 1_1`() {
+        for (expression in expressionsAddedInV11) {
+            assertTrue(
+                actual = rejectsAsUnsupported(PrintScriptV1ExpressionTypeResolver, expression),
+                message = "PrintScript 1.0 deberia rechazar ${expression::class.simpleName}",
             )
         }
     }
 
     @Test
     fun `PrintScript 1_1 resolves every expression of the language`() {
-        val rules = printScriptV11ExpressionTypeRules()
-
-        for (expression in everyExpression) {
-            assertTrue(
-                actual = isSupportedByAnyRule(rules, expression),
-                message = "Ninguna regla de tipos de PrintScript 1.1 resuelve " +
-                    "${expression::class.simpleName}",
+        for (expression in printScriptV1Expressions + expressionsAddedInV11) {
+            assertFalse(
+                actual = rejectsAsUnsupported(PrintScriptV11ExpressionTypeResolver, expression),
+                message = "PrintScript 1.1 deberia resolver ${expression::class.simpleName}",
             )
         }
     }
 
-    private fun belongsToPrintScriptV1(expression: Expression): Boolean {
-        return when (expression) {
-            is NumberLiteralExpression -> true
-            is StringLiteralExpression -> true
-            is GroupingExpression -> true
-            is IdentifierExpression -> true
-            is UnaryExpression -> true
-            is BinaryExpression -> true
-            is BooleanLiteralExpression -> false
-            is ReadInputExpression -> false
-            is ReadEnvironmentExpression -> false
-        }
-    }
-
-    private fun isSupportedByAnyRule(rules: List<ExpressionTypeRule>, expression: Expression): Boolean {
-        for (rule in rules) {
-            if (rule.supportsExpression(expression)) {
-                return true
-            }
-        }
-
-        return false
+    private fun rejectsAsUnsupported(resolver: ExpressionTypeResolver, expression: Expression): Boolean {
+        val result = resolver.typeOf(expression, ValidationEnvironment())
+        return result is ExecutionResult.Failure && result.error is SemanticError.UnsupportedExpression
     }
 }

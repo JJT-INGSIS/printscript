@@ -2,40 +2,16 @@ package printscript.v1.validation.internal.expression.rule
 
 import printscript.ast.DeclaredType
 import printscript.ast.expression.BinaryExpression
-import printscript.ast.expression.Expression
 import printscript.interpreter.ExecutionResult
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.internal.expression.unsupportedExpression
 import printscript.v1.interpreter.internal.operation.resultType
 import printscript.v1.interpreter.internal.orReturn
 import printscript.v1.validation.internal.ValidationEnvironment
 import printscript.v1.validation.internal.expression.ExpressionTypeResolver
 
-internal data object BinaryOperationTypeRule : ExpressionTypeRule {
+internal data object BinaryOperationTypeRule {
 
-    override fun supportsExpression(expression: Expression): Boolean {
-        return expression is BinaryExpression
-    }
-
-    override fun typeOf(
-        expression: Expression,
-        environment: ValidationEnvironment,
-        expectedType: DeclaredType?,
-        nestedResolver: ExpressionTypeResolver,
-    ): ExecutionResult<DeclaredType> {
-        if (expression !is BinaryExpression) {
-            return unsupportedExpression(expression)
-        }
-
-        return binaryOperationType(
-            expression = expression,
-            environment = environment,
-            expectedType = expectedType,
-            nestedResolver = nestedResolver,
-        )
-    }
-
-    private fun binaryOperationType(
+    fun typeOf(
         expression: BinaryExpression,
         environment: ValidationEnvironment,
         expectedType: DeclaredType?,

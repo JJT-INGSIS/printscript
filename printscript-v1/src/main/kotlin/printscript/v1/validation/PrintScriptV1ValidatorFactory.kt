@@ -5,7 +5,7 @@ import printscript.interpreter.StatementExecutor
 import printscript.v1.validation.internal.StaticValidator
 import printscript.v1.validation.internal.ValidationEnvironment
 import printscript.v1.validation.internal.expression.ExpressionTypeResolver
-import printscript.v1.validation.internal.expression.rule.printScriptV1ExpressionTypeRules
+import printscript.v1.validation.internal.expression.PrintScriptV1ExpressionTypeResolver
 import printscript.v1.validation.internal.statement.AssignmentValidator
 import printscript.v1.validation.internal.statement.DeclarationValidator
 import printscript.v1.validation.internal.statement.PrintlnValidator
@@ -20,7 +20,7 @@ public object PrintScriptV1ValidatorFactory {
     @JvmStatic
     public fun create(): Validator {
         return createWith(
-            expressionTypes = ExpressionTypeResolver(printScriptV1ExpressionTypeRules()),
+            expressionTypes = PrintScriptV1ExpressionTypeResolver,
             supportedDeclaredTypes = printScriptV1DeclaredTypes,
         )
     }
