@@ -1,7 +1,6 @@
 package printscript.v1.interpreter.internal.expression.rule
 
 import printscript.ast.DeclaredType
-import printscript.ast.expression.Expression
 import printscript.ast.expression.UnaryExpression
 import printscript.ast.expression.UnaryOperator
 import printscript.interpreter.ExecutionResult
@@ -10,25 +9,16 @@ import printscript.runtime.ExpressionEvaluator
 import printscript.runtime.NumberValue
 import printscript.runtime.RuntimeValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.internal.expression.unsupportedExpression
 import printscript.v1.interpreter.internal.orReturn
 
-internal data object UnaryOperationEvaluationRule : ExpressionEvaluationRule {
+internal data object UnaryOperationEvaluationRule {
 
-    override fun supportsExpression(expression: Expression): Boolean {
-        return expression is UnaryExpression
-    }
-
-    override fun evaluateExpression(
-        expression: Expression,
+    fun evaluateExpression(
+        expression: UnaryExpression,
         environment: Environment,
         expectedType: DeclaredType?,
         nestedEvaluator: ExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
-        if (expression !is UnaryExpression) {
-            return unsupportedExpression(expression)
-        }
-
         val operand: RuntimeValue = nestedEvaluator.evaluateExpression(
             expression = expression.operand,
             environment = environment,

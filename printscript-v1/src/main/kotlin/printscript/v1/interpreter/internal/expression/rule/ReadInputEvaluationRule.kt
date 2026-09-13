@@ -1,7 +1,6 @@
 package printscript.v1.interpreter.internal.expression.rule
 
 import printscript.ast.DeclaredType
-import printscript.ast.expression.Expression
 import printscript.ast.expression.ReadInputExpression
 import printscript.interpreter.ExecutionResult
 import printscript.runtime.Environment
@@ -10,27 +9,18 @@ import printscript.runtime.ProgramInput
 import printscript.runtime.RuntimeValue
 import printscript.runtime.StringValue
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.internal.expression.unsupportedExpression
 import printscript.v1.interpreter.internal.orReturn
 
 internal class ReadInputEvaluationRule(
     private val input: ProgramInput,
-) : ExpressionEvaluationRule {
+) {
 
-    override fun supportsExpression(expression: Expression): Boolean {
-        return expression is ReadInputExpression
-    }
-
-    override fun evaluateExpression(
-        expression: Expression,
+    fun evaluateExpression(
+        expression: ReadInputExpression,
         environment: Environment,
         expectedType: DeclaredType?,
         nestedEvaluator: ExpressionEvaluator,
     ): ExecutionResult<RuntimeValue> {
-        if (expression !is ReadInputExpression) {
-            return unsupportedExpression(expression)
-        }
-
         val prompt: String = promptOf(
             expression = expression,
             environment = environment,
