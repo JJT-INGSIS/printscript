@@ -1,6 +1,7 @@
 package printscript.v1.validation.internal.statement
 
 import printscript.ast.DeclarationKind
+import printscript.ast.DeclaredType
 import printscript.ast.statement.VariableDeclarationStatement
 import printscript.interpreter.ExecutionResult
 import printscript.interpreter.StatementExecutionContext
@@ -16,7 +17,10 @@ import printscript.v1.validation.internal.expression.ExpressionTypeResolver
 
 internal class DeclarationValidator(
     private val expressionTypes: ExpressionTypeResolver,
+    supportedDeclaredTypes: Set<DeclaredType>,
 ) : StatementExecutor<ValidationEnvironment> {
+
+    private val supportedDeclaredTypes: Set<DeclaredType> = supportedDeclaredTypes.toSet()
 
     override fun supportsStatement(statement: Statement): Boolean {
         return statement is VariableDeclarationStatement
@@ -29,7 +33,7 @@ internal class DeclarationValidator(
         if (statement !is VariableDeclarationStatement) {
             return unsupportedStatement(statement)
         }
-        if (!expressionTypes.supports(statement.declaredType)) {
+        if (statement.declaredType !in supportedDeclaredTypes) {
             return unsupportedStatement(statement)
         }
         return validateDeclaration(statement, context.state)
