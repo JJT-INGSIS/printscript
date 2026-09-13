@@ -5,24 +5,34 @@ import printscript.interpreter.StatementExecutor
 import printscript.v1.validation.internal.StaticValidator
 import printscript.v1.validation.internal.ValidationEnvironment
 import printscript.v1.validation.internal.expression.ExpressionTypeResolver
+import printscript.v1.validation.internal.expression.rule.printScriptV1ExpressionTypeRules
 import printscript.v1.validation.internal.statement.AssignmentValidator
 import printscript.v1.validation.internal.statement.DeclarationValidator
 import printscript.v1.validation.internal.statement.PrintlnValidator
 
 public object PrintScriptV1ValidatorFactory {
 
+    private val printScriptV1DeclaredTypes: Set<DeclaredType> = setOf(
+        DeclaredType.NUMBER,
+        DeclaredType.STRING,
+    )
+
     @JvmStatic
     public fun create(): Validator {
-        return createWith(ExpressionTypeResolver(setOf(DeclaredType.NUMBER, DeclaredType.STRING)))
+        return createWith(
+            expressionTypes = ExpressionTypeResolver(printScriptV1ExpressionTypeRules()),
+            supportedDeclaredTypes = printScriptV1DeclaredTypes,
+        )
     }
 
     internal fun createWith(
         expressionTypes: ExpressionTypeResolver,
+        supportedDeclaredTypes: Set<DeclaredType>,
         additionalValidators: List<StatementExecutor<ValidationEnvironment>> = emptyList(),
     ): Validator {
         return StaticValidator(
             additionalValidators + listOf(
-                DeclarationValidator(expressionTypes),
+                DeclarationValidator(expressionTypes, supportedDeclaredTypes),
                 AssignmentValidator(expressionTypes),
                 PrintlnValidator(expressionTypes),
             ),
