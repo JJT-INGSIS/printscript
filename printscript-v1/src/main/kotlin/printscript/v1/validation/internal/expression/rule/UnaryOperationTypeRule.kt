@@ -1,31 +1,21 @@
 package printscript.v1.validation.internal.expression.rule
 
 import printscript.ast.DeclaredType
-import printscript.ast.expression.Expression
 import printscript.ast.expression.UnaryExpression
 import printscript.interpreter.ExecutionResult
 import printscript.v1.interpreter.PrintScriptV1SemanticError
-import printscript.v1.interpreter.internal.expression.unsupportedExpression
 import printscript.v1.interpreter.internal.orReturn
 import printscript.v1.validation.internal.ValidationEnvironment
 import printscript.v1.validation.internal.expression.ExpressionTypeResolver
 
-internal data object UnaryOperationTypeRule : ExpressionTypeRule {
+internal data object UnaryOperationTypeRule {
 
-    override fun supportsExpression(expression: Expression): Boolean {
-        return expression is UnaryExpression
-    }
-
-    override fun typeOf(
-        expression: Expression,
+    fun typeOf(
+        expression: UnaryExpression,
         environment: ValidationEnvironment,
         expectedType: DeclaredType?,
         nestedResolver: ExpressionTypeResolver,
     ): ExecutionResult<DeclaredType> {
-        if (expression !is UnaryExpression) {
-            return unsupportedExpression(expression)
-        }
-
         val operand: DeclaredType = nestedResolver.typeOf(
             expression = expression.operand,
             environment = environment,
