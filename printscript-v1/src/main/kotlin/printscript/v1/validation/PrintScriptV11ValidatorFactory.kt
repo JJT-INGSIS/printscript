@@ -10,7 +10,7 @@ public object PrintScriptV11ValidatorFactory {
     public fun create(): Validator {
         return PrintScriptV1ValidatorFactory.createWith(
             expressionTypes = PrintScriptV11ExpressionTypeResolver,
-            supportedDeclaredTypes = DeclaredType.entries.toSet(),
+            additionalDeclaredTypes = setOf(DeclaredType.BOOLEAN),
             additionalValidators = listOf(IfValidator()),
         )
     }

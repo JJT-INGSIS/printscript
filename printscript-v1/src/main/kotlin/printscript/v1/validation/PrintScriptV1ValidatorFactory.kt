@@ -19,20 +19,17 @@ public object PrintScriptV1ValidatorFactory {
 
     @JvmStatic
     public fun create(): Validator {
-        return createWith(
-            expressionTypes = PrintScriptV1ExpressionTypeResolver,
-            supportedDeclaredTypes = printScriptV1DeclaredTypes,
-        )
+        return createWith(expressionTypes = PrintScriptV1ExpressionTypeResolver)
     }
 
     internal fun createWith(
         expressionTypes: ExpressionTypeResolver,
-        supportedDeclaredTypes: Set<DeclaredType>,
+        additionalDeclaredTypes: Set<DeclaredType> = emptySet(),
         additionalValidators: List<StatementExecutor<ValidationEnvironment>> = emptyList(),
     ): Validator {
         return StaticValidator(
             additionalValidators + listOf(
-                DeclarationValidator(expressionTypes, supportedDeclaredTypes),
+                DeclarationValidator(expressionTypes, printScriptV1DeclaredTypes + additionalDeclaredTypes),
                 AssignmentValidator(expressionTypes),
                 PrintlnValidator(expressionTypes),
             ),
