@@ -214,33 +214,6 @@ internal fun ScannerCursor.assertEndOfInput() {
     assertIs<ScannerCharacterReadResult.EndOfInput>(peek())
 }
 
-internal fun assertInitialSingleLineSpan(actualSpan: SourceSpan, consumedCharacterCount: Int) {
-    val expectedSpan = SourceSpan(
-        start = SourcePosition(
-            line = 1,
-            column = 1,
-            offset = 0,
-        ),
-        end = SourcePosition(
-            line = 1,
-            column = consumedCharacterCount + 1,
-            offset = consumedCharacterCount.toLong(),
-        ),
-    )
-
-    assertEquals(
-        expected = expectedSpan,
-        actual = actualSpan,
-    )
-}
-
-internal data object FailingSourceReader : SourceReader {
-
-    override fun readChunk(): SourceChunkReadResult {
-        error("Source must not be read")
-    }
-}
-
 internal data class SourceReadFailureReader(
     private val error: SourceReadError,
 ) : SourceReader {
