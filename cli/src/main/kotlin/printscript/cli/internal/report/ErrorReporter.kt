@@ -128,6 +128,14 @@ internal class ErrorReporter {
         }
     }
 
+    private fun describeTokenRead(error: TokenReadError): String {
+        return when (error) {
+            is LexicalError -> describeLexical(error)
+            is SourceReadingError -> describeSourceReading(error)
+            else -> "error desconocido al leer el próximo token"
+        }
+    }
+
     private fun describeLexical(error: LexicalError): String {
         return when (error) {
             is LexicalError.UnexpectedCharacter ->
@@ -144,27 +152,19 @@ internal class ErrorReporter {
         }
     }
 
-    private fun describeTokenRead(error: TokenReadError): String {
-        return when (error) {
-            is LexicalError -> describeLexical(error)
-            is SourceReadingError -> describeSourceReading(error)
-            else -> "error desconocido al leer el próximo token"
+    private fun describeSourceReading(error: SourceReadingError): String {
+        return when (val sourceError = error.sourceError) {
+            SourceReadError.InvalidInputStreamEncoding ->
+                "el flujo de entrada no contiene UTF-8 válido"
+
+            is SourceReadError.InputStreamReadFailed ->
+                "no se pudo leer el flujo de entrada: ${sourceError.reason}"
+
+            else -> "no se pudo continuar leyendo el código fuente"
         }
     }
-}
 
-private fun formatError(description: String, span: SourceSpan): String {
-    return "error: $description — ${SpanRenderer.render(span)}"
-}
-
-private fun describeSourceReading(error: SourceReadingError): String {
-    return when (val sourceError = error.sourceError) {
-        SourceReadError.InvalidInputStreamEncoding ->
-            "el flujo de entrada no contiene UTF-8 válido"
-
-        is SourceReadError.InputStreamReadFailed ->
-            "no se pudo leer el flujo de entrada: ${sourceError.reason}"
-
-        else -> "no se pudo continuar leyendo el código fuente"
+    private fun formatError(description: String, span: SourceSpan): String {
+        return "error: $description — ${SpanRenderer.render(span)}"
     }
 }

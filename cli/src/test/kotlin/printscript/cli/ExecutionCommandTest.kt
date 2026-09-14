@@ -202,7 +202,7 @@ class ExecutionCommandTest {
     }
 
     @Test
-    fun `no longer offers a configuration option`() {
+    fun `does not offer a configuration option`() {
         val result = commandWith(RecordingToolchainFactory()).test("--help")
 
         assertFalse(result.stdout.contains("--config"))
