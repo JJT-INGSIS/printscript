@@ -16,15 +16,12 @@ internal fun formatSource(
         PrintScriptV1FormatterFactory.defaultConfiguration(),
     additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
 ): String {
-    val tokens = PrintScriptV1LexerFactory.create().tokenize(
-        SourceReaderFactory.fromString(sourceCode),
-    )
     val formatter = PrintScriptV1FormatterFactory.create(
         configuration = configuration,
         additionalFormattingRules = additionalFormattingRules,
     )
 
-    return collectFormattedText(formatter, tokens)
+    return formatSourceWith(formatter, sourceCode)
 }
 
 internal fun formatSourceWith(formatter: Formatter, sourceCode: String): String {

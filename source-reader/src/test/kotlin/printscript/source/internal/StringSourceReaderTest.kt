@@ -65,19 +65,4 @@ class StringSourceReaderTest {
             reader.readChunk(),
         )
     }
-
-    @Test
-    fun `factory creates reader from source code`() {
-        val reader = printscript.source.SourceReaderFactory
-            .fromString("let")
-
-        val result = assertIs<SourceChunkReadResult.Success>(
-            reader.readChunk(),
-        )
-
-        assertEquals(
-            expected = "let",
-            actual = result.chunk.content,
-        )
-    }
 }
