@@ -3,7 +3,6 @@ package printscript.v1.lexer
 import printscript.lexer.Lexer
 import printscript.lexer.LexerFactory
 import printscript.lexer.scanning.TokenScanner
-import printscript.v1.lexer.internal.PreserveEveryCharacterPolicy
 import printscript.v1.lexer.internal.printScriptV11KeywordTokenTypesByLexeme
 import printscript.v1.lexer.internal.printScriptV11SymbolTokenTypesByCharacter
 import printscript.v1.lexer.internal.printScriptV1StringQuoteDelimiters
@@ -31,7 +30,6 @@ public object PrintScriptV11LexerFactory {
             tokenScanners =
             additionalScanners +
                 printScriptV1TokenScanners(configuration),
-            ignoredCharacterPolicy = PreserveEveryCharacterPolicy,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )
     }
