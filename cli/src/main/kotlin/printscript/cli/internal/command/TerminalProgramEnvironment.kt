@@ -23,11 +23,7 @@ internal fun systemEnvironmentVariables(): EnvironmentVariableProvider {
 }
 
 private fun CliktCommand.terminalOutput(): ProgramOutput {
-    return object : ProgramOutput {
-        override fun writeLine(line: String) {
-            echo(line)
-        }
-    }
+    return ProgramOutput { line -> echo(line) }
 }
 
 private fun CliktCommand.terminalInput(): ProgramInput {

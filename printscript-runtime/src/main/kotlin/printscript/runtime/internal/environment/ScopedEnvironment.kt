@@ -31,7 +31,9 @@ internal class ScopedEnvironment private constructor(
     override fun reassign(name: String, value: RuntimeValue): Environment {
         val scopeIndex = scopes.indexOfLast { scope -> name in scope }
 
-        require(scopeIndex >= 0)
+        check(scopeIndex >= 0) {
+            "Se reasigno la variable '$name', que no esta declarada en ningun scope"
+        }
 
         val updatedScopes = scopes.mapIndexed { index, scope ->
             if (index == scopeIndex) {
@@ -49,7 +51,7 @@ internal class ScopedEnvironment private constructor(
     }
 
     override fun leaveScope(): Environment {
-        require(scopes.size > GLOBAL_SCOPE_COUNT)
+        check(scopes.size > GLOBAL_SCOPE_COUNT) { "Se intento salir del scope global" }
 
         return ScopedEnvironment(scopes.dropLast(1))
     }
