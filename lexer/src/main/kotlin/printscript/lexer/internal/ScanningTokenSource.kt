@@ -1,7 +1,6 @@
 package printscript.lexer.internal
 
 import printscript.lexer.internal.scanner.TokenScannerDispatcher
-import printscript.lexer.scanning.IgnoredCharacterPolicy
 import printscript.lexer.scanning.ScannerCharacterReadResult
 import printscript.lexer.scanning.ScannerCursor
 import printscript.lexer.scanning.TokenScanResult
@@ -16,12 +15,11 @@ private const val EOF_LEXEME = ""
 internal data class ScanningTokenSource(
     private val characterCursor: ScannerCursor,
     private val tokenScannerDispatcher: TokenScannerDispatcher,
-    private val ignoredCharacterPolicy: IgnoredCharacterPolicy,
     private val endOfInputTokenType: TokenType,
 ) : TokenSource {
 
     override fun nextToken(): TokenReadResult {
-        return when (val nextCharacterResult = readNextRelevantCharacter(characterCursor)) {
+        return when (val nextCharacterResult = characterCursor.peek()) {
             is ScannerCharacterReadResult.EndOfInput -> {
                 createEndOfInputResult(
                     cursor = nextCharacterResult.resultingCursor,
@@ -37,30 +35,6 @@ internal data class ScanningTokenSource(
 
             is ScannerCharacterReadResult.Failure -> {
                 tokenReadFailure(nextCharacterResult)
-            }
-        }
-    }
-
-    private tailrec fun readNextRelevantCharacter(cursor: ScannerCursor): ScannerCharacterReadResult {
-        return when (val readResult = cursor.peek()) {
-            is ScannerCharacterReadResult.EndOfInput -> readResult
-
-            is ScannerCharacterReadResult.Failure -> readResult
-
-            is ScannerCharacterReadResult.Success -> {
-                if (ignoredCharacterPolicy.shouldIgnore(readResult.character)) {
-                    when (val advanceResult = readResult.resultingCursor.advance()) {
-                        is ScannerCharacterReadResult.Success -> {
-                            readNextRelevantCharacter(advanceResult.resultingCursor)
-                        }
-
-                        is ScannerCharacterReadResult.EndOfInput -> advanceResult
-
-                        is ScannerCharacterReadResult.Failure -> advanceResult
-                    }
-                } else {
-                    readResult
-                }
             }
         }
     }

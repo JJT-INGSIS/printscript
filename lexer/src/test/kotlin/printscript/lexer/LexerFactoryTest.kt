@@ -1,6 +1,5 @@
 package printscript.lexer
 
-import printscript.lexer.scanning.IgnoredCharacterPolicy
 import kotlin.test.Test
 
 class LexerFactoryTest {
@@ -13,15 +12,11 @@ class LexerFactoryTest {
                     tokenType = TestTokenType.FIRST_WORD,
                 ),
             ),
-            ignoredCharacterPolicy =
-            IgnoredCharacterPolicy { character ->
-                character == '_'
-            },
             endOfInputTokenType = TestTokenType.END_OF_INPUT,
         )
 
         val tokenSource = lexer.tokenize(
-            sourceReaderFor("_external"),
+            sourceReaderFor("external"),
         )
 
         tokenSource.assertProducesTokenSequence(

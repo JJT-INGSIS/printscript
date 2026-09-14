@@ -12,7 +12,6 @@ import printscript.lexer.assertTokenReadError
 import printscript.lexer.cursorFor
 import printscript.lexer.cursorForChunksThenFailure
 import printscript.lexer.internal.scanner.TokenScannerDispatcher
-import printscript.lexer.scanning.IgnoredCharacterPolicy
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
 import printscript.token.LexicalError
@@ -65,10 +64,16 @@ class ScanningTokenSourceTest {
     }
 
     @Test
-    fun `whitespace-only input produces EOF after consumed whitespace`() {
+    fun `whitespace without a scanner produces errors before EOF`() {
         val tokenSource = createTokenSourceFor(" \n")
 
-        val eofResult = tokenSource.assertNextToken(
+        val spaceResult = tokenSource.nextToken()
+        assertEquals(' ', spaceResult.assertLexicalError<LexicalError.UnexpectedCharacter>().character)
+
+        val newlineResult = spaceResult.remainingSource.nextToken()
+        assertEquals('\n', newlineResult.assertLexicalError<LexicalError.UnexpectedCharacter>().character)
+
+        val eofResult = newlineResult.remainingSource.assertNextToken(
             ExpectedToken(
                 tokenType = TestTokenType.END_OF_INPUT,
                 lexeme = "",
@@ -85,12 +90,15 @@ class ScanningTokenSourceTest {
     }
 
     @Test
-    fun `leading whitespace is consumed before each token`() {
+    fun `whitespace without a scanner does not hide following tokens`() {
         val tokenSource = createTokenSourceFor(
             " token \n next",
         )
 
-        val firstTokenResult = tokenSource.assertNextToken(
+        val leadingSpaceResult = tokenSource.nextToken()
+        assertEquals(' ', leadingSpaceResult.assertLexicalError<LexicalError.UnexpectedCharacter>().character)
+
+        val firstTokenResult = leadingSpaceResult.remainingSource.assertNextToken(
             ExpectedToken(
                 tokenType = TestTokenType.FIRST_WORD,
                 lexeme = "token",
@@ -105,8 +113,17 @@ class ScanningTokenSourceTest {
             actual = firstTokenResult.token.span,
         )
 
+        val spaceResult = firstTokenResult.remainingSource.nextToken()
+        assertEquals(' ', spaceResult.assertLexicalError<LexicalError.UnexpectedCharacter>().character)
+
+        val newlineResult = spaceResult.remainingSource.nextToken()
+        assertEquals('\n', newlineResult.assertLexicalError<LexicalError.UnexpectedCharacter>().character)
+
+        val nextSpaceResult = newlineResult.remainingSource.nextToken()
+        assertEquals(' ', nextSpaceResult.assertLexicalError<LexicalError.UnexpectedCharacter>().character)
+
         val secondTokenResult =
-            firstTokenResult.remainingSource.assertNextToken(
+            nextSpaceResult.remainingSource.assertNextToken(
                 ExpectedToken(
                     tokenType = TestTokenType.FIRST_WORD,
                     lexeme = "next",
@@ -211,10 +228,6 @@ class ScanningTokenSourceTest {
         return ScanningTokenSource(
             characterCursor = cursor,
             tokenScannerDispatcher = tokenScannerDispatcher,
-            ignoredCharacterPolicy =
-            IgnoredCharacterPolicy { character ->
-                character.isWhitespace()
-            },
             endOfInputTokenType = TestTokenType.END_OF_INPUT,
         )
     }

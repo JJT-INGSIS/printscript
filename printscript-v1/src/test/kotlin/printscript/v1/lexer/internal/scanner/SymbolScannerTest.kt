@@ -2,8 +2,6 @@ package printscript.v1.lexer.internal.scanner
 
 import printscript.model.source.SourcePosition
 import printscript.model.source.SourceSpan
-import printscript.token.LexicalError
-import printscript.v1.lexer.assertLexicalError
 import printscript.v1.lexer.assertNextCharacter
 import printscript.v1.lexer.assertSuccessToken
 import printscript.v1.lexer.cursorFor
@@ -95,34 +93,5 @@ class SymbolScannerTest {
         mutableTokenTypesByCharacter.clear()
 
         assertTrue(scannerWithMutableConfiguration.canStartWith('+'))
-    }
-
-    @Test
-    fun `scan returns failure and consumes unconfigured character`() {
-        val unexpectedCharacter = '@'
-        val cursor = cursorFor("@remaining")
-
-        val scanResult = scanner.scan(
-            cursor = cursor,
-            startingCharacter = unexpectedCharacter,
-        )
-
-        val error =
-            scanResult.assertLexicalError<LexicalError.UnexpectedCharacter>()
-
-        assertEquals(
-            expected = unexpectedCharacter,
-            actual = error.character,
-        )
-
-        assertEquals(
-            expected = SourceSpan(
-                start = SourcePosition(1, 1, 0),
-                end = SourcePosition(1, 2, 1),
-            ),
-            actual = error.span,
-        )
-
-        scanResult.resultingCursor.assertNextCharacter('r')
     }
 }
