@@ -384,6 +384,13 @@ JSON incorrectos, y conserva errores propios de su versión. Los readers del
 linter comparten el armado de las reglas comunes. El CLI informa el motivo
 específico de una configuración inválida.
 
+Hay ejemplos listos para probar ambas herramientas desde el CLI:
+
+```bash
+printscript formatting examples/formatter/unformatted.ps --version 1.1 --config examples/formatter/v1.1-config.json
+printscript analysis examples/linter/style-violations.ps --version 1.1 --config examples/linter/v1.1-config.json
+```
+
 ### CLI
 
 Los cuatro comandos heredan directamente de `CliktCommand`; no hay una clase
