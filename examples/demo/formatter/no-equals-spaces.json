@@ -1,0 +1,4 @@
+{
+  "enforce-no-spacing-around-equals": true,
+  "mandatory-line-break-after-statement": true
+}

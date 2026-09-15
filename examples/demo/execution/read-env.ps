@@ -1,0 +1,8 @@
+let environmentName: string = readEnv("PRINTSCRIPT_DEMO_NAME");
+let port: number = readEnv("PRINTSCRIPT_DEMO_PORT");
+let enabled: boolean = readEnv("PRINTSCRIPT_DEMO_ENABLED");
+println(environmentName);
+println(port + 1);
+if (enabled) {
+    println("Variables de ambiente leídas");
+}
