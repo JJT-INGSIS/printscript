@@ -501,7 +501,7 @@ El TCK es un repositorio separado y no forma parte de este `check`.
 ### CI y publicación
 
 CI ejecuta `check` en pull requests y admite ejecución manual. Cada push a
-`main` ejecuta `check` y, si pasa, publica un snapshot `1.0.0-SNAPSHOT`; ese
+`main` ejecuta `check` y, si pasa, publica un snapshot `1.1.1-SNAPSHOT`; ese
 workflow también puede lanzarse manualmente. Al publicar una GitHub Release con
 tag `vX.Y.Z`, se usa esa versión para ejecutar `check`, validar con
 `publishToMavenLocal` y publicar en GitHub Packages.
@@ -509,7 +509,7 @@ tag `vX.Y.Z`, se usa esa versión para ejecutar `check`, validar con
 Las librerías aplican `printscript.publishable-library`; `cli` e
 `integration-tests` no se publican. `printscript-v1` es la fachada que expone
 transitivamente los motores y contratos. La versión local predeterminada es
-`1.0.0-SNAPSHOT`, reemplazable mediante `-PreleaseVersion=X.Y.Z`.
+`1.1.1-SNAPSHOT`, reemplazable mediante `-PreleaseVersion=X.Y.Z`.
 Las credenciales de publicación son `GITHUB_ACTOR` y `GITHUB_TOKEN`.
 
 ### Herramientas locales
