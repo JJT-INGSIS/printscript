@@ -391,6 +391,15 @@ printscript formatting examples/formatter/unformatted.ps --version 1.1 --config 
 printscript analysis examples/linter/style-violations.ps --version 1.1 --config examples/linter/v1.1-config.json
 ```
 
+Para una demostración completa del trabajo, incluyendo ejecución de ambas
+versiones, `readInput`, `readEnv`, validación, formatter, linter y errores
+esperados, consultar [`examples/demo/README.md`](examples/demo/README.md). En
+Windows, todos los casos pueden recorrerse con un único comando:
+
+```powershell
+.\examples\demo\run-all.ps1
+```
+
 ### CLI
 
 Los cuatro comandos heredan directamente de `CliktCommand`; no hay una clase

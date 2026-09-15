@@ -1,0 +1,11 @@
+{
+  "enforce-spacing-around-equals": true,
+  "enforce-spacing-before-colon-in-declaration": true,
+  "enforce-spacing-after-colon-in-declaration": true,
+  "mandatory-single-space-separation": true,
+  "mandatory-space-surrounding-operations": true,
+  "mandatory-line-break-after-statement": true,
+  "line-breaks-after-println": 1,
+  "if-brace-same-line": true,
+  "indent-inside-if": 4
+}
