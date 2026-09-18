@@ -71,4 +71,6 @@ internal data class PrintScriptV11FormatterConfigurationDocument(
     val ifBraceBelowLine: Boolean = false,
     @SerialName("indent-inside-if")
     val indentationInsideIf: Int? = null,
+    @SerialName("mandatory-line-breaks-inside-if")
+    val enforceLineBreaksInsideIf: Boolean = false,
 ) : PrintScriptV1FormatterConfigurationProperties

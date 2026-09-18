@@ -12,14 +12,21 @@ internal class DeclarationColonSpacingRule(
 ) : TokenGapFormattingRule {
 
     override fun supports(gap: TokenGap): Boolean {
-        val gapIsBeforeColon = gap.nextToken?.type == PrintScriptV1TokenType.COLON
-        val gapIsAfterColon = gap.previousToken?.type == PrintScriptV1TokenType.COLON
-
-        return (enforceSpaceBeforeColon && gapIsBeforeColon) ||
-            (enforceSpaceAfterColon && gapIsAfterColon)
+        return shouldFormatSpaceBeforeColon(gap) ||
+            shouldFormatSpaceAfterColon(gap)
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
         return WhitespaceFormattingResult.Success(SPACE)
+    }
+
+    private fun shouldFormatSpaceBeforeColon(gap: TokenGap): Boolean {
+        return enforceSpaceBeforeColon &&
+            gap.nextToken?.type == PrintScriptV1TokenType.COLON
+    }
+
+    private fun shouldFormatSpaceAfterColon(gap: TokenGap): Boolean {
+        return enforceSpaceAfterColon &&
+            gap.previousToken?.type == PrintScriptV1TokenType.COLON
     }
 }

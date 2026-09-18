@@ -7,5 +7,6 @@
   "mandatory-line-break-after-statement": true,
   "line-breaks-after-println": 1,
   "if-brace-same-line": true,
+  "mandatory-line-breaks-inside-if": true,
   "indent-inside-if": 4
 }

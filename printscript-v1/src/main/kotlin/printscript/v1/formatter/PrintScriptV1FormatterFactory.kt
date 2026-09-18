@@ -20,11 +20,11 @@ public object PrintScriptV1FormatterFactory {
         configuration: PrintScriptV1FormatterConfiguration = defaultConfiguration(),
         additionalFormattingRules: List<TokenGapFormattingRule> = emptyList(),
     ): Formatter {
-        val configuredRules =
-            PrintScriptV1FormattingRules.allRules(configuration)
+        val configuredRule =
+            PrintScriptV1FormattingRules.create(configuration)
 
         return FormatterFactory.create(
-            formattingRules = additionalFormattingRules + configuredRules,
+            formattingRules = additionalFormattingRules + configuredRule,
             whitespaceTokenType = PrintScriptV1TokenType.WHITESPACE,
             endOfInputTokenType = PrintScriptV1TokenType.EOF,
         )

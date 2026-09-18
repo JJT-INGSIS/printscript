@@ -353,6 +353,7 @@ Ejemplo de formatter V1.1:
   "mandatory-line-break-after-statement": true,
   "line-breaks-after-println": 1,
   "if-brace-below-line": true,
+  "mandatory-line-breaks-inside-if": true,
   "indent-inside-if": 2
 }
 ```
@@ -366,6 +367,7 @@ Ejemplo de formatter V1.1:
 | `mandatory-line-break-after-statement` | Un salto después de `;` cuando hay otro token. |
 | `line-breaks-after-println` | Cantidad de líneas vacías: `0` produce un salto, `1` produce dos. |
 | `if-brace-same-line` / `if-brace-below-line` | Ubicación de la llave de apertura del `if` en V1.1; son excluyentes. |
+| `mandatory-line-breaks-inside-if` | Coloca el contenido de bloques `if` no vacíos en líneas separadas. |
 | `indent-inside-if` | Espacios por nivel de bloque en V1.1; ajusta líneas existentes o creadas por otras reglas. |
 
 Ejemplo de linter V1.1:

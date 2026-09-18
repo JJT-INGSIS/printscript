@@ -19,22 +19,13 @@ internal data class IfBracePlacementRule(
 
     override fun supports(gap: TokenGap): Boolean {
         return ifStatementColumn != null &&
-            gap.previousToken?.type == PrintScriptV1TokenType.RIGHT_PAREN &&
-            gap.nextToken?.type == PrintScriptV1TokenType.LEFT_BRACE
+            gap.isBeforeIfOpeningBrace()
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
         return when (placement) {
-            IfBracePlacement.SAME_LINE ->
-                WhitespaceFormattingResult.Success(SPACE)
-
-            IfBracePlacement.NEXT_LINE ->
-                repeatedWhitespace(
-                    gap = gap,
-                    whitespace = SPACE,
-                    count = indentationBeforeBrace(),
-                    prefix = LINE_BREAK,
-                )
+            IfBracePlacement.SAME_LINE -> placeBraceOnSameLine()
+            IfBracePlacement.NEXT_LINE -> placeBraceOnNextLine(gap)
         }
     }
 
@@ -69,12 +60,25 @@ internal data class IfBracePlacementRule(
         return copy(ifStatementColumn = null)
     }
 
-    private fun indentationBeforeBrace(): Long {
-        if (!shouldAlignBraceWithIf) {
-            return 0
-        }
+    private fun TokenGap.isBeforeIfOpeningBrace(): Boolean =
+        previousToken?.type == PrintScriptV1TokenType.RIGHT_PAREN &&
+            nextToken?.type == PrintScriptV1TokenType.LEFT_BRACE
 
-        return ifStatementColumn ?: 0
+    private fun placeBraceOnSameLine(): WhitespaceFormattingResult = WhitespaceFormattingResult.Success(SPACE)
+
+    private fun placeBraceOnNextLine(gap: TokenGap): WhitespaceFormattingResult = repeatedWhitespace(
+        gap = gap,
+        whitespace = SPACE,
+        count = braceIndentationWidth(),
+        prefix = LINE_BREAK,
+    )
+
+    private fun braceIndentationWidth(): Long {
+        return if (shouldAlignBraceWithIf) {
+            ifStatementColumn ?: 0
+        } else {
+            0
+        }
     }
 
     private fun updatedIfStatementColumn(gap: TokenGap, nextTokenColumn: Long): Long? {

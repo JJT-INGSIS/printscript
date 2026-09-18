@@ -12,15 +12,24 @@ internal class EqualsSpacingRule(
 ) : TokenGapFormattingRule {
 
     override fun supports(gap: TokenGap): Boolean {
-        return gap.previousToken?.type == PrintScriptV1TokenType.ASSIGN ||
-            gap.nextToken?.type == PrintScriptV1TokenType.ASSIGN
+        return gap.isNextToAssignment()
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
-        val whitespace = when (spacing) {
+        return WhitespaceFormattingResult.Success(
+            whitespaceForConfiguredSpacing(),
+        )
+    }
+
+    private fun TokenGap.isNextToAssignment(): Boolean {
+        return previousToken?.type == PrintScriptV1TokenType.ASSIGN ||
+            nextToken?.type == PrintScriptV1TokenType.ASSIGN
+    }
+
+    private fun whitespaceForConfiguredSpacing(): String {
+        return when (spacing) {
             EqualsSpacing.SURROUNDED_BY_SPACES -> SPACE
             EqualsSpacing.WITHOUT_SPACES -> ""
         }
-        return WhitespaceFormattingResult.Success(whitespace)
     }
 }

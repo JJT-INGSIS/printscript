@@ -11,12 +11,15 @@ import printscript.v1.formatter.internal.rule.spacing.SpaceAroundBinaryOperatorR
 
 internal object PrintScriptV1FormattingRules {
 
-    fun allRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
-        return lineBreakRules(configuration) +
-            spacingRules(configuration)
+    fun create(configuration: PrintScriptV1FormatterConfiguration): TokenGapFormattingRule {
+        return CompositeFormattingRule(
+            structuralRules = structuralRules(configuration),
+            spacingRules = spacingRules(configuration),
+            postProcessingRules = emptyList(),
+        )
     }
 
-    fun lineBreakRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
+    fun structuralRules(configuration: PrintScriptV1FormatterConfiguration): List<TokenGapFormattingRule> {
         return listOfNotNull(
             lineBreakAfterPrintlnRule(configuration),
             lineBreakAfterStatementRule(configuration),
@@ -27,7 +30,7 @@ internal object PrintScriptV1FormattingRules {
         return listOfNotNull(
             equalsSpacingRule(configuration),
             declarationColonSpacingRule(configuration),
-            binaryOperatorSpacingRule(configuration),
+            spaceAroundBinaryOperatorRule(configuration),
             singleSpaceSeparationRule(configuration),
         )
     }
@@ -79,7 +82,7 @@ internal object PrintScriptV1FormattingRules {
         )
     }
 
-    private fun binaryOperatorSpacingRule(
+    private fun spaceAroundBinaryOperatorRule(
         configuration: PrintScriptV1FormatterConfiguration,
     ): TokenGapFormattingRule? {
         if (!configuration.enforceSpaceAroundBinaryOperators) {
