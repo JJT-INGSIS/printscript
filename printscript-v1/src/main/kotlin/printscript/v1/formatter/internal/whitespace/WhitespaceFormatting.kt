@@ -4,8 +4,8 @@ import printscript.formatter.TokenGap
 import printscript.formatter.WhitespaceFormattingResult
 import printscript.v1.formatter.WhitespaceSizeLimitExceeded
 
-internal const val SPACE: String = " "
-internal const val LINE_BREAK: String = "\n"
+internal const val SPACE = " "
+internal const val LINE_BREAK = "\n"
 
 internal fun String.containsLineBreak(): Boolean {
     return contains('\n') || contains('\r')
@@ -17,8 +17,8 @@ internal fun repeatedWhitespace(
     count: Long,
     prefix: String = "",
 ): WhitespaceFormattingResult {
-    if (repetitionExceedsStringSize(whitespace, count, prefix)) {
-        return whitespaceSizeOverflow(gap)
+    if (wouldExceedStringSizeLimit(whitespace, count, prefix)) {
+        return whitespaceSizeLimitExceeded(gap)
     }
 
     return WhitespaceFormattingResult.Success(
@@ -43,7 +43,7 @@ internal fun indentedWhitespace(
     )
 }
 
-private fun repetitionExceedsStringSize(whitespace: String, count: Long, prefix: String): Boolean {
+private fun wouldExceedStringSizeLimit(whitespace: String, count: Long, prefix: String): Boolean {
     if (count > Int.MAX_VALUE) {
         return true
     }
@@ -52,14 +52,14 @@ private fun repetitionExceedsStringSize(whitespace: String, count: Long, prefix:
         return false
     }
 
-    val availableCharacterCount =
+    val remainingCharacterCapacity =
         (Int.MAX_VALUE - prefix.length).toLong()
 
     return count >
-        availableCharacterCount / whitespace.length.toLong()
+        remainingCharacterCapacity / whitespace.length.toLong()
 }
 
-private fun whitespaceSizeOverflow(gap: TokenGap): WhitespaceFormattingResult.Failure {
+private fun whitespaceSizeLimitExceeded(gap: TokenGap): WhitespaceFormattingResult.Failure {
     val relatedTokenSpan =
         requireNotNull(gap.nextToken?.span ?: gap.previousToken?.span)
 

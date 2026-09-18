@@ -32,7 +32,8 @@ class PrintScriptV11FormatterConfigurationTest {
             {
                 "enforce-spacing-around-equals": true,
                 "if-brace-below-line": true,
-                "indent-inside-if": 4
+                "indent-inside-if": 4,
+                "mandatory-line-breaks-inside-if": true
             }
             """.trimIndent(),
         )
@@ -49,6 +50,10 @@ class PrintScriptV11FormatterConfigurationTest {
         assertEquals(
             expected = 4,
             actual = success.configuration.indentationInsideIf,
+        )
+        assertEquals(
+            expected = true,
+            actual = success.configuration.enforceLineBreaksInsideIf,
         )
     }
 

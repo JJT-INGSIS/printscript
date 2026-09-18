@@ -15,22 +15,13 @@ internal data class IfBlockIndentationRule(
 
     override fun supports(gap: TokenGap): Boolean {
         return gap.originalWhitespace.containsLineBreak() &&
-            (
-                blockDepth > 0 ||
-                    gap.previousToken?.type == PrintScriptV1TokenType.RIGHT_BRACE
-                )
+            (isInsideBlock() || gap.followsClosingBrace())
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
-        val indentationStart =
-            indentationStartIn(gap.originalWhitespace)
-
-        val whitespaceBeforeIndentation =
-            gap.originalWhitespace.take(indentationStart)
-
         return indentedWhitespace(
             gap = gap,
-            prefix = whitespaceBeforeIndentation,
+            prefix = whitespaceBeforeCurrentLine(gap.originalWhitespace),
             indentationSize = indentationSize,
             depth = indentationDepthFor(gap),
         )
@@ -44,37 +35,31 @@ internal data class IfBlockIndentationRule(
         }
     }
 
-    private fun indentationStartIn(whitespace: String): Int {
-        val lastLineBreak =
+    private fun isInsideBlock(): Boolean = blockDepth > 0
+
+    private fun TokenGap.followsClosingBrace(): Boolean = previousToken?.type == PrintScriptV1TokenType.RIGHT_BRACE
+
+    private fun whitespaceBeforeCurrentLine(whitespace: String): String {
+        val currentLineStart =
             maxOf(
                 whitespace.lastIndexOf('\n'),
                 whitespace.lastIndexOf('\r'),
-            )
+            ) + 1
 
-        return lastLineBreak + 1
+        return whitespace.take(currentLineStart)
     }
 
     private fun indentationDepthFor(gap: TokenGap): Int {
         return if (gap.nextToken?.type == PrintScriptV1TokenType.RIGHT_BRACE) {
-            previousDepth()
+            parentBlockDepth()
         } else {
             blockDepth
         }
     }
 
-    private fun previousDepth(): Int {
-        return if (blockDepth == 0) {
-            0
-        } else {
-            blockDepth - 1
-        }
-    }
+    private fun parentBlockDepth(): Int = maxOf(0, blockDepth - 1)
 
-    private fun enterBlock(): IfBlockIndentationRule {
-        return copy(blockDepth = blockDepth + 1)
-    }
+    private fun enterBlock(): IfBlockIndentationRule = copy(blockDepth = blockDepth + 1)
 
-    private fun leaveBlock(): IfBlockIndentationRule {
-        return copy(blockDepth = previousDepth())
-    }
+    private fun leaveBlock(): IfBlockIndentationRule = copy(blockDepth = parentBlockDepth())
 }

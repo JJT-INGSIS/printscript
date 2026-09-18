@@ -3,6 +3,7 @@ package printscript.v1.formatter
 import printscript.formatter.TokenGap
 import printscript.formatter.TokenGapFormattingRule
 import printscript.formatter.WhitespaceFormattingResult
+import printscript.v1.formatter.configuration.EqualsSpacing
 import printscript.v1.formatter.configuration.IfBracePlacement
 import printscript.v1.formatter.configuration.PrintScriptV11FormatterConfiguration
 import printscript.v1.formatter.configuration.PrintScriptV1FormatterConfiguration
@@ -129,6 +130,79 @@ class PrintScriptFormatterCompositionTest {
             val formatted = formatSource(source, configuration)
             assertEquals(formatted, formatSource(formatted, configuration), configuration.toString())
         }
+    }
+
+    @Test
+    fun `specific equals spacing takes priority over single space separation`() {
+        val configuration = PrintScriptV1FormatterConfiguration(
+            equalsSpacing = EqualsSpacing.WITHOUT_SPACES,
+            enforceSingleSpaceSeparation = true,
+        )
+
+        assertEquals(
+            expected = "value=1;",
+            actual = formatSource("value = 1;", configuration),
+        )
+    }
+
+    @Test
+    fun `indentation preserves line breaks instead of allowing spacing to replace them`() {
+        val configuration = PrintScriptV11FormatterConfiguration(
+            v1Configuration = PrintScriptV1FormatterConfiguration(
+                enforceSingleSpaceSeparation = true,
+            ),
+            indentationInsideIf = 2,
+        )
+
+        assertEquals(
+            expected = "if ( active ) {\n  println ( 1 );\n}",
+            actual = formatSourceV11("if(active){\nprintln(1);\n}", configuration),
+        )
+    }
+
+    @Test
+    fun `creates lines inside a compact block before applying indentation`() {
+        val configuration = PrintScriptV11FormatterConfiguration(
+            indentationInsideIf = 2,
+            enforceLineBreaksInsideIf = true,
+        )
+        val expected = "if(active){\n  println(1);\n}"
+
+        assertEquals(
+            expected = expected,
+            actual = formatSourceV11("if(active){println(1);}", configuration),
+        )
+        assertEquals(
+            expected = expected,
+            actual = formatSourceV11(expected, configuration),
+        )
+    }
+
+    @Test
+    fun `keeps empty blocks compact when block line breaks are enabled`() {
+        val configuration = PrintScriptV11FormatterConfiguration(
+            enforceLineBreaksInsideIf = true,
+        )
+
+        assertEquals(
+            expected = "if(active){}",
+            actual = formatSourceV11("if(active){}", configuration),
+        )
+    }
+
+    @Test
+    fun `println blank lines take priority before a closing brace`() {
+        val configuration = PrintScriptV11FormatterConfiguration(
+            v1Configuration = PrintScriptV1FormatterConfiguration(
+                blankLinesAfterPrintln = 1,
+            ),
+            enforceLineBreaksInsideIf = true,
+        )
+
+        assertEquals(
+            expected = "if(active){\nprintln(1);\n\n}",
+            actual = formatSourceV11("if(active){println(1);}", configuration),
+        )
     }
 
     private fun baseConfigurations(): List<PrintScriptV1FormatterConfiguration> {

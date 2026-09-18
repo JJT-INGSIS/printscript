@@ -6,17 +6,21 @@ import printscript.formatter.WhitespaceFormattingResult
 import printscript.v1.formatter.internal.whitespace.SPACE
 import printscript.v1.token.PrintScriptV1TokenType
 
-internal data object SingleSpaceSeparationRule : TokenGapFormattingRule {
+internal object SingleSpaceSeparationRule : TokenGapFormattingRule {
 
     override fun supports(gap: TokenGap): Boolean {
-        val previousToken = gap.previousToken ?: return false
-        val nextToken = gap.nextToken ?: return false
-
-        return previousToken.type != PrintScriptV1TokenType.SEMICOLON &&
-            nextToken.type != PrintScriptV1TokenType.SEMICOLON
+        return gap.isBetweenRegularTokens()
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
         return WhitespaceFormattingResult.Success(SPACE)
+    }
+
+    private fun TokenGap.isBetweenRegularTokens(): Boolean {
+        val previous = previousToken ?: return false
+        val next = nextToken ?: return false
+
+        return previous.type != PrintScriptV1TokenType.SEMICOLON &&
+            next.type != PrintScriptV1TokenType.SEMICOLON
     }
 }

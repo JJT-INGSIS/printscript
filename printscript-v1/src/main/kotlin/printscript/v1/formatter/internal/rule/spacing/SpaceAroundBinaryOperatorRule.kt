@@ -9,15 +9,13 @@ import printscript.v1.formatter.internal.whitespace.SPACE
 import printscript.v1.token.PrintScriptV1TokenType
 
 internal data class SpaceAroundBinaryOperatorRule(
-    private val lastTokenCanEndExpression: Boolean = false,
-    private val lastTokenWasBinaryOperator: Boolean = false,
+    private val previousTokenCanEndExpression: Boolean = false,
+    private val previousTokenWasBinaryOperator: Boolean = false,
 ) : TokenGapFormattingRule {
 
     override fun supports(gap: TokenGap): Boolean {
-        val gapPrecedesBinaryOperator =
-            gap.nextToken?.type.isBinaryOperator() && lastTokenCanEndExpression
-
-        return gapPrecedesBinaryOperator || lastTokenWasBinaryOperator
+        return gap.precedesBinaryOperator() ||
+            previousTokenWasBinaryOperator
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
@@ -25,13 +23,19 @@ internal data class SpaceAroundBinaryOperatorRule(
     }
 
     override fun afterConsuming(token: Token): TokenGapFormattingRule {
-        val consumedTokenIsBinaryOperator =
-            token.type.isBinaryOperator() && lastTokenCanEndExpression
+        val consumedTokenActsAsBinaryOperator =
+            previousTokenCanEndExpression &&
+                token.type.isBinaryOperator()
 
         return copy(
-            lastTokenCanEndExpression = token.type.canEndExpression(),
-            lastTokenWasBinaryOperator = consumedTokenIsBinaryOperator,
+            previousTokenCanEndExpression = token.type.canEndExpression(),
+            previousTokenWasBinaryOperator = consumedTokenActsAsBinaryOperator,
         )
+    }
+
+    private fun TokenGap.precedesBinaryOperator(): Boolean {
+        return previousTokenCanEndExpression &&
+            nextToken?.type.isBinaryOperator()
     }
 
     private fun TokenType.canEndExpression(): Boolean {

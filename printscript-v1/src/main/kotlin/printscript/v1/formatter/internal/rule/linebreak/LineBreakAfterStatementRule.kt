@@ -6,14 +6,18 @@ import printscript.formatter.WhitespaceFormattingResult
 import printscript.v1.formatter.internal.whitespace.LINE_BREAK
 import printscript.v1.token.PrintScriptV1TokenType
 
-internal data object LineBreakAfterStatementRule : TokenGapFormattingRule {
+internal object LineBreakAfterStatementRule : TokenGapFormattingRule {
 
     override fun supports(gap: TokenGap): Boolean {
-        return gap.previousToken?.type == PrintScriptV1TokenType.SEMICOLON &&
-            gap.nextToken != null
+        return gap.isAfterCompletedStatement()
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
         return WhitespaceFormattingResult.Success(LINE_BREAK)
+    }
+
+    private fun TokenGap.isAfterCompletedStatement(): Boolean {
+        return previousToken?.type == PrintScriptV1TokenType.SEMICOLON &&
+            nextToken != null
     }
 }

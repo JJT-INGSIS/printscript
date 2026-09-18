@@ -10,7 +10,7 @@ import printscript.v1.token.PrintScriptV1TokenType
 
 internal class LineBreakAfterPrintlnRule private constructor(
     private val blankLineCount: Int,
-    private val currentStatement: CurrentStatement?,
+    private val currentStatement: StatementKind?,
     private val completedStatementWasPrintln: Boolean,
 ) : TokenGapFormattingRule {
 
@@ -27,60 +27,69 @@ internal class LineBreakAfterPrintlnRule private constructor(
     }
 
     override fun formatWhitespace(gap: TokenGap): WhitespaceFormattingResult {
-        val requiredLineBreakCount = blankLineCount.toLong() + 1
-
         return repeatedWhitespace(
             gap = gap,
             whitespace = LINE_BREAK,
-            count = requiredLineBreakCount,
+            count = blankLineCount.toLong() + 1,
         )
     }
 
     override fun afterConsuming(token: Token): TokenGapFormattingRule {
         return when {
             token.isBlockDelimiter() -> resetStatementTracking()
-            token.type == PrintScriptV1TokenType.SEMICOLON -> completeCurrentStatement()
+            token.isStatementTerminator() -> completeCurrentStatement()
             currentStatement == null -> startStatementWith(token)
             else -> this
         }
     }
 
+    private fun Token.isStatementTerminator(): Boolean = type == PrintScriptV1TokenType.SEMICOLON
+
+    private fun Token.isBlockDelimiter(): Boolean = type == PrintScriptV1TokenType.LEFT_BRACE ||
+        type == PrintScriptV1TokenType.RIGHT_BRACE
+
     private fun resetStatementTracking(): LineBreakAfterPrintlnRule {
-        return LineBreakAfterPrintlnRule(
-            blankLineCount = blankLineCount,
+        return withState(
             currentStatement = null,
             completedStatementWasPrintln = false,
         )
     }
 
     private fun completeCurrentStatement(): LineBreakAfterPrintlnRule {
-        return LineBreakAfterPrintlnRule(
-            blankLineCount = blankLineCount,
+        return withState(
             currentStatement = null,
-            completedStatementWasPrintln = currentStatement == CurrentStatement.PRINTLN,
+            completedStatementWasPrintln =
+            currentStatement == StatementKind.PRINTLN,
         )
     }
 
     private fun startStatementWith(token: Token): LineBreakAfterPrintlnRule {
-        val statement = if (token.type == PrintScriptV1TokenType.PRINTLN) {
-            CurrentStatement.PRINTLN
-        } else {
-            CurrentStatement.OTHER
-        }
-
-        return LineBreakAfterPrintlnRule(
-            blankLineCount = blankLineCount,
-            currentStatement = statement,
+        return withState(
+            currentStatement = token.statementKind(),
             completedStatementWasPrintln = false,
         )
     }
 
-    private fun Token.isBlockDelimiter(): Boolean {
-        return type == PrintScriptV1TokenType.LEFT_BRACE ||
-            type == PrintScriptV1TokenType.RIGHT_BRACE
+    private fun Token.statementKind(): StatementKind {
+        return if (type == PrintScriptV1TokenType.PRINTLN) {
+            StatementKind.PRINTLN
+        } else {
+            StatementKind.OTHER
+        }
     }
 
-    private enum class CurrentStatement {
+    private fun withState(
+        currentStatement: StatementKind?,
+        completedStatementWasPrintln: Boolean,
+    ): LineBreakAfterPrintlnRule {
+        return LineBreakAfterPrintlnRule(
+            blankLineCount = blankLineCount,
+            currentStatement = currentStatement,
+            completedStatementWasPrintln = completedStatementWasPrintln,
+        )
+    }
+
+    private enum class StatementKind {
         PRINTLN,
         OTHER,
     }

@@ -46,6 +46,7 @@ internal object PrintScriptV11FormatterConfigurationMapper {
                 v1Configuration = v1Configuration,
                 ifBracePlacement = bracePlacementFrom(document),
                 indentationInsideIf = indentationSize,
+                enforceLineBreaksInsideIf = document.enforceLineBreaksInsideIf,
             ),
         )
     }
