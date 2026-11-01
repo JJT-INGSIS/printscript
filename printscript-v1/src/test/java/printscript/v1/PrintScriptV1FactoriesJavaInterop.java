@@ -44,17 +44,25 @@ final class PrintScriptV1FactoriesJavaInterop {
 
         PrintScriptV1FormatterFactory.defaultConfiguration();
         PrintScriptV1FormatterConfiguration.fromJson("{}");
+        PrintScriptV1FormatterConfiguration.rules();
+        PrintScriptV1FormatterConfiguration.check("{}");
         PrintScriptV1FormatterFactory.create();
         PrintScriptV11FormatterFactory.defaultConfiguration();
         PrintScriptV11FormatterConfiguration.fromJson("{}");
+        PrintScriptV11FormatterConfiguration.rules();
+        PrintScriptV11FormatterConfiguration.check("{}");
         PrintScriptV11FormatterFactory.create();
 
         PrintScriptV1LinterFactory.defaultConfiguration();
         PrintScriptV1LinterFactory.configurationFrom("{}");
+        PrintScriptV1LinterFactory.configurationRules();
+        PrintScriptV1LinterFactory.checkConfiguration("{}");
         PrintScriptV1LinterFactory.create();
 
         PrintScriptV11LinterFactory.defaultConfiguration();
         PrintScriptV11LinterFactory.configurationFrom("{}");
+        PrintScriptV11LinterFactory.configurationRules();
+        PrintScriptV11LinterFactory.checkConfiguration("{}");
         PrintScriptV11LinterFactory.create();
     }
 }

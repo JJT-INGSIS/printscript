@@ -1,5 +1,8 @@
 package printscript.v1.formatter.configuration
 
+import printscript.v1.configuration.ConfigurationCheck
+import printscript.v1.configuration.ConfigurationRule
+import printscript.v1.formatter.internal.configuration.FormatterConfigurationCatalog
 import printscript.v1.formatter.internal.configuration.PrintScriptV1FormatterConfigurationReader
 
 public data class PrintScriptV1FormatterConfiguration(
@@ -28,6 +31,16 @@ public data class PrintScriptV1FormatterConfiguration(
         @JvmStatic
         public fun fromJson(json: String): PrintScriptV1FormatterConfigurationResult {
             return PrintScriptV1FormatterConfigurationReader.read(json)
+        }
+
+        @JvmStatic
+        public fun rules(): List<ConfigurationRule> {
+            return FormatterConfigurationCatalog.v1Rules
+        }
+
+        @JvmStatic
+        public fun check(json: String): ConfigurationCheck {
+            return FormatterConfigurationCatalog.v1Checker.check(json)
         }
     }
 }
