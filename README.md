@@ -386,6 +386,33 @@ JSON incorrectos, y conserva errores propios de su versión. Los readers del
 linter comparten el armado de las reglas comunes. El CLI informa el motivo
 específico de una configuración inválida.
 
+#### Catálogo y validación de la configuración
+
+Además de leer la configuración, cada versión publica qué reglas acepta y
+permite validar un documento sin construir la herramienta:
+
+| Herramienta | Catálogo | Validación |
+|---|---|---|
+| Formatter V1 | `PrintScriptV1FormatterConfiguration.rules()` | `PrintScriptV1FormatterConfiguration.check(json)` |
+| Formatter V1.1 | `PrintScriptV11FormatterConfiguration.rules()` | `PrintScriptV11FormatterConfiguration.check(json)` |
+| Linter V1 | `PrintScriptV1LinterFactory.configurationRules()` | `PrintScriptV1LinterFactory.checkConfiguration(json)` |
+| Linter V1.1 | `PrintScriptV11LinterFactory.configurationRules()` | `PrintScriptV11LinterFactory.checkConfiguration(json)` |
+
+Cada `ConfigurationRule` indica su `id`, su tipo (`BOOLEAN`, `INTEGER` o
+`CHOICE`), si acepta `null` para dejarla apagada, las opciones de una regla
+`CHOICE` y las reglas con las que entra en conflicto. El catálogo se obtiene del
+mismo documento que leen los readers, por lo que no puede describir una clave
+que el reader desconozca.
+
+`check` devuelve `Valid`, `MalformedDocument` cuando el texto no es un objeto
+JSON, o `InvalidRules` con todas las violaciones juntas. Cada violación indica
+la regla y el motivo: `UNKNOWN_RULE`, `WRONG_TYPE`, `OUT_OF_RANGE`,
+`UNKNOWN_CHOICE` o `CONFLICTING_RULES`; en un conflicto se informan ambas
+reglas. Los valores se toman tal como están escritos: `"true"`, `"1"` o `1e2`
+son `WRONG_TYPE`, aunque el reader de kotlinx los convierta. Todo documento que
+`check` acepta también es aceptado por `fromJson` o `configurationFrom`, y un
+test lo verifica regla por regla y en cada par de reglas.
+
 Hay ejemplos listos para probar ambas herramientas desde el CLI:
 
 ```bash
@@ -519,7 +546,7 @@ El TCK es un repositorio separado y no forma parte de este `check`.
 ### CI y publicación
 
 CI ejecuta `check` en pull requests y admite ejecución manual. Cada push a
-`main` ejecuta `check` y, si pasa, publica un snapshot `1.1.1-SNAPSHOT`; ese
+`main` ejecuta `check` y, si pasa, publica un snapshot `1.2.1-SNAPSHOT`; ese
 workflow también puede lanzarse manualmente. Al publicar una GitHub Release con
 tag `vX.Y.Z`, se usa esa versión para ejecutar `check`, validar con
 `publishToMavenLocal` y publicar en GitHub Packages.
@@ -527,7 +554,7 @@ tag `vX.Y.Z`, se usa esa versión para ejecutar `check`, validar con
 Las librerías aplican `printscript.publishable-library`; `cli` e
 `integration-tests` no se publican. `printscript-v1` es la fachada que expone
 transitivamente los motores y contratos. La versión local predeterminada es
-`1.1.1-SNAPSHOT`, reemplazable mediante `-PreleaseVersion=X.Y.Z`.
+`1.2.1-SNAPSHOT`, reemplazable mediante `-PreleaseVersion=X.Y.Z`.
 Las credenciales de publicación son `GITHUB_ACTOR` y `GITHUB_TOKEN`.
 
 ### Herramientas locales

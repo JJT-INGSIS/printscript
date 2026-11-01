@@ -3,6 +3,9 @@ package printscript.v1.linter
 import printscript.linter.LintRule
 import printscript.linter.Linter
 import printscript.linter.LinterFactory
+import printscript.v1.configuration.ConfigurationCheck
+import printscript.v1.configuration.ConfigurationRule
+import printscript.v1.linter.internal.configuration.LinterConfigurationCatalog
 import printscript.v1.linter.internal.configuration.PrintScriptV11LinterConfigurationReader
 import printscript.v1.linter.rule.PrintScriptV11StatementTreeRule
 
@@ -18,6 +21,16 @@ public object PrintScriptV11LinterFactory {
     @JvmStatic
     public fun configurationFrom(json: String): PrintScriptV11LinterConfigurationResult {
         return PrintScriptV11LinterConfigurationReader.read(json)
+    }
+
+    @JvmStatic
+    public fun configurationRules(): List<ConfigurationRule> {
+        return LinterConfigurationCatalog.v11Rules
+    }
+
+    @JvmStatic
+    public fun checkConfiguration(json: String): ConfigurationCheck {
+        return LinterConfigurationCatalog.v11Checker.check(json)
     }
 
     @JvmStatic
